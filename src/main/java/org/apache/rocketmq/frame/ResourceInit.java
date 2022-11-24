@@ -67,7 +67,7 @@ public class ResourceInit {
         try {
             String env = System.getProperty("env", "daily");
             String region = System.getProperty("region", "daily");
-            InputStream inputStream = ResourceInit.class.getResourceAsStream(String.format("/env/%s/%s.conf", env, region));
+            InputStream inputStream = new FileInputStream(String.format("src/test/resources/env/%s/%s.conf", env, region));
             log.info("INIT - use config env:{}, config:{}", env, region);
             properties = configFileHelper.loadConfig(inputStream);
         } catch (Exception e) {
