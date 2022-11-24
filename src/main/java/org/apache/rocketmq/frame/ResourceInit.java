@@ -26,7 +26,6 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.account.Account;
 import org.apache.rocketmq.util.MQAdmin;
@@ -62,7 +61,6 @@ public class ResourceInit {
         log.info("Init process success");
     }
 
-    //Initializing the console
     private static void initResource() {
         try {
             String env = System.getProperty("env", "daily");
@@ -146,7 +144,6 @@ public class ResourceInit {
     }
 
     private static void checkConnection(String ip, String port) {
-        //tcp endpoint connect check
         boolean isConnected = telnet(ip, Integer.parseInt(port), 5000);
         if (!isConnected) {
             log.error("INIT - check: telnet {} {} ==> timeout: {}, isConnected: false", ip, port, 5000);
@@ -192,28 +189,16 @@ public class ResourceInit {
         }
     }
 
-    /**
-     * Generated md5
-     *
-     * @param className  className
-     * @param methodName methodName
-     * @return md5
-     */
-    protected static String getMD5Sum(String className, String methodName) {
-        String completeName = String.format("%s_%s", className, methodName);
-        return methodName + "_" + DigestUtils.md5Hex(completeName).substring(0, 6);
-    }
-
     public static boolean telnet(String hostname, int port, int timeout) {
         Socket socket = new Socket();
         boolean isConnected = false;
         try {
-            socket.connect(new InetSocketAddress(hostname, port), timeout); // connection
-            isConnected = socket.isConnected(); // Check the connectivity status using existing methods
+            socket.connect(new InetSocketAddress(hostname, port), timeout);
+            isConnected = socket.isConnected();
         } catch (IOException e) {
         } finally {
             try {
-                socket.close();   // Closing the connection
+                socket.close();
             } catch (IOException e) {
             }
         }
