@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.broker.simple;
 
-import java.time.Duration;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
 import org.apache.rocketmq.client.apis.message.Message;
@@ -41,6 +40,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
 
 @Tag(TESTSET.NORMAL)
 @Tag(TESTSET.SIMPLE)
@@ -69,7 +70,7 @@ public class SimpleAckTest extends BaseOperate {
 
     @Test
     @Timeout(180)
-    @DisplayName("Send 20 normal messages synchronously and expect SimpleConsumer to receive() and ack() messages normally")
+    @DisplayName("Send 20 normal messages synchronously and expect consume with receive() and ack() messages successful")
     public void testNormal_simple_receive_ack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
 
@@ -90,7 +91,7 @@ public class SimpleAckTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("Send 20 normal messages synchronously. Expect SimpleConsumer to receive normal receiveAsync() and ack() messages")
+    @DisplayName("Send 20 normal messages synchronously. Expect consume with receiveAsync() and ack() messages successful")
     public void testNormal_simple_receiveAsync_ack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);
@@ -112,7 +113,7 @@ public class SimpleAckTest extends BaseOperate {
 
     @Test
     @Timeout(180)
-    @DisplayName("Send 20 normal messages synchronously and expect SimpleConsumer to receive() and ackAsync() messages normally")
+    @DisplayName("Send 20 normal messages synchronously and expect consume with receive() and ackAsync() messages successful")
     public void testNormal_simple_receive_ackAsync() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);
@@ -134,7 +135,7 @@ public class SimpleAckTest extends BaseOperate {
 
     @Test
     @Timeout(180)
-    @DisplayName("Send 20 normal messages synchronously. Expect SimpleConsumer to receive normal receiveAsync() and ackAsync() messages")
+    @DisplayName("Send 20 normal messages synchronously. Expect consume with receiveAsync() and ackAsync() messages successful")
     public void testNormal_simple_receiveAsync_ackAsync() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);

@@ -28,8 +28,8 @@ import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -57,9 +57,9 @@ public class NormalMessageTest extends BaseOperate {
     @Test
     @DisplayName("同步发送10条普通消息，期望这10条消息被消费到")
     public void testConsumeNormalMessage() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
         producer.send(topic, tag, SEND_NUM);
 
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
@@ -70,9 +70,9 @@ public class NormalMessageTest extends BaseOperate {
     @Test
     @DisplayName("异步发送10条普通消息，期望这10条消息被消费到")
     public void testConsumeNormalMessageAndSendWithAsync() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
         RMQSendCallBack callBack = new RMQSendCallBack();
         producer.sendAsync(topic, tag, callBack, SEND_NUM);
 
@@ -83,9 +83,9 @@ public class NormalMessageTest extends BaseOperate {
     @Test
     @DisplayName("OneWay发送10条普通消息，期望这10条消息被消费到")
     public void testConsumeNormalMessageAndSendWithOneWay() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
 
         producer.sendOneWay(topic, tag, SEND_NUM);
 
@@ -96,14 +96,14 @@ public class NormalMessageTest extends BaseOperate {
     @DisplayName("topic创建,然后发送消息,不消费,删除该topic再次创建同名topic,启动消费,预期无法再次消费到")
     public void testConsumeNormalMessageWithDeleteAndCreateTopicAgain() {
 
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
         producer.send(topic, tag, SEND_NUM);
 
         MQAdmin.deleteTopic(namesrvAddr, cluster, topic);
 
         MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
 
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
         VerifyUtils.waitForConsumeFailed(consumer.getListener().getDequeueMessages(), 20);
 

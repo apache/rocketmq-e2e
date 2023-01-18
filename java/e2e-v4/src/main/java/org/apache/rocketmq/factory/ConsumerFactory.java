@@ -18,13 +18,29 @@
 package org.apache.rocketmq.factory;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
+import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
+import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.utils.RandomUtils;
 
 public class ConsumerFactory {
 
+    private static Boolean aclEnable = Boolean.parseBoolean(System.getProperty("aclEnable"));
+
     public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup) {
         DefaultMQPushConsumer consumer = new DefaultMQPushConsumer(consumerGroup);
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook) {
+        DefaultMQPushConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely());
+        } else {
+            consumer = new DefaultMQPushConsumer(consumerGroup);
+        }
         consumer.setInstanceName(RandomUtils.getStringByUUID());
         consumer.setNamesrvAddr(nsAddr);
         return new RMQNormalConsumer(consumer);
