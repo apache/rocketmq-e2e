@@ -23,6 +23,7 @@ import org.apache.rocketmq.client.producer.TransactionListener;
 import org.apache.rocketmq.client.producer.TransactionMQProducer;
 import org.apache.rocketmq.client.rmq.RMQNormalProducer;
 import org.apache.rocketmq.client.rmq.RMQTransactionProducer;
+import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,9 +33,15 @@ import java.util.concurrent.ExecutorService;
 
 public class ProducerFactory {
     private static Logger logger = LoggerFactory.getLogger(ProducerFactory.class);
+    private static Boolean aclEnable = Boolean.parseBoolean(System.getProperty("aclEnable"));
 
-    public static RMQNormalProducer getRMQProducer(String ns) {
-        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID());
+    public static RMQNormalProducer getRMQProducer(String ns, RPCHook rpcHook) {
+        DefaultMQProducer producer;
+        if (aclEnable) {
+            producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        } else {
+            producer = new DefaultMQProducer(RandomUtils.getStringByUUID());
+        }
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(ns);
         try {
@@ -45,20 +52,13 @@ public class ProducerFactory {
         return new RMQNormalProducer(producer);
     }
 
-    public static RMQNormalProducer getOrderProducer(String ns) {
-        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID());
-        producer.setInstanceName(UUID.randomUUID().toString());
-        producer.setNamesrvAddr(ns);
-        try {
-            producer.start();
-        } catch (MQClientException e) {
-            logger.info("Start DefaultMQProducer failed, {}", e.getMessage());
+    public static RMQTransactionProducer getTransProducer(String ns, ExecutorService executorService, TransactionListener transactionListener, RPCHook rpcHook) {
+        TransactionMQProducer producer;
+        if (aclEnable) {
+            producer = new TransactionMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        } else {
+            producer = new TransactionMQProducer(RandomUtils.getStringByUUID());
         }
-        return new RMQNormalProducer(producer);
-    }
-
-    public static RMQTransactionProducer getTransProducer(String ns, ExecutorService executorService, TransactionListener transactionListener) {
-        TransactionMQProducer producer = new TransactionMQProducer(RandomUtils.getStringByUUID());
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(ns);
         try {

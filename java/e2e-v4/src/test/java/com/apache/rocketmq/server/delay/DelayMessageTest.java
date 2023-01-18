@@ -63,9 +63,9 @@ public class DelayMessageTest extends BaseOperate {
     @DisplayName("测试延迟level=1")
     public void testDelayLevel1() {
         int delayLevel = 1;
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
 
         producer.sendDelay(topic, delayLevel, SEND_NUM);
         VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);
@@ -78,9 +78,9 @@ public class DelayMessageTest extends BaseOperate {
     @DisplayName("测试延迟level=4")
     public void testDelayLevel4() {
         int delayLevel = 4;
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
 
         producer.sendDelay(topic, delayLevel, SEND_NUM);
         VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);

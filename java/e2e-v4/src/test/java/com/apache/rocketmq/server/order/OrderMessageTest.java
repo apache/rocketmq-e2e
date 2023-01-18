@@ -64,11 +64,11 @@ public class OrderMessageTest extends BaseOperate {
     @Test
     @DisplayName("使用分区顺序topic，设置8个shardingkey，发送100条分区顺序消息，期望能按顺序消费到全部消息")
     public void testConsumePartitionOrderMessage() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
-        producer.sendWithQueue(messageQueues, SEND_NUM);
+        producer.sendWithQueue(messageQueues, 30);
         VerifyUtils.verifyOrderMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
 
         producer.shutdown();
@@ -78,9 +78,9 @@ public class OrderMessageTest extends BaseOperate {
     @Test
     @DisplayName("使用全局顺序topic，发送100条全局顺序消息，期望能按顺序消费到全部消息")
     public void testConsumeGlobalOrderMessage() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
         messageQueues.removeIf(messageQueue -> messageQueue.getQueueId() != 0);
         producer.sendWithQueue(messageQueues, SEND_NUM);

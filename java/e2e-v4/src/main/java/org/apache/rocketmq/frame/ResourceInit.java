@@ -19,6 +19,8 @@ package org.apache.rocketmq.frame;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.account.Account;
+import org.apache.rocketmq.factory.AclClient;
+import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.utils.MQAdmin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -52,6 +54,7 @@ public class ResourceInit {
     protected static List<String> brokerIpList = new ArrayList<>();
     protected static String nameserverPort = "9876";
     private static Properties properties = null;
+    protected static RPCHook rpcHook;
 
     static {
         initResource();
@@ -87,6 +90,7 @@ public class ResourceInit {
             String accessKey = System.getProperty("accessKey", properties.getProperty("accessKey"));
             String secretKey = System.getProperty("secretKey", properties.getProperty("secretKey"));
             account = new Account(accessKey, secretKey);
+            rpcHook = AclClient.getAclRPCHook(account.getAccessKey(), account.getSecretKey());
             log.info("INIT - acl is enabled, [accessKey:{}, secretKey:{}]", accessKey, secretKey);
         } else {
             log.info("INIT - acl is disabled");

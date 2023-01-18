@@ -64,7 +64,7 @@ public class TransactionMessageTest extends BaseOperate {
     @Test
     @DisplayName("同步发送10条普通消息，期望这10条消息被消费到")
     public void testConsumeNormalMessage() {
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
@@ -76,8 +76,7 @@ public class TransactionMessageTest extends BaseOperate {
             }
         });
 
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
-                new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE));
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE), rpcHook);
         producer.send(topic, tag, SEND_NUM);
 
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
