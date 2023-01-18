@@ -16,6 +16,16 @@
  */
 package org.apache.rocketmq.util;
 
+import org.apache.rocketmq.client.apis.ClientException;
+import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
+import org.apache.rocketmq.client.apis.message.MessageView;
+import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
+import org.apache.rocketmq.client.rmq.RMQNormalProducer;
+import org.apache.rocketmq.util.data.collect.DataCollector;
+import org.junit.jupiter.api.Assertions;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
@@ -34,19 +44,12 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import org.apache.rocketmq.client.apis.ClientException;
-import org.apache.rocketmq.client.apis.consumer.SimpleConsumer;
-import org.apache.rocketmq.client.apis.message.MessageView;
-import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
-import org.apache.rocketmq.client.rmq.RMQNormalProducer;
-import org.apache.rocketmq.util.data.collect.DataCollector;
-import org.junit.jupiter.api.Assertions;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class VerifyUtils {
     private static final Logger log = LoggerFactory.getLogger(VerifyUtils.class);
@@ -92,7 +95,7 @@ public class VerifyUtils {
      * @param dequeueMessages
      */
     public static void verifyNormalMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages) {
+                                           DataCollector<Object> dequeueMessages) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
@@ -100,7 +103,7 @@ public class VerifyUtils {
     }
 
     public static void verifyNormalMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, Set<String> unconsumedMsgIds, int timeout) {
+                                           DataCollector<Object> dequeueMessages, Set<String> unconsumedMsgIds, int timeout) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, timeout * 1000L, 1);
 //        if (unConsumedMessages.size() == 0) {
 //            Assertions.fail(String.format("Messages are all consumed"));
@@ -128,7 +131,7 @@ public class VerifyUtils {
     }
 
     public static void verifyNormalMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, int timeout) {
+                                           DataCollector<Object> dequeueMessages, int timeout) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, timeout * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
@@ -143,7 +146,7 @@ public class VerifyUtils {
      * @param messageBody     Body of message
      */
     public static void verifyNormalMessageWithBody(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, String messageBody) {
+                                                   DataCollector<Object> dequeueMessages, String messageBody) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
@@ -163,7 +166,7 @@ public class VerifyUtils {
      * @param dequeueMessages Consume the outgoing message set
      */
     public static void verifyOrderMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages) {
+                                          DataCollector<Object> dequeueMessages) {
         //Check whether the consumption is complete
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
@@ -181,10 +184,10 @@ public class VerifyUtils {
      * @param delayTime       Estimated consumption time required
      */
     public static void verifyDelayMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, int delayTime) {
+                                          DataCollector<Object> dequeueMessages, int delayTime) {
         //Check whether the consumption is complete
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
-            (TIMEOUT + delayTime) * 1000L, 1);
+                (TIMEOUT + delayTime) * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
         }
@@ -205,8 +208,8 @@ public class VerifyUtils {
      * @param count           The amount that is not consumed
      */
     public static void verifyDelayMessageWithUnConsumeCount(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, int delayTime,
-        int count) {
+                                                            DataCollector<Object> dequeueMessages, int delayTime,
+                                                            int count) {
         //Check whether the consumption is complete
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, (TIMEOUT + delayTime) * 1000L, 1);
         if (unConsumedMessages.size() > count) {
@@ -220,7 +223,7 @@ public class VerifyUtils {
         SimpleDateFormat date = new SimpleDateFormat("ss");
         for (String msg : delayUnExcept.keySet()) {
             sb.append(msg).append(" , interval:").append("Difference between" + date.format(new Date(Long.parseLong(String.valueOf(delayUnExcept.get(msg))))) + "s").append(
-                "\n");
+                    "\n");
         }
         Assertions.assertEquals(0, delayUnExcept.size(), sb.toString());
     }
@@ -232,8 +235,8 @@ public class VerifyUtils {
      * @param reconsumeTime   Number of retries
      */
     public static void verifyDelayMessageWithReconsumeTimes(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, int delayTime,
-        int reconsumeTime) {
+                                                            DataCollector<Object> dequeueMessages, int delayTime,
+                                                            int reconsumeTime) {
         int flexibleTime = TIMEOUT;
         if (reconsumeTime == 1) {
             flexibleTime = flexibleTime + 10;
@@ -260,8 +263,8 @@ public class VerifyUtils {
     }
 
     public static void verifyNormalMessageWithReconsumeTimes(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages,
-        int reconsumeTime) {
+                                                             DataCollector<Object> dequeueMessages,
+                                                             int reconsumeTime) {
         int flexibleTime = TIMEOUT;
         if (reconsumeTime == 1) {
             flexibleTime = flexibleTime + 10;
@@ -287,7 +290,7 @@ public class VerifyUtils {
      * @param consumedTimes      The number of repeated purchases
      */
     public static void verifyRetryConsume(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueAllMessages, int consumedTimes) {
+                                          DataCollector<Object> dequeueAllMessages, int consumedTimes) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueAllMessages, TIMEOUT * 1000L, consumedTimes);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
@@ -301,7 +304,7 @@ public class VerifyUtils {
      * @param dequeueMessages Consume the outgoing message set
      */
     public static void checkTransactionMessage(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages) {
+                                               DataCollector<Object> dequeueMessages) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
@@ -359,8 +362,8 @@ public class VerifyUtils {
      * @return A collection of messages that are not consumed
      */
     private static Collection<Object> waitForMessageConsume(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages,
-        Long timeoutMills, Integer consumedTimes) {
+                                                            DataCollector<Object> dequeueMessages,
+                                                            Long timeoutMills, Integer consumedTimes) {
         log.info("Set timeout: {}ms", timeoutMills);
 
         Collection<Object> sendMessages = new ArrayList<>(enqueueMessages.getAllData());
@@ -376,16 +379,16 @@ public class VerifyUtils {
 //                String messageId = (MessageView) message;
 
                 long msgCount = receivedMessagesCopy.stream().filter(
-                    msg -> {
-                        MessageView messageView = (MessageView) msg;
-                        return messageView.getMessageId().toString().equals(enqueueMessageId);
-                    }).count();
+                        msg -> {
+                            MessageView messageView = (MessageView) msg;
+                            return messageView.getMessageId().toString().equals(enqueueMessageId);
+                        }).count();
                 if (msgCount > 0 && getRepeatedTimes(receivedMessagesCopy, enqueueMessageId) == consumedTimes) {
                     iter.remove();
                 } else if (getRepeatedTimes(receivedMessagesCopy, enqueueMessageId) > consumedTimes) {
                     Assertions.fail(
-                        String.format("More retry messages were consumed than expected (including one original message) Except:%s, Actual:%s, MsgId:%s", consumedTimes, getRepeatedTimes(receivedMessagesCopy, enqueueMessageId),
-                            enqueueMessageId));
+                            String.format("More retry messages were consumed than expected (including one original message) Except:%s, Actual:%s, MsgId:%s", consumedTimes, getRepeatedTimes(receivedMessagesCopy, enqueueMessageId),
+                                    enqueueMessageId));
                     //log.error("More retry messages were consumed than expected, Except:{}, Actual:{}", consumedTimes, getRepeatedTimes(receivedMessagesCopy, message));
                 }
             }
@@ -395,7 +398,7 @@ public class VerifyUtils {
 
             if (System.currentTimeMillis() - currentTime >= timeoutMills) {
                 log.error("Timeout but not received all send messages,topic:{},  send {} , recv {}, not received msg: {}\n received msg:{}\n",
-                    dequeueMessages.getDataSize() > 0 ? ((MessageView) dequeueMessages.getFirstElement()).getTopic() : null, enqueueMessages.getDataSize(), receivedMessagesCopy.size(), sendMessages, receivedMessagesCopy);
+                        dequeueMessages.getDataSize() > 0 ? ((MessageView) dequeueMessages.getFirstElement()).getTopic() : null, enqueueMessages.getDataSize(), receivedMessagesCopy.size(), sendMessages, receivedMessagesCopy);
                 break;
             }
             TestUtils.waitForMoment(500L);
@@ -422,7 +425,7 @@ public class VerifyUtils {
      * @param props           The desired attribute condition is not met
      */
     public static void verifyNormalMessageWithUserProperties(DataCollector<Object> enqueueMessages,
-        DataCollector<Object> dequeueMessages, HashMap<String, String> props, int expectedUnrecvMsgNum) {
+                                                             DataCollector<Object> dequeueMessages, HashMap<String, String> props, int expectedUnrecvMsgNum) {
         Collection<Object> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
         Collection<Object> recvMsgs = dequeueMessages.getAllData();
         for (Object unConsumedMessage : recvMsgs) {
@@ -449,7 +452,7 @@ public class VerifyUtils {
      */
     @SafeVarargs
     public static void verifyClusterConsume(DataCollector<Object> enqueueMessages,
-        DataCollector<Object>... dequeueAllMessages) {
+                                            DataCollector<Object>... dequeueAllMessages) {
         long currentTime = System.currentTimeMillis();
         List<Object> sendMessagesCopy = new ArrayList<>(enqueueMessages.getAllData());
 
@@ -526,7 +529,7 @@ public class VerifyUtils {
                         for (MessageView messageView : messageViews) {
                             receivedIndex.getAndIncrement();
                             log.info("MessageId:{}, Body:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                    StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                             try {
                                 consumer.ack(messageView);
                             } catch (ClientException e) {
@@ -547,7 +550,7 @@ public class VerifyUtils {
     }
 
     public static void waitReceiveThenAckAsync(RMQNormalProducer producer, SimpleConsumer consumer, int maxMessageNum,
-        Duration invisibleDuration) {
+                                               Duration invisibleDuration) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         List<Runnable> runnables = new ArrayList<>();
         Collection<Object> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
@@ -562,7 +565,7 @@ public class VerifyUtils {
                                 for (MessageView messageView : messageViews) {
                                     receivedIndex.getAndIncrement();
                                     log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                        StandardCharsets.UTF_8.decode(messageView.getBody()).toString(), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                            StandardCharsets.UTF_8.decode(messageView.getBody()).toString(), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                                     CompletableFuture<Void> future = consumer.ackAsync(messageView);
                                     future.thenAccept(new Consumer<Void>() {
                                         @Override
@@ -606,7 +609,7 @@ public class VerifyUtils {
     }
 
     public static void waitReceiveThenAck(RMQNormalProducer producer, SimpleConsumer consumer, int maxMessageNum,
-        Duration invisibleDuration) {
+                                          Duration invisibleDuration) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
 
         List<Runnable> runnables = new ArrayList<>(8);
@@ -622,7 +625,7 @@ public class VerifyUtils {
                                 for (MessageView messageView : messageViews) {
                                     receivedIndex.getAndIncrement();
                                     log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                        StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                                     consumer.ack(messageView);
                                     sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
                                 }
@@ -648,8 +651,8 @@ public class VerifyUtils {
     }
 
     public static void waitFIFOReceiveThenAck(RMQNormalProducer producer, SimpleConsumer consumer,
-        int maxMessageNum,
-        Duration invisibleDuration) {
+                                              int maxMessageNum,
+                                              Duration invisibleDuration) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         Collection<Object> sendCollection = producer.getEnqueueMessages().getAllData();
         ConcurrentHashMap<String, LinkedList<Object>> map = new ConcurrentHashMap<>();
@@ -660,7 +663,7 @@ public class VerifyUtils {
                     for (MessageView messageView : messageViews) {
                         receivedIndex.getAndIncrement();
                         log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                         consumer.ack(messageView);
                         sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
                         String shardingKey = String.valueOf(messageView.getMessageGroup());
@@ -687,145 +690,120 @@ public class VerifyUtils {
     }
 
     public static void waitReceiveAsyncThenAck(RMQNormalProducer producer, SimpleConsumer consumer,
-        int maxMessageNum,
-        Duration invisibleDuration) {
+                                               int maxMessageNum,
+                                               Duration invisibleDuration) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         Collection<Object> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
-
-        List<Runnable> runnables = new ArrayList<>();
-        for (int i = 0; i < defaultSimpleThreadNums; i++) {
-            runnables.add(new Runnable() {
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        while (endTime > System.currentTimeMillis()) {
+            if (sendCollection.size() == 0) {
+                break;
+            }
+            final CompletableFuture<List<MessageView>> future = consumer.receiveAsync(maxMessageNum, invisibleDuration);
+            future.thenAcceptAsync(new Consumer<List<MessageView>>() {
                 @Override
-                public void run() {
-                    while (endTime > System.currentTimeMillis()) {
-                        if (sendCollection.size() == 0) {
-                            break;
-                        }
-                        final CompletableFuture<List<MessageView>> future = consumer.receiveAsync(maxMessageNum, invisibleDuration);
-                        future.thenAccept(new Consumer<List<MessageView>>() {
-                            @Override
-                            public void accept(List<MessageView> messageViews) {
-                                log.info("Get {} message: {}", messageViews.size(), Arrays.toString(messageViews.toArray()));
-                                if (messageViews.size() > 0) {
-                                    for (MessageView messageView : messageViews) {
-                                        receivedIndex.getAndIncrement();
-                                        log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
-                                        try {
-                                            consumer.ack(messageView);
-                                            sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
-                                        } catch (ClientException e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    log.info("Pull message: {} bar, remaining unconsumed message: {} bar", messageViews.size(), sendCollection.size());
-                                }
+                public void accept(List<MessageView> messageViews) {
+                    log.info("Get {} message: {}", messageViews.size(), Arrays.toString(messageViews.toArray()));
+                    if (messageViews.size() > 0) {
+                        for (MessageView messageView : messageViews) {
+                            receivedIndex.getAndIncrement();
+                            log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
+                                    StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                            try {
+                                consumer.ack(messageView);
+                                sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
+                            } catch (ClientException e) {
+                                e.printStackTrace();
                             }
-                        });
-                        future.exceptionally(new Function<Throwable, List<MessageView>>() {
-                            @Override
-                            public List<MessageView> apply(Throwable throwable) {
-                                throwable.printStackTrace();
-//                    log.info("received async failed:{}", throwable.getMessage());
-                                Assertions.fail(String.format("received async failed:%s", throwable.getMessage()));
-                                return null;
-                            }
-                        });
-                        try {
-                            future.get();
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
+                        log.info("Pull message: {} bar, remaining unconsumed message: {} bar", messageViews.size(), sendCollection.size());
                     }
-                    Assertions.assertEquals(0, sendCollection.size(), String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+                }
+            }, executorService);
+            future.exceptionally(new Function<Throwable, List<MessageView>>() {
+                @Override
+                public List<MessageView> apply(Throwable throwable) {
+                    throwable.printStackTrace();
+//                    log.info("received async failed:{}", throwable.getMessage());
+                    Assertions.fail(String.format("received async failed:%s", throwable.getMessage()));
+                    return null;
                 }
             });
+            try {
+                future.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
-        try {
-            AssertUtils.assertConcurrent("Test Failed", runnables, TIMEOUT + 5);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Assertions.assertEquals(0, sendCollection.size(), String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
     }
 
     public static void waitReceiveAsyncThenAckAsync(RMQNormalProducer producer, SimpleConsumer consumer,
-        int maxMessageNum, Duration invisibleDuration) {
+                                                    int maxMessageNum, Duration invisibleDuration) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         Collection<Object> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
 
-        List<Runnable> runnables = new ArrayList<>();
-        for (int i = 0; i < defaultSimpleThreadNums; i++) {
-            runnables.add(new Runnable() {
+        ExecutorService executorService = Executors.newFixedThreadPool(4);
+        while (endTime > System.currentTimeMillis()) {
+            if (sendCollection.size() == 0) {
+                break;
+            }
+            final CompletableFuture<List<MessageView>> future = consumer.receiveAsync(maxMessageNum, invisibleDuration);
+            future.thenAcceptAsync(new Consumer<List<MessageView>>() {
                 @Override
-                public void run() {
-                    while (endTime > System.currentTimeMillis()) {
-                        if (sendCollection.size() == 0) {
-                            break;
-                        }
-                        final CompletableFuture<List<MessageView>> future = consumer.receiveAsync(maxMessageNum, invisibleDuration);
-                        future.thenAccept(new Consumer<List<MessageView>>() {
-                            @Override
-                            public void accept(List<MessageView> messageViews) {
-                                log.info("Get {} message: {}", messageViews.size(), Arrays.toString(messageViews.toArray()));
-                                if (messageViews.size() > 0) {
-                                    for (MessageView messageView : messageViews) {
-                                        receivedIndex.getAndIncrement();
-                                        log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
-                                        CompletableFuture<Void> ackFuture = consumer.ackAsync(messageView);
-                                        ackFuture.thenAccept(new Consumer<Void>() {
-                                            @Override
-                                            public void accept(Void unused) {
-                                                log.info("ack async success");
-                                                sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
-                                            }
-                                        });
-                                        ackFuture.exceptionally(new Function<Throwable, Void>() {
-                                            @Override
-                                            public Void apply(Throwable throwable) {
-                                                throwable.printStackTrace();
-                                                Assertions.fail(String.format("ack async failed: %s", throwable.getMessage()));
-                                                return null;
-                                            }
-                                        });
-                                        try {
-                                            ackFuture.get();
-                                        } catch (Exception e) {
-                                            e.printStackTrace();
-                                        }
-                                    }
-                                    log.info("Pull message: {} bar, remaining unconsumed message: {} bar", messageViews.size(), sendCollection.size());
+                public void accept(List<MessageView> messageViews) {
+                    log.info("Get {} message: {}", messageViews.size(), Arrays.toString(messageViews.toArray()));
+                    if (messageViews.size() > 0) {
+                        for (MessageView messageView : messageViews) {
+                            receivedIndex.getAndIncrement();
+                            log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
+                                    StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                            CompletableFuture<Void> ackFuture = consumer.ackAsync(messageView);
+                            ackFuture.thenAccept(new Consumer<Void>() {
+                                @Override
+                                public void accept(Void unused) {
+                                    log.info("ack async success");
+                                    sendCollection.removeIf(sendMessageId -> sendMessageId.equals(messageView.getMessageId().toString()));
                                 }
+                            });
+                            ackFuture.exceptionally(new Function<Throwable, Void>() {
+                                @Override
+                                public Void apply(Throwable throwable) {
+                                    throwable.printStackTrace();
+                                    Assertions.fail(String.format("ack async failed: %s", throwable.getMessage()));
+                                    return null;
+                                }
+                            });
+                            try {
+                                ackFuture.get();
+                            } catch (Exception e) {
+                                e.printStackTrace();
                             }
-                        });
-                        future.exceptionally(new Function<Throwable, List<MessageView>>() {
-                            @Override
-                            public List<MessageView> apply(Throwable throwable) {
-                                throwable.printStackTrace();
-                                Assertions.fail(String.format("received async failed:%s", throwable.getMessage()));
-                                return null;
-                            }
-                        });
-                        try {
-                            future.get();
-                        } catch (Exception e) {
-                            e.printStackTrace();
                         }
+                        log.info("Pull message: {} bar, remaining unconsumed message: {} bar", messageViews.size(), sendCollection.size());
                     }
-                    Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+                }
+            }, executorService);
+            future.exceptionally(new Function<Throwable, List<MessageView>>() {
+                @Override
+                public List<MessageView> apply(Throwable throwable) {
+                    throwable.printStackTrace();
+                    Assertions.fail(String.format("received async failed:%s", throwable.getMessage()));
+                    return null;
                 }
             });
+            try {
+                future.get();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        try {
-            AssertUtils.assertConcurrent("Test Failed", runnables, TIMEOUT + 5);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+
     }
 
     public static void waitReceiveThenNack(RMQNormalProducer producer, SimpleConsumer consumer, int maxMessageNum,
-        Duration receiveInvisibleDuration, Duration changeInvisibleDuration) {
+                                           Duration receiveInvisibleDuration, Duration changeInvisibleDuration) {
 
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         Collection<Object> sendCollection = producer.getEnqueueMessages().getAllData();
@@ -836,7 +814,7 @@ public class VerifyUtils {
                     for (MessageView messageView : messageViews) {
                         receivedIndex.getAndIncrement();
                         log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                            StandardCharsets.UTF_8.decode(messageView.getBody()).toString(), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                StandardCharsets.UTF_8.decode(messageView.getBody()).toString(), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                         if (changeInvisibleDuration != null) {
                             consumer.changeInvisibleDuration(messageView, changeInvisibleDuration);
                             log.info("Change the invisibility duration of [{}] to (changeInvisibleDuration): {}", messageView.getMessageId().toString(), changeInvisibleDuration);
@@ -856,7 +834,7 @@ public class VerifyUtils {
     }
 
     public static void waitReceiveThenAck(RMQNormalProducer producer, SimpleConsumer consumer, int maxMessageNum,
-        Duration invisibleDuration, int consumeTimes) {
+                                          Duration invisibleDuration, int consumeTimes) {
         ConcurrentHashMap<String, Integer> msgMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Long> msgTimeMap = new ConcurrentHashMap<>();
         List<Runnable> runnables = new ArrayList<>(4);
@@ -874,7 +852,7 @@ public class VerifyUtils {
                                 for (MessageView messageView : messageViews) {
                                     receivedIndex.getAndIncrement();
                                     log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                        StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                                     String receivedMessageId = messageView.getMessageId().toString();
 
                                     //Processing repeated consuming messages
@@ -926,7 +904,7 @@ public class VerifyUtils {
     }
 
     public static void waitReceiveThenAck(RMQNormalProducer producer, SimpleConsumer consumer, int maxMessageNum,
-        Duration invisibleDuration, int consumeTimes, int waitTime, boolean needAck) {
+                                          Duration invisibleDuration, int consumeTimes, int waitTime, boolean needAck) {
         ConcurrentHashMap<String, Integer> msgMap = new ConcurrentHashMap<>();
         ConcurrentHashMap<String, Long> msgTimeMap = new ConcurrentHashMap<>();
         List<Runnable> runnables = new ArrayList<>(4);
@@ -944,7 +922,7 @@ public class VerifyUtils {
                                 for (MessageView messageView : messageViews) {
                                     receivedIndex.getAndIncrement();
                                     log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                        StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                                     String receivedMessageId = messageView.getMessageId().toString();
 
                                     //Processing repeated consuming messages
@@ -1012,7 +990,7 @@ public class VerifyUtils {
     }
 
     public static void waitDelayReceiveThenAck(RMQNormalProducer producer, SimpleConsumer consumer,
-        int maxMessageNum, long delayTimeMillis) {
+                                               int maxMessageNum, long delayTimeMillis) {
         long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
         Collection<Object> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
         List<Runnable> runnables = new ArrayList<>();
@@ -1027,7 +1005,7 @@ public class VerifyUtils {
                                 for (MessageView messageView : messageViews) {
                                     receivedIndex.getAndIncrement();
                                     log.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}, Retry:{}", messageView.getMessageId(),
-                                        StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
+                                            StandardCharsets.UTF_8.decode(messageView.getBody()), messageView.getTag().get(), messageView.getProperties(), receivedIndex.get(), messageView.getDeliveryAttempt());
                                     consumer.ack(messageView);
                                     long bornTimestamp = messageView.getBornTimestamp();
                                     long startDeliverTime = messageView.getDeliveryTimestamp().get();

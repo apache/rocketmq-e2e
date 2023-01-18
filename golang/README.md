@@ -30,12 +30,3 @@ RocketMQ E2E Test
 * Retry
   * Normal message
   * Order message
-  
-#### How to start
-```angular2html
-mvn clean test -B -Dgroups=smoke -Dcluster=DefaultCluster
-```
-##### Options
-* `ALL_IP` : not required, default is null 
-* `cluster`: not required, default `DefaultCluster`
-* `groups`: param of junit5, `src/main/java/org/apache/rocketmq/enums/TESTSET.java`
