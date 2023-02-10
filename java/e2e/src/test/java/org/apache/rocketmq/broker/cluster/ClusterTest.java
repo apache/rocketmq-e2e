@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.broker.cluster;
 
-import java.io.IOException;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.PushConsumer;
 import org.apache.rocketmq.client.apis.message.Message;
@@ -34,14 +33,15 @@ import org.apache.rocketmq.util.RandomUtils;
 import org.apache.rocketmq.util.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-@Tag(TESTSET.NORMAL)
+import java.io.IOException;
+
+@Tag(TESTSET.MODEL)
 public class ClusterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(ClusterTest.class);
     private String tag;
@@ -72,8 +72,7 @@ public class ClusterTest extends BaseOperate {
         }
     }
 
-    //TODO
-    @Disabled
+    @Test
     @DisplayName("Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages")
     public void testBroadcastConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -116,7 +115,7 @@ public class ClusterTest extends BaseOperate {
         pushConsumer03 = ConsumerFactory.getPushConsumer(account, topic, groupId, new FilterExpression(tag), listenerC);
 
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(account, topic);
-        Assertions.assertNotNull(producer, "Get Producer failed");
+        Assertions.assertNotNull(producer, "Get producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = MessageFactory.buildMessage(topic, tag, String.valueOf(i));
             producer.send(message);
