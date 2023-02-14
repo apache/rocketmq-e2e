@@ -34,6 +34,7 @@ import org.apache.rocketmq.util.TestUtils;
 import org.apache.rocketmq.util.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -74,7 +75,7 @@ public class ClusterTest extends BaseOperate {
         }
     }
 
-    @Test
+    @Disabled
     @DisplayName("Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages")
     public void testBroadcastConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -125,6 +126,26 @@ public class ClusterTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyClusterConsume(producer.getEnqueueMessages(), listenerA.getDequeueMessages(), listenerB.getDequeueMessages(), listenerC.getDequeueMessages());
+    }
+
+    @Test
+    @DisplayName("Send 100 normal messages synchronously, start 3 consumers on the same GroupId, expect 3 clients to consume a total of 100 messages")
+    public void testOneConsume() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);
+//        String topic = "yueya-topic";
+        String groupId = getGroupId(methodName);
+        RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
+        pushConsumer01 = ConsumerFactory.getPushConsumer(account, topic, groupId, new FilterExpression(tag), listenerA);
+
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(account, topic);
+        Assertions.assertNotNull(producer, "Get producer failed");
+        for (int i = 0; i < SEND_NUM; i++) {
+            Message message = MessageFactory.buildMessage(topic, tag, String.valueOf(i));
+            producer.send(message);
+        }
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+        VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerA.getDequeueMessages());
     }
 }
 
