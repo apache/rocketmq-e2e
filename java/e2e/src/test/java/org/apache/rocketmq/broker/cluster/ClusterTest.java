@@ -30,6 +30,7 @@ import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.RMQNormalListener;
 import org.apache.rocketmq.util.NameUtils;
 import org.apache.rocketmq.util.RandomUtils;
+import org.apache.rocketmq.util.TestUtils;
 import org.apache.rocketmq.util.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -57,6 +58,7 @@ public class ClusterTest extends BaseOperate {
 
     @BeforeEach
     public void tearDown() {
+        TestUtils.waitForSeconds(60);
         try {
             if (pushConsumer01 != null) {
                 pushConsumer01.close();
@@ -105,8 +107,9 @@ public class ClusterTest extends BaseOperate {
     public void testClusterConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);
-        String groupId = getGroupId(methodName + 1);
-
+//        String topic = "yueya-topic";
+        String groupId = getGroupId(methodName);
+        TestUtils.waitForSeconds(60);
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
