@@ -107,7 +107,7 @@
                 <version>3.0.0-M5</version>
                 <configuration>
                     <argLine>-Xmx1024m -XX:MaxPermSize=256m</argLine>
-                    <rerunFailingTestsCount>1</rerunFailingTestsCount>
+<!--                    <rerunFailingTestsCount>1</rerunFailingTestsCount>-->
                 </configuration>
             </plugin>
             <plugin>
