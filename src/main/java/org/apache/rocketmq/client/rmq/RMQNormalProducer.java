@@ -17,6 +17,11 @@
 
 package org.apache.rocketmq.client.rmq;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import org.apache.rocketmq.client.apis.message.Message;
 import org.apache.rocketmq.client.apis.producer.Producer;
 import org.apache.rocketmq.client.apis.producer.SendReceipt;
@@ -27,12 +32,6 @@ import org.apache.rocketmq.util.RandomUtils;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
-import java.util.function.Function;
 
 public class RMQNormalProducer extends AbstractMQProducer {
     private static Logger log = LoggerFactory.getLogger(RMQNormalProducer.class);
@@ -85,9 +84,10 @@ public class RMQNormalProducer extends AbstractMQProducer {
             org.apache.rocketmq.client.apis.message.Message message = MessageFactory.buildMessage(topic, tag, RandomUtils.getStringByUUID());
             try {
                 SendReceipt sendReceipt = producer.send(message);
+                log.info("{}, Body: {}, Tag: {}, MessageGroup: {}", sendReceipt.getMessageId(), StandardCharsets.UTF_8.decode(message.getBody()), tag, message.getMessageGroup().isPresent() ? message.getMessageGroup().get() : "");
                 this.enqueueMessages.addData(sendReceipt.getMessageId().toString());
             } catch (Exception e) {
-                log.error("Producer send message failed, {}, topic:{}, tag:{}", e.getMessage(), topic, tag);
+                log.error("Producer send message failed, {}", e.getMessage());
             }
         }
         log.info("Producer send messages finished");
@@ -115,23 +115,21 @@ public class RMQNormalProducer extends AbstractMQProducer {
             try {
                 CompletableFuture<SendReceipt> future = producer.sendAsync(message);
                 future.thenAccept(
-                        new Consumer<SendReceipt>() {
-                            @Override
-                            public void accept(SendReceipt receipt) {
-                                log.info("callback msg success: {}", receipt.getMessageId());
-                                enqueueMessages.addData(receipt.getMessageId().toString());
-                            }
+                    new Consumer<SendReceipt>() {
+                        @Override public void accept(SendReceipt receipt) {
+                            log.info("callback msg success: {}", receipt.getMessageId());
+                            enqueueMessages.addData(receipt.getMessageId().toString());
                         }
+                    }
                 );
                 future.exceptionally(
-                        new Function<Throwable, SendReceipt>() {
-                            @Override
-                            public SendReceipt apply(Throwable throwable) {
-                                log.warn("{} callback message failed", message.getTopic());
-                                enqueueFailedMessages.addData(message);
-                                return null;
-                            }
-                        });
+                    new Function<Throwable, SendReceipt>() {
+                        @Override public SendReceipt apply(Throwable throwable) {
+                            log.warn("{} callback message failed", message.getTopic());
+                            enqueueFailedMessages.addData(message);
+                            return null;
+                        }
+                    });
                 log.info("{}, index: {}", future, i);
                 future.get();
             } catch (Exception e) {
@@ -145,23 +143,21 @@ public class RMQNormalProducer extends AbstractMQProducer {
         try {
             CompletableFuture<SendReceipt> future = producer.sendAsync(message);
             future.thenAccept(
-                    new Consumer<SendReceipt>() {
-                        @Override
-                        public void accept(SendReceipt receipt) {
-                            log.info("Async send success: {}, topic:{}, tag:{}, body:{}", receipt.getMessageId(), message.getTopic(), message.getTag(), StandardCharsets.UTF_8.decode(message.getBody()));
-                            enqueueMessages.addData(receipt.getMessageId().toString());
-                        }
+                new Consumer<SendReceipt>() {
+                    @Override public void accept(SendReceipt receipt) {
+                        log.info("Async send success: {}, topic:{}, tag:{}, body:{}", receipt.getMessageId(), message.getTopic(), message.getTag(), StandardCharsets.UTF_8.decode(message.getBody()));
+                        enqueueMessages.addData(receipt.getMessageId().toString());
                     }
+                }
             );
             future.exceptionally(
-                    new Function<Throwable, SendReceipt>() {
-                        @Override
-                        public SendReceipt apply(Throwable throwable) {
-                            log.warn("send {} callback message failed", message.getTopic());
-                            enqueueFailedMessages.addData(message);
-                            return null;
-                        }
-                    });
+                new Function<Throwable, SendReceipt>() {
+                    @Override public SendReceipt apply(Throwable throwable) {
+                        log.warn("send {} callback message failed", message.getTopic());
+                        enqueueFailedMessages.addData(message);
+                        return null;
+                    }
+                });
             future.get();
         } catch (Exception e) {
             log.error("Producer async send message failed, {}", e.getMessage());

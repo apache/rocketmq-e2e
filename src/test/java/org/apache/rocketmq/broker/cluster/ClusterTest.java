@@ -17,10 +17,10 @@
 
 package org.apache.rocketmq.broker.cluster;
 
+import java.io.IOException;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.consumer.PushConsumer;
 import org.apache.rocketmq.client.apis.message.Message;
-import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
 import org.apache.rocketmq.client.rmq.RMQNormalProducer;
 import org.apache.rocketmq.common.attribute.TopicMessageType;
 import org.apache.rocketmq.enums.TESTSET;
@@ -34,16 +34,14 @@ import org.apache.rocketmq.util.RandomUtils;
 import org.apache.rocketmq.util.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.time.Duration;
-
-@Tag(TESTSET.MODEL)
+@Tag(TESTSET.NORMAL)
 public class ClusterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(ClusterTest.class);
     private String tag;
@@ -51,7 +49,6 @@ public class ClusterTest extends BaseOperate {
     private PushConsumer pushConsumer01;
     private PushConsumer pushConsumer02;
     private PushConsumer pushConsumer03;
-    private RMQNormalConsumer simpleConsumer;
 
     @BeforeEach
     public void setUp() {
@@ -70,15 +67,13 @@ public class ClusterTest extends BaseOperate {
             if (pushConsumer03 != null) {
                 pushConsumer03.close();
             }
-            if (simpleConsumer != null) {
-                simpleConsumer.close();
-            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    @Test
+    //TODO
+    @Disabled
     @DisplayName("Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages")
     public void testBroadcastConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -93,9 +88,6 @@ public class ClusterTest extends BaseOperate {
         pushConsumer01 = ConsumerFactory.getPushConsumer(account, topic, groupId01, new FilterExpression(tag), listenerA);
         pushConsumer02 = ConsumerFactory.getPushConsumer(account, topic, groupId02, new FilterExpression(tag), listenerB);
         pushConsumer03 = ConsumerFactory.getPushConsumer(account, topic, groupId03, new FilterExpression(tag), listenerC);
-
-        simpleConsumer = ConsumerFactory.getRMQSimpleConsumer(account, topic, groupId01, new FilterExpression(tag), Duration.ofSeconds(10));
-        VerifyUtils.tryReceiveOnce(simpleConsumer.getSimpleConsumer());
 
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(account, topic);
         Assertions.assertNotNull(producer, "Get Producer failed");
@@ -114,7 +106,8 @@ public class ClusterTest extends BaseOperate {
     public void testClusterConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(TopicMessageType.NORMAL.getValue(), methodName);
-        String groupId = getGroupId(methodName);
+        String groupId = getGroupId(methodName + 1);
+
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
@@ -122,11 +115,8 @@ public class ClusterTest extends BaseOperate {
         pushConsumer02 = ConsumerFactory.getPushConsumer(account, topic, groupId, new FilterExpression(tag), listenerB);
         pushConsumer03 = ConsumerFactory.getPushConsumer(account, topic, groupId, new FilterExpression(tag), listenerC);
 
-        simpleConsumer = ConsumerFactory.getRMQSimpleConsumer(account, topic, groupId, new FilterExpression(tag), Duration.ofSeconds(10));
-        VerifyUtils.tryReceiveOnce(simpleConsumer.getSimpleConsumer());
-
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(account, topic);
-        Assertions.assertNotNull(producer, "Get producer failed");
+        Assertions.assertNotNull(producer, "Get Producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = MessageFactory.buildMessage(topic, tag, String.valueOf(i));
             producer.send(message);

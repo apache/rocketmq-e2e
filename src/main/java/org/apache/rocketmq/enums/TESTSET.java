@@ -51,7 +51,6 @@ public class TESTSET {
     public static final String SQL = "sql";
     public static final String CLUSTER = "cluster";
     public static final String BROADCAST = "broadcast";
-    public static final String MODEL = "MODEL";
     public static final String ACL = "acl";
     public static final String SIMPLE = "Simple";
 
