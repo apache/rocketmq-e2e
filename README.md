@@ -17,8 +17,11 @@ RocketMQ E2E Test
   * Order/Delay/Transaction/Normal
   * Sync receive/Async receive
   * Sync ack/Async ack
-* Client init
+* Client init (Producer/PushConsumer/SimpleConsumer)
   * Parameter settings
+* Mode
+  * Cluster
+  * Broadcast
 * Message
   * Tag 
   * Body 
