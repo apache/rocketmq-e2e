@@ -19,4 +19,4 @@ bazel-rocketmq
 bazel-testlogs
 .vscode
 *.py
-/rocketmq-admintools/
+
