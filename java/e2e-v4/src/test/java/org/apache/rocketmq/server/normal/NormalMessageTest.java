@@ -15,7 +15,7 @@
  *  limitations under the License.
  */
 
-package com.apache.rocketmq.server.normal;
+package org.apache.rocketmq.server.normal;
 
 import org.apache.rocketmq.client.callback.RMQSendCallBack;
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;

@@ -15,15 +15,16 @@
  *  limitations under the License.
  */
 
-package com.apache.rocketmq.server.delay;
+package org.apache.rocketmq.server.order;
 
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
 import org.apache.rocketmq.client.rmq.RMQNormalProducer;
+import org.apache.rocketmq.common.message.MessageQueue;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
-import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.listener.rmq.concurrent.RMQOrderListener;
 import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
@@ -35,11 +36,12 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
+
 @Tag(TESTSET.SMOKE)
-@Tag(TESTSET.DELAY)
-public class DelayMessageTest extends BaseOperate {
-    private final Logger logger = LoggerFactory.getLogger(DelayMessageTest.class);
-    //private RMQOrderConsumer consumer;
+@Tag(TESTSET.ORDER)
+public class OrderMessageTest extends BaseOperate {
+    private final Logger logger = LoggerFactory.getLogger(OrderMessageTest.class);
     private String tag;
     private String topic;
     private String groupId;
@@ -60,30 +62,29 @@ public class DelayMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("测试延迟level=1")
-    public void testDelayLevel1() {
-        int delayLevel = 1;
+    @DisplayName("使用分区顺序topic，设置8个shardingkey，发送100条分区顺序消息，期望能按顺序消费到全部消息")
+    public void testConsumePartitionOrderMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
-
-        producer.sendDelay(topic, delayLevel, SEND_NUM);
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);
+        consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
+        producer.sendWithQueue(messageQueues, 30);
+        VerifyUtils.verifyOrderMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
 
         producer.shutdown();
         consumer.shutdown();
     }
 
     @Test
-    @DisplayName("测试延迟level=4")
-    public void testDelayLevel4() {
-        int delayLevel = 4;
+    @DisplayName("使用全局顺序topic，发送100条全局顺序消息，期望能按顺序消费到全部消息")
+    public void testConsumeGlobalOrderMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
-
-        producer.sendDelay(topic, delayLevel, SEND_NUM);
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);
+        consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
+        messageQueues.removeIf(messageQueue -> messageQueue.getQueueId() != 0);
+        producer.sendWithQueue(messageQueues, SEND_NUM);
+        VerifyUtils.verifyOrderMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
 
         producer.shutdown();
         consumer.shutdown();
