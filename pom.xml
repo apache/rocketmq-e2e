@@ -7,12 +7,6 @@
     <groupId>org.apache.rocketmq</groupId>
     <artifactId>rocketmq-e2e</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <modules>
-        <module>java</module>
-        <module>java/e2e</module>
-        <module>java/e2e-v4</module>
-    </modules>
-    <packaging>pom</packaging>
 
     <properties>
         <maven.compiler.source>8</maven.compiler.source>
