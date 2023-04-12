@@ -91,7 +91,7 @@ public class DelayMessageTest extends BaseOperate {
             producer.send(message);
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), 15);
+        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), 10);
     }
 
     @Test
@@ -117,7 +117,7 @@ public class DelayMessageTest extends BaseOperate {
             }
         });
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), 15);
+        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), 10);
     }
 
     @Test

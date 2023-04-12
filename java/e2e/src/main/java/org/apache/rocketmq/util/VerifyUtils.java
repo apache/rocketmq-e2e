@@ -40,7 +40,6 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
@@ -192,7 +191,7 @@ public class VerifyUtils {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
         }
         //Check for consumption latency
-        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, 5);
+        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, delayTime);
         StringBuilder sb = new StringBuilder();
         sb.append("The following messages do not meet the delay requirements \n");
         for (String msg : delayUnExcept.keySet()) {
@@ -216,7 +215,7 @@ public class VerifyUtils {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
         }
         //Check for consumption latency
-        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, TIMEOUT + 5);
+        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, delayTime);
         StringBuilder sb = new StringBuilder();
         sb.append("The following message does not meet the delay requirement \n");
         //Time stamp formatting
@@ -253,7 +252,7 @@ public class VerifyUtils {
             Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(), unConsumedMessages));
         }
         //Check for consumption latency
-        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, 5 + flexibleTime - 30);
+        HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, delayTime);
         StringBuilder sb = new StringBuilder();
         sb.append("The following message does not meet the delay requirement \n");
         for (String msg : delayUnExcept.keySet()) {
@@ -311,18 +310,18 @@ public class VerifyUtils {
         }
     }
 
-    private static HashMap<String, Long> checkDelay(DataCollector<Object> dequeueMessages, int offset) {
+    private static HashMap<String, Long> checkDelay(DataCollector<Object> dequeueMessages, int delayTimeSec) {
         HashMap<String, Long> map = new HashMap<>();
         Collection<Object> receivedMessages = dequeueMessages.getAllData();
+        long consumeTime = System.currentTimeMillis();
         for (Object receivedMessage : receivedMessages) {
             MessageView messageView = (MessageView) receivedMessage;
-            Optional<Long> startDeliverTime = messageView.getDeliveryTimestamp();
+            Assertions.assertTrue(messageView.getDeliveryTimestamp().isPresent());
             //Check the current time and the distribution time. If the difference is within 5s, the requirements are met
             long bornTimestamp = messageView.getBornTimestamp();
-            //if ()
-//            if (Math.abs(startDeliverTime.get() - bornTimestamp) / 1000 > DelayConf.DELAY_LEVEL[messageView.getDeliveryAttempt() - 1] + offset) {
-//                map.put(messageView.getMessageId().toString(), (startDeliverTime.get() - bornTimestamp) / 1000);
-//            }
+            if (Math.abs((consumeTime - bornTimestamp) / 1000 - delayTimeSec) > 5) {
+                map.put(messageView.getMessageId().toString(), (consumeTime - bornTimestamp) / 1000);
+            }
         }
         return map;
     }
