@@ -55,7 +55,7 @@ public class NormalMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("同步发送10条普通消息，期望这10条消息被消费到")
+    @DisplayName("Send 10 normal messages synchronously, expecting all to be consumed")
     public void testConsumeNormalMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -68,7 +68,7 @@ public class NormalMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("异步发送10条普通消息，期望这10条消息被消费到")
+    @DisplayName("Send 10 normal messages asynchronously, expecting all to be consumed")
     public void testConsumeNormalMessageAndSendWithAsync() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -81,7 +81,7 @@ public class NormalMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("OneWay发送10条普通消息，期望这10条消息被消费到")
+    @DisplayName("Send 10 normal messages in OneWay, expecting all to be consumed")
     public void testConsumeNormalMessageAndSendWithOneWay() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -93,7 +93,7 @@ public class NormalMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("topic创建,然后发送消息,不消费,删除该topic再次创建同名topic,启动消费,预期无法再次消费到")
+    @DisplayName("Create a topic, then send a message, do not consume, delete the topic to create another topic of the same name, start consumption, not expected to be consumed again")
     public void testConsumeNormalMessageWithDeleteAndCreateTopicAgain() {
 
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
