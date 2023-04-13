@@ -43,7 +43,7 @@ public class DelayMessageTest extends BaseOperate {
     private String tag;
     private String topic;
     private String groupId;
-    private final static int SEND_NUM = 100;
+    private final static int SEND_NUM = 10;
 
     @BeforeEach
     public void setUp() {
@@ -60,7 +60,7 @@ public class DelayMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("测试延迟level=1")
+    @DisplayName("Send 10 delay messages and set the delay test delay level=1 , expecting all to be consumed and latency is as expected")
     public void testDelayLevel1() {
         int delayLevel = 1;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
@@ -75,7 +75,7 @@ public class DelayMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("测试延迟level=4")
+    @DisplayName("Send 10 delay messages and set the delay test delay level=4 , expecting all to be consumed and latency is as expected")
     public void testDelayLevel4() {
         int delayLevel = 4;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);

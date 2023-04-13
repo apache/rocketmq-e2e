@@ -62,7 +62,7 @@ public class TransactionMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("同步发送10条普通消息，期望这10条消息被消费到")
+    @DisplayName("Send 10 transaction messages synchronously, expecting all to be consumed")
     public void testConsumeNormalMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
