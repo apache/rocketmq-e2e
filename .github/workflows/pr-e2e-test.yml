@@ -12,87 +12,6 @@ env:
   DOCKER_REPO: apache/rocketmq-ci
 
 jobs:
-  docker:
-    runs-on: ubuntu-latest
-    if: >
-      github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.conclusion == 'success'
-    timeout-minutes: 30
-    strategy:
-      matrix:
-        base-image: ["ubuntu"]
-        java-version: ["8"]
-    steps:
-      - name: 'Download artifact'
-        uses: actions/github-script@v3.1.0
-        with:
-          script: |
-            var artifacts = await github.actions.listWorkflowRunArtifacts({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               run_id: ${{github.event.workflow_run.id }},
-            });
-            var matchArtifactRmq = artifacts.data.artifacts.filter((artifact) => {
-              return artifact.name == "rocketmq"
-            })[0];
-            var download = await github.actions.downloadArtifact({
-               owner: context.repo.owner,
-               repo: context.repo.repo,
-               artifact_id: matchArtifactRmq.id,
-               archive_format: 'zip',
-            });
-            var fs = require('fs');
-            fs.writeFileSync('${{github.workspace}}/rocketmq.zip', Buffer.from(download.data));
-      - run: |
-          unzip rocketmq.zip
-          mkdir rocketmq
-          cp -r rocketmq-* rocketmq/
-          ls
-      - uses: actions/checkout@v3
-        with:
-          repository: apache/rocketmq-docker.git
-          ref: master
-          path: rocketmq-docker
-      - name: docker-login
-        uses: docker/login-action@v2
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ secrets.DOCKERHUB_USER }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-      - name: Build and save docker images
-        id: build-images
-        run: |
-          cd rocketmq-docker/image-build-ci
-          version=${{ github.event.pull_request.number || github.ref_name }}-$(uuidgen)
-          mkdir versionlist
-          touch versionlist/"${version}-`echo ${{ matrix.base-image }} | sed -e "s/:/-/g"`"
-          sh ./build-image-local.sh ${version} ${{ matrix.base-image }} ${{ matrix.java-version }} ${DOCKER_REPO}
-      - uses: actions/upload-artifact@v3
-        name: Upload distribution tar
-        with:
-          name: versionlist
-          path: rocketmq-docker/image-build-ci/versionlist/*
-  
-  list-version:
-    if: always()
-    name: List version
-    needs: [docker]
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    outputs:
-      version-json: ${{ steps.show_versions.outputs.version-json }}
-    steps:
-      - uses: actions/download-artifact@v3
-        name: Download versionlist
-        with:
-          name: versionlist
-          path: versionlist
-      - name: Show versions
-        id: show_versions
-        run: | 
-          a=(`ls versionlist`)
-          printf '%s\n' "${a[@]}" | jq -R . | jq -s .
-          echo version-json=`printf '%s\n' "${a[@]}" | jq -R . | jq -s .` >> $GITHUB_OUTPUT
   deploy:
     if: ${{ success() }}
     name: Deploy RocketMQ
@@ -130,7 +49,7 @@ jobs:
   e2e-test:
     if: ${{ success() }}
     name: E2E Test
-    needs: [list-version, deploy]
+    needs: [deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 60
     strategy:
