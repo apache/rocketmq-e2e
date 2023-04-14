@@ -80,8 +80,8 @@ jobs:
         if: always()
         name: Upload test log
         with:
-          name: testlog.txt
-          path: testlog.txt
+          name: test-e2e-grpc-java-log.txt
+          path: test-e2e-grpc-java-log.txt
 
   e2e-remoting-java-test:
     if: ${{ success() }}
@@ -116,8 +116,8 @@ jobs:
         if: always()
         name: Upload test log
         with:
-          name: testlog.txt
-          path: testlog.txt
+          name: test-e2e-remoting-java-log.txt
+          path: test-e2e-remoting-java-log.txt
 
   clean:
     if: always()
