@@ -62,8 +62,8 @@ jobs:
           action: "test"
           ask-config: "${{ secrets.ASK_CONFIG_VIRGINA }}"
           test-version: "${{ matrix.version }}"
-          test-code-git: "https://ghproxy.com/https://github.com/apache/rocketmq-e2e.git"
-          test-code-branch: "master"
+          test-code-git: "https://ghproxy.com/https://github.com/cryptoya/rocketmq-e2e.git"
+          test-code-branch: "cicd"
           test-code-path: java/e2e
           test-cmd: "mvn -B test"
           job-id: ${{ strategy.job-index }}
