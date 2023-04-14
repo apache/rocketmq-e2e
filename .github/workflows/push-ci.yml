@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        version: 5.1.0
+        version: "5.1.0"
     steps:
       - uses: apache/rocketmq-test-tool@1a646589accad17070423eabf0f54925e52b0666
         name: Deploy rocketmq
@@ -54,7 +54,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        version: 5.1.0
+        version: "5.1.0"
     steps:
       - uses: apache/rocketmq-test-tool@1a646589accad17070423eabf0f54925e52b0666
         name: e2e test
@@ -90,7 +90,7 @@ jobs:
     timeout-minutes: 60
     strategy:
       matrix:
-        version: 5.1.0
+        version: "5.1.0"
     steps:
       - uses: apache/rocketmq-test-tool@1a646589accad17070423eabf0f54925e52b0666
         name: clean
