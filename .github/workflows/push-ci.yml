@@ -57,7 +57,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: apache/rocketmq-test-tool@1a646589accad17070423eabf0f54925e52b0666
+      - uses: deepsola/rocketmq-test-tool@98cf0811adf93347ddfb7404108229c6faa8143b
         name: e2e test
         with:
           action: "test"
@@ -93,7 +93,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: apache/rocketmq-test-tool@1a646589accad17070423eabf0f54925e52b0666
+      - uses: deepsola/rocketmq-test-tool@98cf0811adf93347ddfb7404108229c6faa8143b
         name: e2e test
         with:
           action: "test"
@@ -103,7 +103,7 @@ jobs:
           test-code-branch: "cicd"
           test-code-path: java/e2e-v4
           test-cmd: "mvn -B test"
-          job-id: 1
+          job-id: 0
       - name: Publish Test Report
         uses: mikepenz/action-junit-report@v3
         if: always() # always run even if the previous step fails
