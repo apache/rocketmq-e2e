@@ -15,7 +15,7 @@ RocketMQ E2E Test
 * PushConsumer
 * SimpleConsumer
   * Order/Delay/Transaction/Normal
-  * Sync receive/Async receive
+  * Sync receive/Async receive 
   * Sync ack/Async ack
 * Client init (Producer/PushConsumer/SimpleConsumer)
   * Parameter settings
@@ -39,6 +39,6 @@ RocketMQ E2E Test
 mvn clean test -B -Dgroups=smoke -Dcluster=DefaultCluster
 ```
 ##### Options
-* `ALL_IP` : not required, default is null  
+* `ALL_IP` : not required, default is null   
 * `cluster`: not required, default `DefaultCluster`
 * `groups`: param of junit5, `src/main/java/org/apache/rocketmq/enums/TESTSET.java`
