@@ -27,6 +27,7 @@ import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
+import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -100,7 +101,7 @@ public class NormalMessageTest extends BaseOperate {
         producer.send(topic, tag, SEND_NUM);
 
         MQAdmin.deleteTopic(namesrvAddr, cluster, topic);
-
+        TestUtils.waitForSeconds(10);
         MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
 
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
