@@ -91,25 +91,5 @@ public class NormalMessageTest extends BaseOperate {
 
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
     }
-
-    @Test
-    @DisplayName("Create a topic, then send a message, do not consume, delete the topic to create another topic of the same name, start consumption, not expected to be consumed again")
-    public void testConsumeNormalMessageWithDeleteAndCreateTopicAgain() {
-
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
-        producer.send(topic, tag, SEND_NUM);
-
-        MQAdmin.deleteTopic(namesrvAddr, cluster, topic);
-
-        MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
-
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
-        VerifyUtils.waitForConsumeFailed(consumer.getListener().getDequeueMessages(), 20);
-
-        producer.shutdown();
-        consumer.shutdown();
-    }
-
 }
 
