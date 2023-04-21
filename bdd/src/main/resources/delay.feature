@@ -8,6 +8,7 @@ Feature: Test the message transfer mode and topic type
     And Set message "DeliveryTimestamp" to 20 seconds before the current system time
     And  Send "10" messages "synchronous"
     Then Check all messages that can be consumed within 60s
+    And Check the received message's "DeliveryTimestamp" property "isNotNull" and value is expected
     And Check consume all messages immediately
     And Shutdown the producer and consumer
 
@@ -19,6 +20,7 @@ Feature: Test the message transfer mode and topic type
     And Set message "DeliveryTimestamp" to 30 seconds after the current system time
     And  Send "10" messages "synchronous"
     Then Check consume all 10 messages after 30s(±5s)
+    And Check the received message's "DeliveryTimestamp" property "isNotNull" and value is expected
     And Shutdown the producer and consumer
 
   Scenario:  Send a message set delivery timestamp 24h+5s after the current system time. Expect send message failed
