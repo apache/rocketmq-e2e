@@ -2,7 +2,7 @@ name: PUSH-CI
 
 on:
   push:
-    branches: [ cicd ]
+    branches: [ master ]
   #schedule:
   #  - cron: "0 18 * * *" # TimeZone: UTC 0
 
@@ -23,7 +23,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: deepsola/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
+      - uses: apache/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
         name: Deploy rocketmq
         with:
           action: "deploy"
@@ -57,7 +57,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: deepsola/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
+      - uses: apache/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
         name: e2e test
         with:
           action: "test"
@@ -93,7 +93,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: deepsola/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
+      - uses: apache/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
         name: e2e test
         with:
           action: "test"
@@ -129,7 +129,7 @@ jobs:
       matrix:
         version: [ 5.1.0 ]
     steps:
-      - uses: deepsola/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
+      - uses: apache/rocketmq-test-tool@07147d677bc032edf30eee27fe94c0f531e075a2
         name: clean
         with:
           action: "clean"
