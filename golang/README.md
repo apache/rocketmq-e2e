@@ -43,3 +43,10 @@ cd golang && sh bin/run.sh
 ##### Options
 * `ALL_IP` : required, set by GitHub actions
 * `cluster`: not required, default `DefaultCluster`
+
+####  how to replace go client sdk version
+```angular2html 
+to get version xxx
+# go get github.com/apache/rocketmq-clients/golang@xxx
+to get latest version
+# go get -u github.com/apache/rocketmq-clients/golang

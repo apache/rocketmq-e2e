@@ -19,9 +19,5 @@ output/
 # vendor/
 
 go.work
-
-
-go.mod
-go.sum
-
+·
 cover/
