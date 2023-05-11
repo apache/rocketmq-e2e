@@ -316,7 +316,7 @@ public class VerifyUtils {
         long consumeTime = System.currentTimeMillis();
         for (Object receivedMessage : receivedMessages) {
             MessageView messageView = (MessageView) receivedMessage;
-//            Assertions.assertTrue(messageView.getDeliveryTimestamp().isPresent());
+            Assertions.assertTrue(messageView.getDeliveryTimestamp().isPresent(),"DeliveryTimestamp is empty");
             //Check the current time and the distribution time. If the difference is within 5s, the requirements are met
             long bornTimestamp = messageView.getBornTimestamp();
             if (Math.abs((consumeTime - bornTimestamp) / 1000 - delayTimeSec) > 5) {
