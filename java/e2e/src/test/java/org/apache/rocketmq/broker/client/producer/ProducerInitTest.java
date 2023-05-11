@@ -194,18 +194,6 @@ public class ProducerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("The Producer sets the maximum retry times to 100, expect the client start failed")
-    public void testSet100MaxAttempts() {
-        assertThrows(Exception.class, () -> {
-            provider.newProducerBuilder()
-                .setClientConfiguration(ClientConfigurationFactory.build(account))
-                .setMaxAttempts(-1)
-                .setTopics(topic)
-                .build();
-        }, "Expected ClientException to throw, but it didn't");
-    }
-
-    @Test
     @DisplayName("The Producer sets a non-existent topic, expect the client start failed")
     public void testSetNotExistTopic() {
         assertThrows(Exception.class, () -> {

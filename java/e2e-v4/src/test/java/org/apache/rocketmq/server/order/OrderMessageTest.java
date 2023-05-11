@@ -62,7 +62,7 @@ public class OrderMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("使用分区顺序topic，设置8个shardingkey，发送100条分区顺序消息，期望能按顺序消费到全部消息")
+    @DisplayName("Thirty messages are sent to each of the eight queues in a topic, with the expectation that the sequential consumption client will consume the messages in each queue in order")
     public void testConsumePartitionOrderMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
@@ -76,7 +76,7 @@ public class OrderMessageTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("使用全局顺序topic，发送100条全局顺序消息，期望能按顺序消费到全部消息")
+    @DisplayName("100 messages are sent to a queue for a topic, with the expectation that the sequential consuming client will consume the messages in the queue in order")
     public void testConsumeGlobalOrderMessage() {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQOrderListener());

@@ -17,10 +17,9 @@
 
 package org.apache.rocketmq.broker.server;
 
-import java.time.Duration;
-import java.util.concurrent.Callable;
 import org.apache.rocketmq.client.apis.consumer.FilterExpression;
 import org.apache.rocketmq.client.apis.message.Message;
+import org.apache.rocketmq.client.java.exception.BadRequestException;
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
 import org.apache.rocketmq.client.rmq.RMQNormalProducer;
 import org.apache.rocketmq.common.attribute.TopicMessageType;
@@ -42,8 +41,12 @@ import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.util.concurrent.Callable;
+
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.DELAY)
 @Tag(TESTSET.SMOKE)
@@ -141,5 +144,19 @@ public class DelayMessageTest extends BaseOperate {
         VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), 0);
     }
 
+    @Test
+    @DisplayName("Send 10 timed messages (after 24 hours) , expected message fails to be sent")
+    public void testDelayTime24hAfter() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(TopicMessageType.DELAY.getValue(), methodName);
+
+        producer = ProducerFactory.getRMQProducer(account, topic);
+
+        Assertions.assertNotNull(producer, "Get Producer failed");
+        Message message = MessageFactory.buildDelayMessage(topic, tag, RandomUtils.getStringByUUID(), System.currentTimeMillis() + (24 * 60 * 60 + 5) * 1000);
+        assertThrows(BadRequestException.class, () -> {
+            producer.getProducer().send(message);
+        }, "Expected BadRequestException to throw, but it didn't");
+    }
 }
 
