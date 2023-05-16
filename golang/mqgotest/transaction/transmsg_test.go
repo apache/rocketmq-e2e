@@ -18,12 +18,13 @@
 package transaction_test
 
 import (
-	rmq_client "github.com/apache/rocketmq-clients/golang"
 	"log"
 	. "rocketmq-go-e2e/utils"
 	"sync"
 	"testing"
 	"time"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
 func TestTransactionMsg(t *testing.T) {

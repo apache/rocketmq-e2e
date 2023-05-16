@@ -18,12 +18,13 @@
 package utils
 
 import (
-	rmq_client "github.com/apache/rocketmq-clients/golang"
-	"github.com/stretchr/testify/assert"
 	"math"
 	"sort"
 	"testing"
 	"time"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
+	"github.com/stretchr/testify/assert"
 )
 
 // check msg with msgId received only once

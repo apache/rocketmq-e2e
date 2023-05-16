@@ -20,12 +20,13 @@ package utils
 import (
 	"context"
 	"fmt"
-	rmq_client "github.com/apache/rocketmq-clients/golang"
-	"github.com/apache/rocketmq-clients/golang/credentials"
 	"log"
 	"os"
 	"strings"
 	"time"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
+	"github.com/apache/rocketmq-clients/golang/credentials"
 )
 
 var (
