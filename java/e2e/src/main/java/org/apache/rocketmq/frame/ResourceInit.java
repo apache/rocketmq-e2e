@@ -26,6 +26,7 @@ import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.rocketmq.account.Account;
 import org.apache.rocketmq.util.MQAdmin;
@@ -101,7 +102,7 @@ public class ResourceInit {
     }
 
     private static void initConnectionInfo() {
-        ALL_IP = System.getProperty("ALL_IP", properties.getProperty("ALL_IP"));
+        ALL_IP = System.getenv("ALL_IP");
         if (ALL_IP != null) {
             String[] allPodInfos = ALL_IP.split(",");
             for (String podInfo : allPodInfos) {
@@ -135,7 +136,7 @@ public class ResourceInit {
             endPoint = System.getProperty("endPoint", properties.getProperty("endPoint"));
             namesrvAddr = System.getProperty("namesrvAddr", properties.getProperty("namesrvAddr"));
         }
-        cluster = System.getProperty("cluster", properties.getProperty("cluster"));
+        cluster = System.getenv("cluster") != null ? System.getenv("cluster") : properties.getProperty("cluster");
         if (cluster == null) {
             log.error("INIT- cluster is null, system exit");
             System.exit(-1);

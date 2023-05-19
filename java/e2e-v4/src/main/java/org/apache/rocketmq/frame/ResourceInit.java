@@ -98,7 +98,7 @@ public class ResourceInit {
     }
 
     private static void initConnectionInfo() {
-        allIp = System.getProperty("ALL_IP", properties.getProperty("ALL_IP"));
+        allIp = System.getenv("ALL_IP");
         if (allIp != null) {
             String[] allPodInfos = allIp.split(",");
             for (String podInfo : allPodInfos) {
@@ -118,7 +118,7 @@ public class ResourceInit {
             log.info("INIT- Get ALL_IP is null, use local info");
             namesrvAddr = System.getProperty("namesrvAddr", properties.getProperty("namesrvAddr"));
         }
-        cluster = System.getProperty("cluster", properties.getProperty("cluster"));
+        cluster = System.getenv("cluster") != null ? System.getenv("cluster") : properties.getProperty("cluster");
         if (cluster == null) {
             log.error("INIT- cluster is null, system exit");
             System.exit(-1);
