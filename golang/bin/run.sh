@@ -20,5 +20,5 @@
 cd ../common &&  mvn -Prelease -DskipTests clean package -U
 # set env for mqadmin (use source to set linux env variables in current shell)
 cd ../rocketmq-admintools && source bin/env.sh
-# run go e2e test case
-cd ../golang && go test ./mqgotest/... -timeout 2m  -v
+# run go e2e test case with latest client version
+cd ../golang && go get -u github.com/apache/rocketmq-clients/golang && go test ./mqgotest/... -timeout 2m  -v
