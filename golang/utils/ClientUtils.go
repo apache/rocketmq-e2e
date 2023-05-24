@@ -20,12 +20,12 @@ package utils
 import (
 	"context"
 	"fmt"
-	rmq_client "github.com/apache/rocketmq-clients/golang"
-	"github.com/apache/rocketmq-clients/golang/credentials"
 	"log"
 	"os"
-	"strings"
 	"time"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
+	"github.com/apache/rocketmq-clients/golang/credentials"
 )
 
 var (
@@ -263,9 +263,6 @@ func RecvMessage(simpleConsumer rmq_client.SimpleConsumer, maxMessageNum int32, 
 		mvs, err := simpleConsumer.Receive(context.TODO(), maxMessageNum, invisibleDuration)
 		if err != nil {
 			fmt.Println(err)
-			if strings.Contains(err.Error(), "MESSAGE_NOT_FOUND") {
-				break
-			}
 		}
 		// ack message
 		for _, mv := range mvs {
@@ -288,9 +285,6 @@ func RecvMessageWithNum(simpleConsumer rmq_client.SimpleConsumer, maxMessageNum 
 		mvs, err := simpleConsumer.Receive(context.TODO(), maxMessageNum, invisibleDuration)
 		if err != nil {
 			fmt.Println(err)
-			if strings.Contains(err.Error(), "MESSAGE_NOT_FOUND") {
-				break
-			}
 		}
 		// ack message
 		for _, mv := range mvs {

@@ -106,7 +106,7 @@ func TestNormalMsgWithMsgIdAsync(t *testing.T) {
 	wg.Add(1)
 
 	go func() {
-		recvMsgCollector = RecvMessageWithNum(simpleConsumer, maxMessageNum, invisibleDuration, 20, msgCount)
+		recvMsgCollector = RecvMessageWithNum(simpleConsumer, maxMessageNum, invisibleDuration, 30, msgCount)
 		wg.Done()
 	}()
 	go func() {

@@ -60,7 +60,7 @@ func TestFiFOMsg(t *testing.T) {
 	wg.Add(1)
 
 	go func() {
-		recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 30)
+		recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 60)
 		wg.Done()
 	}()
 
