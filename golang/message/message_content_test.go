@@ -9,7 +9,7 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
-func TestSendNormalMassage(t *testing.T) {
+func TestMessageContent(t *testing.T) {
 	type args struct {
 		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
@@ -18,7 +18,7 @@ func TestSendNormalMassage(t *testing.T) {
 		args args
 	}{
 		{
-			name: "Send normal messages synchronously with the body size of 4M+1, expect send failed",
+			name: "Send normal message, setting message body with space character, expect consume success",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -28,11 +28,11 @@ func TestSendNormalMassage(t *testing.T) {
 				sk:           "",
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
-				body:         RandomString(4*1024*1024 + 1),
+				body:         " ",
 			},
 		},
 		{
-			name: "Send normal messages synchronously with the body size of 4M, expect send success",
+			name: "Send normal message, setting message body with chinese character, expect consume success",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -42,7 +42,21 @@ func TestSendNormalMassage(t *testing.T) {
 				sk:           "",
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
-				body:         RandomString(4 * 1024 * 1024),
+				body:         "中文字符",
+			},
+		},
+		{
+			name: "Send normal message, setting message body with emoji(😱) character, expect consume success",
+			args: args{
+				testTopic:    GetTopicName(),
+				nameServer:   NAMESERVER,
+				grpcEndpoint: GRPC_ENDPOINT,
+				clusterName:  CLUSTER_NAME,
+				ak:           "",
+				sk:           "",
+				msgtag:       RandomString(8),
+				keys:         RandomString(8),
+				body:         "😱",
 			},
 		},
 	}

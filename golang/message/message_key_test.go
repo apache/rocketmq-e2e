@@ -9,7 +9,7 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
-func TestSendNormalMassage(t *testing.T) {
+func TestMessageKey(t *testing.T) {
 	type args struct {
 		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
@@ -18,7 +18,7 @@ func TestSendNormalMassage(t *testing.T) {
 		args args
 	}{
 		{
-			name: "Send normal messages synchronously with the body size of 4M+1, expect send failed",
+			name: "Message Key equals 16KB, expect send success",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -27,12 +27,12 @@ func TestSendNormalMassage(t *testing.T) {
 				ak:           "",
 				sk:           "",
 				msgtag:       RandomString(8),
-				keys:         RandomString(8),
-				body:         RandomString(4*1024*1024 + 1),
+				keys:         RandomString(16 * 1024),
+				body:         RandomString(64),
 			},
 		},
 		{
-			name: "Send normal messages synchronously with the body size of 4M, expect send success",
+			name: "Message Key beyond 16KB, expect send failed",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -41,8 +41,22 @@ func TestSendNormalMassage(t *testing.T) {
 				ak:           "",
 				sk:           "",
 				msgtag:       RandomString(8),
-				keys:         RandomString(8),
-				body:         RandomString(4 * 1024 * 1024),
+				keys:         RandomString(16*1024 + 1),
+				body:         RandomString(64),
+			},
+		},
+		{
+			name: "Message Key contains invisible characters \u0000 , expect send failed",
+			args: args{
+				testTopic:    GetTopicName(),
+				nameServer:   NAMESERVER,
+				grpcEndpoint: GRPC_ENDPOINT,
+				clusterName:  CLUSTER_NAME,
+				ak:           "",
+				sk:           "",
+				msgtag:       RandomString(8),
+				keys:         "\u0000",
+				body:         RandomString(64),
 			},
 		},
 	}

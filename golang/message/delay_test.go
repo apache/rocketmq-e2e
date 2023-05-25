@@ -18,7 +18,6 @@ func TestSendDelayMassage(t *testing.T) {
 	tests := []struct {
 		name string
 		args args
-		want string
 	}{
 		{
 			name: "Send delay messages synchronously with the body size of 4M+1, expect send failed",
@@ -29,13 +28,11 @@ func TestSendDelayMassage(t *testing.T) {
 				clusterName:       CLUSTER_NAME,
 				ak:                "",
 				sk:                "",
-				cm:                GetGroupName(),
 				msgtag:            RandomString(8),
 				keys:              RandomString(8),
 				body:              RandomString(4*1024*1024 + 1),
 				deliveryTimestamp: 10,
 			},
-			want: "",
 		},
 		{
 			name: "Send delay messages synchronously with the body size of 4M, expect send success",
@@ -46,13 +43,11 @@ func TestSendDelayMassage(t *testing.T) {
 				clusterName:       CLUSTER_NAME,
 				ak:                "",
 				sk:                "",
-				cm:                GetGroupName(),
 				msgtag:            RandomString(8),
 				keys:              RandomString(8),
 				body:              RandomString(4 * 1024 * 1024),
 				deliveryTimestamp: 10,
 			},
-			want: "",
 		},
 	}
 	for _, tt := range tests {
