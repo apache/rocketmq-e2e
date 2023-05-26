@@ -18,12 +18,13 @@
 package utils
 
 import (
-	rmq_client "github.com/apache/rocketmq-clients/golang"
-	"github.com/stretchr/testify/assert"
 	"math"
 	"sort"
 	"testing"
 	"time"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
+	"github.com/stretchr/testify/assert"
 )
 
 // check msg with msgId received only once
@@ -74,4 +75,17 @@ func CheckFIFOMsgsWithMsgId(t *testing.T, sendMsgsCollector *SendMsgsCollector, 
 
 func CheckTransactionMsgsWithMsgId(t *testing.T, sendMsgsCollector *SendMsgsCollector, recvMsgsCollector *RecvMsgsCollector) {
 	CheckMsgsWithMsgId(t, sendMsgsCollector, recvMsgsCollector)
+}
+
+func CheckMsgsWithMsgBody(t *testing.T, sendMsgsCollector *SendMsgsCollector, recvMsgsCollector *RecvMsgsCollector) {
+	var sendMsg string
+	var recvMsg string
+	for _, msg := range sendMsgsCollector.SendMsgs {
+		sendMsg = string(msg.Body)
+	}
+	for _, msg1 := range recvMsgsCollector.RecvMsgViews {
+		recvMsg = string(msg1.GetBody())
+	}
+
+	assert.Equal(t, sendMsg, recvMsg)
 }
