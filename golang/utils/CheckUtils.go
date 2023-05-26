@@ -80,11 +80,11 @@ func CheckTransactionMsgsWithMsgId(t *testing.T, sendMsgsCollector *SendMsgsColl
 func CheckMsgsWithMsgBody(t *testing.T, sendMsgsCollector *SendMsgsCollector, recvMsgsCollector *RecvMsgsCollector) {
 	var sendMsg string
 	var recvMsg string
-	for _, msg := range sendMsgsCollector.SendMsgs {
-		sendMsg = string(msg.Body)
+	for _, sed := range sendMsgsCollector.SendMsgs {
+		sendMsg = string(sed.Body)
 	}
-	for _, msg1 := range recvMsgsCollector.RecvMsgViews {
-		recvMsg = string(msg1.GetBody())
+	for _, recv := range recvMsgsCollector.RecvMsgViews {
+		recvMsg = string(recv.GetBody())
 	}
 
 	assert.Equal(t, sendMsg, recvMsg)
