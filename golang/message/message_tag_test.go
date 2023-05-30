@@ -11,7 +11,7 @@ import (
 	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
-func TestMessageKey(t *testing.T) {
+func TestMessageTag(t *testing.T) {
 	type args struct {
 		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
@@ -20,7 +20,7 @@ func TestMessageKey(t *testing.T) {
 		args args
 	}{
 		{
-			name: "Message Key equals 16KB, expect send success",
+			name: "Message Tag beyond 16KB,, expect send failed",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -28,13 +28,27 @@ func TestMessageKey(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
-				msgtag:       RandomString(8),
-				keys:         RandomString(16 * 1024),
+				msgtag:       RandomString(16*1024 + 1),
+				keys:         RandomString(8),
+				body:         "test",
+			},
+		},
+		{
+			name: "Message Tag equals 16KB, expect send success",
+			args: args{
+				testTopic:    GetTopicName(),
+				nameServer:   NAMESERVER,
+				grpcEndpoint: GRPC_ENDPOINT,
+				clusterName:  CLUSTER_NAME,
+				ak:           "",
+				sk:           "",
+				msgtag:       RandomString(64 * 1024),
+				keys:         RandomString(64),
 				body:         RandomString(64),
 			},
 		},
 		{
-			name: "Message Key beyond 16KB, expect send failed",
+			name: "Message Tag contains invisible characters \u0000 , expect send failed",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -42,13 +56,13 @@ func TestMessageKey(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
-				msgtag:       RandomString(8),
-				keys:         RandomString(16*1024 + 1),
+				msgtag:       "\u0000",
+				keys:         RandomString(64),
 				body:         RandomString(64),
 			},
 		},
 		{
-			name: "Message Key contains invisible characters \u0000 , expect send failed",
+			name: "Message Tag contains |, expect send failed",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -56,8 +70,8 @@ func TestMessageKey(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
-				msgtag:       RandomString(8),
-				keys:         "\u0000",
+				msgtag:       "tag|",
+				keys:         RandomString(64),
 				body:         RandomString(64),
 			},
 		},
@@ -65,7 +79,6 @@ func TestMessageKey(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
-
 			// new producer instance
 			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
 			// graceful stop producer
@@ -100,7 +113,7 @@ func TestMessageKey(t *testing.T) {
 	}
 }
 
-func TestMessageKeyContentWithChinese(t *testing.T) {
+func TestMessageTagContentWithChinese(t *testing.T) {
 	type args struct {
 		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
@@ -109,7 +122,7 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 		args args
 	}{
 		{
-			name: "Message key contains Chinese, expect send and consume success",
+			name: "Message Tag contains Chinese, expect send and consume success",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -118,69 +131,7 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 				ak:           "",
 				sk:           "",
 				cm:           GetGroupName(),
-				msgtag:       RandomString(8),
-				keys:         RandomString(64),
-				body:         "中文字符",
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var wg sync.WaitGroup
-			// maximum number of messages received at one time
-			var maxMessageNum int32 = 32
-			// invisibleDuration should > 20s
-			var invisibleDuration = time.Second * 20
-			var msgCount = 10
-
-			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
-			simpleConsumer := BuildSimpleConsumer(tt.args.grpcEndpoint, tt.args.cm, tt.args.msgtag, tt.args.ak, tt.args.sk, tt.args.testTopic)
-
-			// graceful stop simpleConsumer
-			defer simpleConsumer.GracefulStop()
-
-			// new producer instance
-			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
-			// graceful stop producer
-			defer producer.GracefulStop()
-
-			var recvMsgCollector *RecvMsgsCollector
-			var sendMsgCollector *SendMsgsCollector
-			wg.Add(1)
-
-			go func() {
-				recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 10)
-				wg.Done()
-			}()
-			go func() {
-				sendMsgCollector = SendNormalMessage(producer, tt.args.testTopic, tt.args.body, tt.args.msgtag, msgCount, tt.args.keys)
-			}()
-			wg.Wait()
-
-			CheckMsgsWithMsgBody(t, sendMsgCollector, recvMsgCollector)
-		})
-	}
-}
-
-func TestMessageWithMultiKey(t *testing.T) {
-	type args struct {
-		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "The message contains multiple keys, expect send and consume success",
-			args: args{
-				testTopic:    GetTopicName(),
-				nameServer:   NAMESERVER,
-				grpcEndpoint: GRPC_ENDPOINT,
-				clusterName:  CLUSTER_NAME,
-				ak:           "",
-				sk:           "",
-				cm:           GetGroupName(),
-				msgtag:       RandomString(8),
+				msgtag:       "中文字符",
 				keys:         RandomString(64),
 				body:         RandomString(64),
 			},
@@ -194,7 +145,6 @@ func TestMessageWithMultiKey(t *testing.T) {
 			// invisibleDuration should > 20s
 			var invisibleDuration = time.Second * 20
 			var msgCount = 10
-			var k1 = RandomString(64)
 
 			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
 			simpleConsumer := BuildSimpleConsumer(tt.args.grpcEndpoint, tt.args.cm, tt.args.msgtag, tt.args.ak, tt.args.sk, tt.args.testTopic)
@@ -206,24 +156,6 @@ func TestMessageWithMultiKey(t *testing.T) {
 			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
 			// graceful stop producer
 			defer producer.GracefulStop()
-
-			msg := &rmq_client.Message{
-				// 为当前消息设置 Topic。
-				Topic: tt.args.testTopic,
-				// 消息体。
-				Body: []byte(tt.args.body),
-			}
-
-			if tt.args.keys != "" {
-				// 设置消息索引键，可根据关键字精确查找某条消息。
-				//添加索引键
-				msg.SetKeys(tt.args.keys, k1)
-			}
-
-			if tt.args.msgtag != "" {
-				// 设置消息 Tag，用于消费端根据指定 Tag 过滤消息。
-				msg.SetTag(tt.args.msgtag)
-			}
 
 			var recvMsgCollector *RecvMsgsCollector
 			var sendMsgCollector *SendMsgsCollector
