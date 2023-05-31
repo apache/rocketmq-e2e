@@ -96,6 +96,7 @@ public class ClientInitStepdefs {
 
     @Then("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), and Body\\({string})")
     public void createAMessageIncludingTheTopicTagKeyAndBody(String arg0, String arg1, String arg2, String arg3) {
+        
 
     }
 
@@ -153,11 +154,6 @@ public class ClientInitStepdefs {
 
     }
 
-    @Then("Check build method that throws no exceptions")
-    public void checkBuildMethodThatThrowsNoExceptions() {
-
-    }
-
     @And("Shutdown the producer and consumer if they are started")
     public void shutdownTheProducerAndConsumerIfTheyAreStarted() {
     }
@@ -191,28 +187,31 @@ public class ClientInitStepdefs {
         
     }
 
-    @Then("Check there no fail message occurs")
-    public void checkNoFailMessageOccurs() {
-
-    }
-
-    @And("Create a message, including the Topic\\({string}), Body\\({string}), Key\\({string}), and Value\\({string})")
-    public void createAMessageIncludingTheTopicBodyKeyAndValue(String arg0, String arg1, String arg2, String arg3) {
-        
-    }
-
-    @And("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), Key\\({string}), and Value\\({string})")
-    public void createAMessageIncludingTheTopicBodyMessageGroupKeyAndValue(String arg0, String arg1, String arg2, String arg3, String arg4) {
-        
-    }
-
-    @And("Create a message, including the Topic\\({string}), and userProperty\\({string})")
-    public void createAMessageIncludingTheTopicAndUserProperty(String arg0, String arg1) {
-        
-    }
-
     @And("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), Value\\({string}), Body\\({string}), msgKey\\({string})")
     public void createAMessageIncludingTheTopicTagKeyValueBodyMsgKey(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+
+    }
+
+    @And("Create a message, including the Topic\\({string}), and userProperty\\({string}, {string})")
+    public void createAMessageIncludingTheTopicAndUserProperty(String arg0, String arg1, String arg2) {
+    }
+
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), and userProperty\\({string})")
+    public void createAMessageIncludingTheTopicBodyAndUserProperty(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), and userProperty\\({string})")
+    public void createAMessageIncludingTheTopicBodyMessageGroupAndUserProperty(String arg0, String arg1, String arg2, String arg3) {
+    }
+
+    @And("Set message {string} {string} times")
+    public void setMessageTimes(String arg0, String arg1) {
+        
+    }
+
+    @And("Set Key\\({string}), Value\\({string})")
+    public void setKeyValue(String arg0, String arg1) {
 
     }
 }

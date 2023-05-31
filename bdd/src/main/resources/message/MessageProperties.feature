@@ -19,7 +19,7 @@ Feature: Test message properties
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Tag("random-tag"), Key("Key"), and Body(null)
-    And  Send "1" messages "synchronous"
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
@@ -27,7 +27,7 @@ Feature: Test message properties
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic(""), Tag("random-tag"), Key("Key"), and Body("Body")
-    And  Send "1" messages "synchronous"
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
@@ -35,7 +35,7 @@ Feature: Test message properties
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic(null), Tag("random-tag"), Key("Key"), and Body("Body")
-    And  Send "1" messages "synchronous"
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
@@ -43,7 +43,7 @@ Feature: Test message properties
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Tag(null), Key("Key"), and Body("Body")
-    And  Send "1" messages "synchronous"
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
@@ -51,7 +51,7 @@ Feature: Test message properties
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Tag(" "), Key("Key"), and Body("Body")
-    And  Send "1" messages "synchronous"
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 

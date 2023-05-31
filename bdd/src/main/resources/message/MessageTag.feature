@@ -15,34 +15,45 @@
 
 Feature: Test message tag
 
-  Scenario Outline: Setting illegal Message Tag, expect throw exception
+  Scenario: Message Tag beyond 16KB, expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    And Create a message, including the Topic("random-topic"), Tag("<IllegalTag>"), and Body("size:64 bits")
-    And  Send "1" messages "synchronous"
+    And Create a message, including the Topic("random-topic"), Tag("size:16kB+1"), and Body("random-body")
+    And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
-    Examples:
-      |  IllegalTag  |
-      | size:16kB+1  |
-      |   \u0000     |
-      |    tag\|     |
+  Scenario: Message Tag equals 16KB, expect send and consume success
+    Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
+    When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
+    And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
+    And Create a message, including the Topic("random-topic"), Tag("size:16kB"), and Body("random-body")
+    And  Send "a" messages "synchronous"
+    Then  Check all messages that can be consumed within 60s
+    And Shutdown the producer and consumer if they are started
 
-  Scenario: Setting legal Message Tag, expect send success
+  Scenario: Message Tag contains invisible characters \u0000, expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    And Create a message, including the Topic("random-topic"), Tag("size:16kB"), and Body("size:64 bits")
-    And  Send "1" messages "synchronous"
-    Then Check build method that throws no exceptions
+    And Create a message, including the Topic("random-topic"), Tag("\u0000"), and Body("random-body")
+    And  Send "a" messages "synchronous"
+    Then Check exceptions can be thrown
+    And Shutdown the producer and consumer if they are started
+
+  Scenario: Message Tag contains | , expect throw exception
+    Given Create a "Normal" topic:"random-topic" if not exist
+    When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
+    And Create a message, including the Topic("random-topic"), Tag("tag|"), and Body("random-body")
+    And  Send "a" messages "synchronous"
+    Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
   Scenario: Message Tag contains Chinese, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a message, including the Topic("random-topic"), Tag("中文字符"), and Body("size:64 bits")
-    And  Send "1" messages "synchronous"
+    And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
+    And Create a message, including the Topic("random-topic"), Tag("中文字符"), and Body("random-body")
+    And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
