@@ -1,10 +1,10 @@
 package rocketmqtest
 
 import (
-	"context"
-	"fmt"
 	. "rocketmq-go-e2e/utils"
+	"sync"
 	"testing"
+	"time"
 
 	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
@@ -26,6 +26,7 @@ func TestMessageContent(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
+				cm:           GetGroupName(),
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
 				body:         " ",
@@ -40,6 +41,7 @@ func TestMessageContent(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
+				cm:           GetGroupName(),
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
 				body:         "中文字符",
@@ -54,6 +56,7 @@ func TestMessageContent(t *testing.T) {
 				clusterName:  CLUSTER_NAME,
 				ak:           "",
 				sk:           "",
+				cm:           GetGroupName(),
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
 				body:         "😱",
@@ -62,7 +65,15 @@ func TestMessageContent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			var wg sync.WaitGroup
+			// maximum number of messages received at one time
+			var maxMessageNum int32 = 32
+			// invisibleDuration should > 20s
+			var invisibleDuration = time.Second * 20
+			var msgCount = 10
+
 			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
+			simpleConsumer := BuildSimpleConsumer(tt.args.grpcEndpoint, tt.args.cm, tt.args.msgtag, tt.args.ak, tt.args.sk, tt.args.testTopic)
 
 			// new producer instance
 			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
@@ -86,14 +97,20 @@ func TestMessageContent(t *testing.T) {
 				msg.SetTag(tt.args.msgtag)
 			}
 
-			// 发送消息，需要关注发送结果，并捕获失败等异常。
-			resp, err := producer.Send(context.TODO(), msg)
-			if err != nil {
-				t.Errorf("failed to send normal message, err:%s", err)
-			}
-			for i := 0; i < len(resp); i++ {
-				fmt.Printf("%#v\n", resp[i])
-			}
+			var recvMsgCollector *RecvMsgsCollector
+			var sendMsgCollector *SendMsgsCollector
+			wg.Add(1)
+
+			go func() {
+				recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 10)
+				wg.Done()
+			}()
+			go func() {
+				sendMsgCollector = SendNormalMessage(producer, tt.args.testTopic, tt.args.body, tt.args.msgtag, msgCount, tt.args.keys)
+			}()
+			wg.Wait()
+
+			CheckMsgsWithMsgBody(t, sendMsgCollector, recvMsgCollector)
 		})
 	}
 }
