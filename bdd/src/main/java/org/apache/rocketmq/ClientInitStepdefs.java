@@ -23,9 +23,6 @@ import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 
 public class ClientInitStepdefs {
-    @And("Shutdown the producer and consumer")
-    public void shutdownTheProducerAndConsumer() {
-    }
 
     @And("Create a Producer, set the <NameServer>, <RequestTimeout>")
     public void createAProducerSetTheNameServerRequestTimeout() {
@@ -46,11 +43,7 @@ public class ClientInitStepdefs {
 
     @And("Send {string} messages {string}")
     public void sendMessages(String arg0, String arg1) {
-
-    }
-
-    @And("Shutdown the producer")
-    public void shutdownTheProducer() {
+        
 
     }
 
@@ -90,8 +83,9 @@ public class ClientInitStepdefs {
 
     }
 
-    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), SubscriptionExpression\\({string}), Topic\\({string}), MessageListener\\({string})")
-    public void createAPushConsumerSetTheEndpointConsumerGroupSubscriptionExpressionTopicMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4) {
+    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), Tag\\({string}), Topic\\({string}), MessageListener\\({string})")
+    public void createAPushConsumerSetTheEndpointConsumerGroupTagTopicMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
 
     }
 
@@ -100,18 +94,125 @@ public class ClientInitStepdefs {
 
     }
 
-    @Then("Create a message, including the Topic\\({string}), SubscriptionExpression\\({string}), Key\\({string}), and Body\\({string})")
-    public void createAMessageIncludingTheTopicSubscriptionExpressionKeyAndBody(String arg0, String arg1, String arg2, String arg3) {
+    @Then("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), and Body\\({string})")
+    public void createAMessageIncludingTheTopicTagKeyAndBody(String arg0, String arg1, String arg2, String arg3) {
 
     }
 
     @And("Create a Producer, set the Endpoint\\({string}), RequestTimeout:\\({string}), Topic\\({string})")
     public void createAProducerSetTheEndpointRequestTimeoutTopic(String arg0, String arg1, String arg2) {
+        
 
     }
 
     @Then("Check send message failed")
     public void checkSendMessageFailed() {
+
+    }
+
+    @And("Check each MessageGroup consumes up to {int} messages separately and is consumed orderly")
+    public void checkEachMessageGroupConsumesUpToMessagesSeparatelyAndIsConsumedOrderly(int arg0) {
+    }
+    
+
+    @And("Create a SimpleConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), SubscriptionExpression\\({string}), Topic\\({string}), Duration\\({string})")
+    public void createASimpleConsumerSetTheEndpointConsumerGroupSubscriptionExpressionTopicDuration(String arg0, String arg1, String arg2, String arg3, String arg4) {
+    }
+
+    @And("Check the subscribed message body is equal to {string}")
+    public void checkTheSubscribedMessageBodyEqualsTo(String arg0) {
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), and Body\\(null)")
+    public void createAMessageIncludingTheTopicTagKeyAndBodyNull(String arg0, String arg1, String arg2) {
+    }
+
+
+    @And("Create a message, including the Topic\\(null), Tag\\({string}), Key\\({string}), and Body\\({string})")
+    public void createAMessageIncludingTheTopicNullTagKeyAndBody(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\(null), Key\\({string}), and Body\\({string})")
+    public void createAMessageIncludingTheTopicTagNullKeyAndBody(String arg0, String arg1, String arg2) {
+
+    }
+
+    @And("Create a message, including the Topic\\({string}), SubscriptionExpression\\({string}), Key\\(RandomStringUtils.randomAlphabetic\\({int} * {int} + {int})), and Body\\({string})")
+    public void createAMessageIncludingTheTopicSubscriptionExpressionKeyRandomStringUtilsRandomAlphabeticAndBody(String arg0, String arg1, int arg2, int arg3, int arg4, String arg5) {
+
+    }
+
+    @Then("Check exceptions can be thrown")
+    public void checkBuildMethodThatCanThrowExceptions() {
+    }
+
+    @Given("Create a {string} topic:{string} if not exist")
+    public void createATopicIfNotExist(String arg0, String arg1) {
+
+
+    }
+
+    @Then("Check build method that throws no exceptions")
+    public void checkBuildMethodThatThrowsNoExceptions() {
+
+    }
+
+    @And("Shutdown the producer and consumer if they are started")
+    public void shutdownTheProducerAndConsumerIfTheyAreStarted() {
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}, {string}), and Body\\({string})")
+    public void createAMessageIncludingTheTopicTagKeyAndBody(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @And("Send a half message")
+    public void sendAHalfMessage() {
+        
+    }
+
+    @And("Create a transaction branch")
+    public void createATransactionBranch() {
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), and Body\\({string})")
+    public void createAMessageIncludingTheTopicTagAndBody(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), Body\\({string}), deliveryTimestamp\\({string})")
+    public void createAMessageIncludingTheTopicTagBodyDeliveryTimestamp(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), Body\\({string}), messageGroup\\({string})")
+    public void createAMessageIncludingTheTopicTagBodyMessageGroup(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @Then("Check there no fail message occurs")
+    public void checkNoFailMessageOccurs() {
+
+    }
+
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), Key\\({string}), and Value\\({string})")
+    public void createAMessageIncludingTheTopicBodyKeyAndValue(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), Key\\({string}), and Value\\({string})")
+    public void createAMessageIncludingTheTopicBodyMessageGroupKeyAndValue(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), and userProperty\\({string})")
+    public void createAMessageIncludingTheTopicAndUserProperty(String arg0, String arg1) {
+        
+    }
+
+    @And("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), Value\\({string}), Body\\({string}), msgKey\\({string})")
+    public void createAMessageIncludingTheTopicTagKeyValueBodyMsgKey(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
 
     }
 }
