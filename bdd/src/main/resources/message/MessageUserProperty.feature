@@ -18,8 +18,8 @@ Feature: Test message property
   Scenario: Message user property beyond limit 128 ,expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    And Create a message, including the Topic("random-topic"), Body("random-body"), and userProperty("random-userProperty")
-    And Set message "userProperty" "129" times
+    And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("random-messageProperty")
+    And Set message "messageProperty" "129" times
     And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
@@ -28,8 +28,8 @@ Feature: Test message property
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a message, including the Topic("random-topic"), Body("random-body"), and userProperty("random-userProperty")
-    And Set message "userProperty" "128" times
+    And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("random-messageProperty")
+    And Set message "messageProperty" "128" times
     And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
@@ -38,7 +38,7 @@ Feature: Test message property
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a message, including the Topic("random-topic"), Body("random-body"), and userProperty("size:16kB")
+    And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("size:16kB")
     And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
@@ -47,7 +47,7 @@ Feature: Test message property
   Scenario: Message user property beyond 16KB, expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    And Create a message, including the Topic("random-topic"), Body("random-body"), and userProperty("size:16kB+1")
+    And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("size:16kB+1")
     And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
@@ -55,7 +55,7 @@ Feature: Test message property
   Scenario Outline: Message user property contains invisible character \u0000 / use SystemKey UNIQ_KEY ,expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
-    And Create a message, including the Topic("random-topic"), and userProperty("<KeyContent>", "<ValueContent>")
+    And Create a message, including the Topic("random-topic"), and messageProperty("<KeyContent>", "<ValueContent>")
     And  Send "a" messages "synchronous"
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
@@ -95,12 +95,12 @@ Feature: Test message property
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
     And Create a message, including the Topic("random-topic"), Tag("random-tag"), Key("中文"), Value("中文"), Body("random-body"), msgKey("random-msgkey")
-    And Set Key("_"), Value("_")
-    And Set Key("%"), Value("%")
-    And Set Key("。"), Value("。")
-    And Set Key("|"), Value("|")
-    And Set Key("&&"), Value("&&")
-    And Set Key("🏷"), Value("🏷")
+    And Set messageProperty "Key" to "_" and "Value" to "_"
+    And Set messageProperty "Key" to "%" and "Value" to "%"
+    And Set messageProperty "Key" to "。" and "Value" to "。"
+    And Set messageProperty "Key" to "｜" and "Value" to "｜"
+    And Set messageProperty "Key" to "&&" and "Value" to "&&"
+    And Set messageProperty "Key" to "🏷" and "Value" to "🏷"
     And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started

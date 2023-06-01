@@ -80,7 +80,7 @@ Feature: Test message size
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a message, including the Topic("random-topic"), Body("size:4M"), and userProperty("size:16kB")
+    And Create a message, including the Topic("random-topic"), Body("size:4M"), and messageProperty("size:16kB")
     And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
@@ -89,7 +89,7 @@ Feature: Test message size
     Given Create a "FIFO" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a message, including the Topic("random-topic"), Body("size:4M"), messageGroup("a"), and userProperty("size:16kB")
+    And Create a message, including the Topic("random-topic"), Body("size:4M"), messageGroup("a"), and messageProperty("size:16kB")
     And  Send "a" messages "synchronous"
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started

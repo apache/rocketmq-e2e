@@ -192,17 +192,17 @@ public class ClientInitStepdefs {
 
     }
 
-    @And("Create a message, including the Topic\\({string}), and userProperty\\({string}, {string})")
-    public void createAMessageIncludingTheTopicAndUserProperty(String arg0, String arg1, String arg2) {
+    @And("Create a message, including the Topic\\({string}), and messageProperty\\({string}, {string})")
+    public void createAMessageIncludingTheTopicAndMessageProperty(String arg0, String arg1, String arg2) {
     }
 
-    @And("Create a message, including the Topic\\({string}), Body\\({string}), and userProperty\\({string})")
-    public void createAMessageIncludingTheTopicBodyAndUserProperty(String arg0, String arg1, String arg2) {
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), and messageProperty\\({string})")
+    public void createAMessageIncludingTheTopicBodyAndMessageProperty(String arg0, String arg1, String arg2) {
         
     }
 
-    @And("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), and userProperty\\({string})")
-    public void createAMessageIncludingTheTopicBodyMessageGroupAndUserProperty(String arg0, String arg1, String arg2, String arg3) {
+    @And("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), and messageProperty\\({string})")
+    public void createAMessageIncludingTheTopicBodyMessageGroupAndMessageProperty(String arg0, String arg1, String arg2, String arg3) {
     }
 
     @And("Set message {string} {string} times")
@@ -213,5 +213,9 @@ public class ClientInitStepdefs {
     @And("Set Key\\({string}), Value\\({string})")
     public void setKeyValue(String arg0, String arg1) {
 
+    }
+
+    @And("Set messageProperty {string} to {string} and {string} to {string}")
+    public void setMessagePropertyToAndTo(String arg0, String arg1, String arg2, String arg3) {
     }
 }
