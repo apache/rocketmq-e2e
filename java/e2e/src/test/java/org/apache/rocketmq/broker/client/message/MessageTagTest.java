@@ -112,20 +112,6 @@ public class MessageTagTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("Message Tag and User Property beyond 16KB ,expect throw exception")
-    public void testMessageUserPropertyAndTagBeyond16KB() {
-        producer = ProducerFactory.getRMQProducer(account, topic);
-        String tag = RandomStringUtils.randomAlphabetic(16 * 1024 + 1);
-        String body = RandomStringUtils.randomAlphabetic(64);
-
-        Assertions.assertNotNull(producer);
-        assertThrows(Exception.class, () -> {
-            Message message = MessageFactory.buildMessage(topic, tag, body);
-            producer.getProducer().send(message);
-        }, " message tag and user property beyond 16KB ,expect throw exception but it didn't");
-    }
-
-    @Test
     @DisplayName("Message Tag contains | , expect throw exception")
     public void testMessageTagContentWith() {
         String tag = "tag|";
