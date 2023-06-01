@@ -76,7 +76,7 @@ Feature: Test message size
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Send normal messages with the body size of 4M and the user property size of 16KB, expect send and consume success
+  Scenario: Send normal messages with the body size of 4M and the property size of 16KB, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
@@ -85,7 +85,7 @@ Feature: Test message size
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Send FIFO messages with the body size of 4M and the user property size of 16KB, expect send and consume success
+  Scenario: Send FIFO messages with the body size of 4M and the property size of 16KB, expect send and consume success
     Given Create a "FIFO" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")

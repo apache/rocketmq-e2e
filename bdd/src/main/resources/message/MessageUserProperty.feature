@@ -15,7 +15,7 @@
 
 Feature: Test message property
 
-  Scenario: Message user property beyond limit 128 ,expect throw exception
+  Scenario: Message property beyond limit 128 ,expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("random-messageProperty")
@@ -24,7 +24,7 @@ Feature: Test message property
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
-  Scenario: The number of message user properties equals limit 128, expect send and consume success
+  Scenario: The number of message properties equals limit 128, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
@@ -34,7 +34,7 @@ Feature: Test message property
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Message user property equals 16KB, expect send and consume success
+  Scenario: Message property equals 16KB, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
@@ -44,7 +44,7 @@ Feature: Test message property
     And Shutdown the producer and consumer if they are started
 
 
-  Scenario: Message user property beyond 16KB, expect throw exception
+  Scenario: Message property beyond 16KB, expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Body("random-body"), and messageProperty("size:16kB+1")
@@ -52,7 +52,7 @@ Feature: Test message property
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
-  Scenario Outline: Message user property contains invisible character \u0000 / use SystemKey UNIQ_KEY ,expect throw exception
+  Scenario Outline: Message property contains invisible character \u0000 / use SystemKey UNIQ_KEY ,expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), and messageProperty("<KeyContent>", "<ValueContent>")
@@ -65,7 +65,7 @@ Feature: Test message property
       | \u0000     | value        |
       | UNIQ_KEY   | value        |
 
-  Scenario: Message user property ,key and tag beyond 16KB ,expect throw exception
+  Scenario: Message property ,key and tag beyond 16KB ,expect throw exception
     Given Create a "Normal" topic:"random-topic" if not exist
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Tag("size:4kB"), Key("size:4kB"), Value("size:4kB"), Body("size:4M"), msgKey("size:4kB+1")
@@ -73,7 +73,7 @@ Feature: Test message property
     Then Check exceptions can be thrown
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Message user property ,key and tag equals 16KB, expect send and consume success
+  Scenario: Message property ,key and tag equals 16KB, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
@@ -82,7 +82,7 @@ Feature: Test message property
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Message user property ,key and tag equals 64B, expect send and consume success
+  Scenario: Message property ,key and tag equals 64B, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a message, including the Topic("random-topic"), Tag("size:64B"), Key("size:64B"), Value("size:64B"), Body("size:64B"), msgKey("size:64B")
@@ -90,7 +90,7 @@ Feature: Test message property
     Then  Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
-  Scenario: Message user property is the visible character, expect send and consume success
+  Scenario: Message property is the visible character, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
     And Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
