@@ -5,11 +5,9 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
-func TestMessageContent(t *testing.T) {
+func TestMessageBodyContent(t *testing.T) {
 	type args struct {
 		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
@@ -79,23 +77,6 @@ func TestMessageContent(t *testing.T) {
 			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
 			// graceful stop producer
 			defer producer.GracefulStop()
-
-			msg := &rmq_client.Message{
-				// 为当前消息设置 Topic。
-				Topic: tt.args.testTopic,
-				// 消息体。
-				Body: []byte(tt.args.body),
-			}
-
-			if tt.args.keys != "" {
-				// 设置消息索引键，可根据关键字精确查找某条消息。
-				msg.SetKeys(tt.args.keys)
-			}
-
-			if tt.args.msgtag != "" {
-				// 设置消息 Tag，用于消费端根据指定 Tag 过滤消息。
-				msg.SetTag(tt.args.msgtag)
-			}
 
 			var recvMsgCollector *RecvMsgsCollector
 			var sendMsgCollector *SendMsgsCollector
