@@ -14,20 +14,20 @@ func TestNormalMessageSize(t *testing.T) {
 		name string
 		args args
 	}{
-		//{
-		//	name: "Send normal messages synchronously with the body size of 4M+1, expect send failed",
-		//	args: args{
-		//		testTopic:    GetTopicName(),
-		//		nameServer:   NAMESERVER,
-		//		grpcEndpoint: GRPC_ENDPOINT,
-		//		clusterName:  CLUSTER_NAME,
-		//		ak:           "",
-		//		sk:           "",
-		//		msgtag:       RandomString(8),
-		//		keys:         RandomString(8),
-		//		body:         RandomString(4*1024*1024 + 1),
-		//	},
-		//},
+		{
+			name: "Send normal messages synchronously with the body size of 4M+1, expect send failed",
+			args: args{
+				testTopic:    GetTopicName(),
+				nameServer:   NAMESERVER,
+				grpcEndpoint: GRPC_ENDPOINT,
+				clusterName:  CLUSTER_NAME,
+				ak:           "",
+				sk:           "",
+				msgtag:       RandomString(8),
+				keys:         RandomString(8),
+				body:         RandomString(4*1024*1024 + 1),
+			},
+		},
 		{
 			name: "Send normal messages synchronously with the body size of 4M, expect send success",
 			args: args{
@@ -39,7 +39,7 @@ func TestNormalMessageSize(t *testing.T) {
 				sk:           "",
 				msgtag:       RandomString(8),
 				keys:         RandomString(8),
-				body:         RandomString(4 * 1024 * 500),
+				body:         RandomString(4 * 1024 * 1024),
 			},
 		},
 	}
