@@ -104,8 +104,8 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 				sk:           "",
 				cm:           GetGroupName(),
 				msgtag:       RandomString(8),
-				keys:         RandomString(64),
-				body:         "中文字符",
+				keys:         "中文字符",
+				body:         RandomString(8),
 			},
 		},
 	}
@@ -142,7 +142,7 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 			}()
 			wg.Wait()
 
-			CheckMsgsWithMsgBody(t, sendMsgCollector, recvMsgCollector)
+			CheckMsgsWithAll(t, sendMsgCollector, recvMsgCollector)
 		})
 	}
 }
@@ -205,7 +205,7 @@ func TestMessageWithMultiKey(t *testing.T) {
 			}()
 			wg.Wait()
 
-			CheckMsgsWithMsgBody(t, sendMsgCollector, recvMsgCollector)
+			CheckMsgsWithAll(t, sendMsgCollector, recvMsgCollector)
 		})
 	}
 }

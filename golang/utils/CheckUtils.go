@@ -76,16 +76,3 @@ func CheckFIFOMsgsWithMsgId(t *testing.T, sendMsgsCollector *SendMsgsCollector, 
 func CheckTransactionMsgsWithMsgId(t *testing.T, sendMsgsCollector *SendMsgsCollector, recvMsgsCollector *RecvMsgsCollector) {
 	CheckMsgsWithMsgId(t, sendMsgsCollector, recvMsgsCollector)
 }
-
-func CheckMsgsWithMsgBody(t *testing.T, sendMsgsCollector *SendMsgsCollector, recvMsgsCollector *RecvMsgsCollector) {
-	var sendMsg string
-	var recvMsg string
-	for _, sed := range sendMsgsCollector.SendMsgs {
-		sendMsg = string(sed.Body)
-	}
-	for _, recv := range recvMsgsCollector.RecvMsgViews {
-		recvMsg = string(recv.GetBody())
-	}
-
-	assert.Equal(t, sendMsg, recvMsg)
-}

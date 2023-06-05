@@ -91,7 +91,7 @@ func TestMessageBodyContent(t *testing.T) {
 			}()
 			wg.Wait()
 
-			CheckMsgsWithMsgBody(t, sendMsgCollector, recvMsgCollector)
+			CheckMsgsWithAll(t, sendMsgCollector, recvMsgCollector)
 		})
 	}
 }
