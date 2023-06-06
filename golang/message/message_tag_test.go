@@ -82,7 +82,7 @@ func TestMessageTagSizeAndSpecialCharacter(t *testing.T) {
 			defer producer.GracefulStop()
 
 			// 为当前消息设置 Topic 和 消息体。
-			msg := CreateDelayMessage(tt.args.testTopic, tt.args.body)
+			msg := CreateMessage(tt.args.testTopic, tt.args.body)
 
 			// 设置消息 Tag，用于消费端根据指定 Tag 过滤消息。
 			msg.SetTag(tt.args.msgtag)
