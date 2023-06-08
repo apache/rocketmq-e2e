@@ -17,7 +17,7 @@ Feature: Test SQL filtering with order messages
 
   Scenario: Send 10 order messages synchronously, then filter the messages without any attribute filtering, expect to consume 10 messages
     Given Create a "FIFO" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
-    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(subExpression:"TRUE", FilterExpressionType:"SQL92"), and MessageListener("default")
+    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(SubExpression:"TRUE", FilterExpressionType:"SQL92"), and MessageListener("default")
     And Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("random-group"), Topic("random-topic")
     Then Create a message, including the Topic("random-topic"), Body("Body"), messageGroup("messageGroup"), and msgProps(regionId:"cn-hangzhou", price:"30")
     And Send "10" messages "synchronous"
@@ -28,7 +28,7 @@ Feature: Test SQL filtering with order messages
 
   Scenario: Send 10 order messages synchronously, then use the attribute 'between{a,b}' to filter messages, expect to consume 10 messages
     Given Create a "FIFO" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
-    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(subExpression:"(price BETWEEN 10 AND 100) AND regionId IS NOT NUll", FilterExpressionType:"SQL92"), and MessageListener("default")
+    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(SubExpression:"(price BETWEEN 10 AND 100) AND regionId IS NOT NUll", FilterExpressionType:"SQL92"), and MessageListener("default")
     And Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("random-group"), Topic("random-topic")
     Then Create a message, including the Topic("random-topic"), Body("Body"), messageGroup("messageGroup"), and msgProps(regionId:"cn-hangzhou", price:"30")
     And Send "10" messages "synchronous"
@@ -39,7 +39,7 @@ Feature: Test SQL filtering with order messages
 
   Scenario: Send 10 order messages synchronously, then use unknown attributes to filter messages, expect to consume 0 messages
     Given Create a "FIFO" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
-    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(subExpression:"product = 'MQ'", FilterExpressionType:"SQL92"), and MessageListener("default")
+    When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Topic("random-topic"), filterExpression(SubExpression:"product = 'MQ'", FilterExpressionType:"SQL92"), and MessageListener("default")
     And Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("random-group"), Topic("random-topic")
     Then Create a message, including the Topic("random-topic"), Body("Body"), messageGroup("messageGroup"), and msgProps(regionId:"cn-hangzhou", price:"30")
     And Send "10" messages "synchronous"

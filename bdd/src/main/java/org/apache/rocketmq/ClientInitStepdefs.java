@@ -420,7 +420,7 @@ public class ClientInitStepdefs {
         
     }
 
-    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), Topic\\({string}), filterExpression\\(subExpression:{string}, FilterExpressionType:{string}), and MessageListener\\({string})")
+    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), Topic\\({string}), filterExpression\\(SubExpression:{string}, FilterExpressionType:{string}), and MessageListener\\({string})")
     public void createAPushConsumerSetTheEndpointConsumerGroupTopicFilterExpressionSubExpressionFilterExpressionTypeAndMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
         
     }
