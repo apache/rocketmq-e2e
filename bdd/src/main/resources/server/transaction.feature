@@ -23,7 +23,7 @@ Feature: Test the message transfer mode
     Then Create a message, including the Topic("random-topic"), Tag("TagA"), Key("Key"), and Body("Body")
     And  Send a half message
     And  Execute transaction:"<TransactionExecutor>"
-    Then Check all messages send "success"
+    Then Check all messages send "successfully"
     And Check all messages that can be consumed within 60s
     And Shutdown the producer and consumer if they are started
 
