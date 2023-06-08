@@ -198,7 +198,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
 
     @Test
     @DisplayName("SimpleConsumer client start setting 'invisibleDuration<10000ms', except throw exception")
-    public void testReceiveInvisibleDurationLess10000finishms() {
+    public void testReceiveInvisibleDurationLess10000ms() {
         SimpleConsumer simpleConsumer = null;
         try {
             simpleConsumer = provider.newSimpleConsumerBuilder()
