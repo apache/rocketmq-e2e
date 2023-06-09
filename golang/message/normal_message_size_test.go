@@ -1,7 +1,6 @@
 package rocketmqtest
 
 import (
-	"context"
 	. "rocketmq-go-e2e/utils"
 	"testing"
 )
@@ -52,19 +51,11 @@ func TestNormalMessageSize(t *testing.T) {
 			// graceful stop producer
 			defer producer.GracefulStop()
 
-			// 为当前消息设置 Topic 和 消息体。
-			msg := CreateMessage(tt.args.testTopic, tt.args.body)
+			msg := BuildNormalMessage(tt.args.testTopic, tt.args.body, tt.args.msgtag, tt.args.keys)
 
-			// 设置消息 Tag，用于消费端根据指定 Tag 过滤消息。
-			msg.SetTag(tt.args.msgtag)
-			// 设置消息索引键，可根据关键字精确查找某条消息。
-			msg.SetKeys(tt.args.keys)
+			sendMsgCollector := NewSendMsgsCollector()
 
-			// 发送消息，需要关注发送结果，并捕获失败等异常。
-			_, err := producer.Send(context.TODO(), msg)
-			if err != nil {
-				t.Errorf("failed to send normal message, err:%s", err)
-			}
+			SendMessage(producer, msg, sendMsgCollector)
 		})
 	}
 }

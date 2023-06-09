@@ -29,12 +29,13 @@ import (
 )
 
 var (
+	MsgCount = 10
 	// maximum waiting time for receive func
 	awaitDuration = time.Second * 5
-	// maximum number of messages received at one time
-	maxMessageNum int32 = 32
-	// invisibleDuration should > 20s
-	invisibleDuration = time.Second * 20
+	// MaxMessageNum maximum number of messages received at one time
+	MaxMessageNum int32 = 32
+	// InvisibleDuration should > 20s
+	InvisibleDuration = time.Second * 20
 	// receive messages in a loop
 	GRPC_ENDPOINT = os.Getenv("GRPC_ENDPOINT")
 	NAMESERVER    = os.Getenv("NAMESERVER")

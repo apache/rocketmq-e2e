@@ -4,7 +4,6 @@ import (
 	. "rocketmq-go-e2e/utils"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestMessageBodyContent(t *testing.T) {
@@ -63,12 +62,11 @@ func TestMessageBodyContent(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			var wg sync.WaitGroup
-			// maximum number of messages received at one time
-			var maxMessageNum int32 = 32
-			// invisibleDuration should > 20s
-			var invisibleDuration = time.Second * 20
-			var msgCount = 10
+			var (
+				wg               sync.WaitGroup
+				recvMsgCollector *RecvMsgsCollector
+				sendMsgCollector *SendMsgsCollector
+			)
 
 			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
 			simpleConsumer := BuildSimpleConsumer(tt.args.grpcEndpoint, tt.args.cm, tt.args.msgtag, tt.args.ak, tt.args.sk, tt.args.testTopic)
@@ -78,16 +76,14 @@ func TestMessageBodyContent(t *testing.T) {
 			// graceful stop producer
 			defer producer.GracefulStop()
 
-			var recvMsgCollector *RecvMsgsCollector
-			var sendMsgCollector *SendMsgsCollector
 			wg.Add(1)
 
 			go func() {
-				recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 10)
+				recvMsgCollector = RecvMessage(simpleConsumer, MaxMessageNum, InvisibleDuration, 10)
 				wg.Done()
 			}()
 			go func() {
-				sendMsgCollector = SendNormalMessage(producer, tt.args.testTopic, tt.args.body, tt.args.msgtag, msgCount, tt.args.keys)
+				sendMsgCollector = SendNormalMessage(producer, tt.args.testTopic, tt.args.body, tt.args.msgtag, MsgCount, tt.args.keys)
 			}()
 			wg.Wait()
 
