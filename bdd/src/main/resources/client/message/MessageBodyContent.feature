@@ -13,23 +13,24 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-Feature: Test the message transfer mode
+Feature: Test message body contents
 
-  Scenario Outline:  10 transaction messages are sent synchronously and are expected to be received
+  Scenario Outline: Send normal message, setting message body, expect send and consume success
     Given Create a "Normal" topic:"random-topic" if not exist, a "Concurrently" group:"random-group"
     When Create a PushConsumer, set the Endpoint("127.0.0.1:9876"), ConsumerGroup("random-group"), Tag("TagA"), Topic("random-topic"), MessageListener("default")
-    And Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic"), TransactionChecker:("<TransactionChecker>")
-    And  Create a transaction branch
-    Then Create a message, including the Topic("random-topic"), Tag("TagA"), Key("Key"), and Body("Body")
-    And  Send a half message
-    And  Execute transaction:"<TransactionExecutor>"
-    Then Check all messages send "success"
-    And Check all messages that can be consumed within 60s
+    And Create a Producer, set the Endpoint("127.0.0.1:9876"), RequestTimeout:("10s"), Topic("random-topic")
+    Then Create a message, including the Topic("random-topic"), Tag("TagA"), Key("Key"), and Body("<MessageBodyContent>")
+    And  Send "a" messages "synchronous"
+    Then  Check all messages that can be consumed within 60s
+    And Check the subscribed message body is equal to "<MessageBodyContent>"
     And Shutdown the producer and consumer if they are started
 
     Examples:
-      | TransactionChecker | TransactionExecutor |
-      | COMMIT             | COMMIT              |
-      | ROLLBACK           | COMMIT              |
-      | UNKNOWN            | COMMIT              |
+      | MessageBodyContent |
+      |                    |
+      |       中文字符       |
+      |         😱         |
+
+
+
 

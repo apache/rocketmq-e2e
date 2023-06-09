@@ -83,7 +83,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start without setting 'ClientConfiguration', expect throw exception")
+    @DisplayName("Without setting 'ClientConfiguration' of the consumer client, expect start failed")
     public void testNoClientConfiguration() {
         assertThrows(NullPointerException.class, () -> {
             SimpleConsumer simpleConsumer = provider.newSimpleConsumerBuilder()
@@ -95,7 +95,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start without setting 'ConsumerGroup', expect throw exception")
+    @DisplayName("Without setting 'ConsumerGroup' of the consumer client, expect start failed")
     public void testNoConsumerGroup() {
         assertThrows(Exception.class, () -> {
             SimpleConsumer simpleConsumer = provider.newSimpleConsumerBuilder()
@@ -107,7 +107,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start without setting 'Subscription', expect throw exception")
+    @DisplayName("Without setting 'Subscription' of the consumer client, expect start failed")
     public void testNoSubscription() {
         assertThrows(Exception.class, () -> {
             SimpleConsumer simpleConsumer = provider.newSimpleConsumerBuilder()
@@ -119,7 +119,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start without setting 'AwaitDuration', expect throw exception ")
+    @DisplayName("Without setting 'AwaitDuration' of the consumer client, expect start failed")
     public void testNoAwaitDuration() {
         assertThrows(Exception.class, () -> {
             SimpleConsumer simpleConsumer = provider.newSimpleConsumerBuilder()
@@ -131,7 +131,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start setting empty 'AwaitDuration', expect throw exception ")
+    @DisplayName("Error setting 'SubscriptionExpressions' empty of the consumer client, except start failed")
     public void testEmptySubscription() {
         assertThrows(Exception.class, () -> {
             SimpleConsumer simpleConsumer = provider.newSimpleConsumerBuilder()
@@ -144,7 +144,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start setting 'AwaitDuration=0', except invoke 'receive()' throw exception")
+    @DisplayName("Error setting 'MaxMessageNum=0' of the consumer client, except start failed")
     public void testAwaitDurationIs0s() {
         SimpleConsumer simpleConsumer = null;
         try {
@@ -180,7 +180,7 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start setting 'MaxMessageNum=100000', except success")
+    @DisplayName("Setting 'MaxMessageNum=100000', except start success")
     public void testReceiveMaxMessageNumMore100000() {
         SimpleConsumer simpleConsumer = null;
         try {
@@ -197,8 +197,8 @@ public class SimpleConsumerInitTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("SimpleConsumer client start setting 'invisibleDuration<1000ms', except throw exception")
-    public void testReceiveInvisibleDurationLess1000ms() {
+    @DisplayName("SimpleConsumer client start setting 'invisibleDuration<10000ms', except throw exception")
+    public void testReceiveInvisibleDurationLess10000ms() {
         SimpleConsumer simpleConsumer = null;
         try {
             simpleConsumer = provider.newSimpleConsumerBuilder()

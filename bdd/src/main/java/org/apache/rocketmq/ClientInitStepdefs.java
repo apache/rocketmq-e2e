@@ -218,4 +218,203 @@ public class ClientInitStepdefs {
     @And("Set messageProperty {string} to {string} and {string} to {string}")
     public void setMessagePropertyToAndTo(String arg0, String arg1, String arg2, String arg3) {
     }
+
+    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), Topic\\({string}), filterExpression\\(SubExpression:{string}, FilterExpressionType:{string}), and MessageListener\\({string})")
+    public void createAPushConsumerSetTheEndpointConsumerGroupTopicFilterExpressionSubExpressionFilterExpressionTypeAndMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+        
+    }
+
+    @Then("Create a message, including the Topic\\({string}), Tag\\({string}), Key\\({string}), Body\\({string}), and msgProps\\(regionId:{string}, price:{string})")
+    public void createAMessageIncludingTheTopicTagKeyBodyAndMsgPropsRegionIdPrice(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+        
+    }
+
+    @And("Send {string} messages with msgProps\\(price:{string}) {string}")
+    public void sendMessagesWithMsgPropsPrice(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @Then("Check only all messages with msgProps\\(price:{string}) are consumed")
+    public void checkOnlyAllMessagesWithMsgPropsPriceAreConsumed(String arg0) {
+        
+    }
+
+    @And("Check PushConsumer consumes {int} messages")
+    public void checkPushConsumerConsumesMessages(int arg0) {
+        
+    }
+
+    @Then("Create a message, including the Topic\\({string}), Body\\({string}), messageGroup\\({string}), and msgProps\\(regionId:{string}, price:{string})")
+    public void createAMessageIncludingTheTopicBodyMessageGroupAndMsgPropsRegionIdPrice(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @And("Check the order of received messages consistent with the order of pre-sent messages")
+    public void checkTheOrderOfReceivedMessagesConsistentWithTheOrderOfPreSentMessages() {
+        
+    }
+
+    @When("Create a PushConsumer, set the Endpoint\\({string}), ConsumerGroup\\({string}), Topic\\({string}), filterExpression\\({string}), and MessageListener\\({string})")
+    public void createAPushConsumerSetTheEndpointConsumerGroupTopicFilterExpressionAndMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @And("Send {string} messages with Tag\\({string}) {string}")
+    public void sendMessagesWithTag(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @And("Create a SimpleConsumer, set the Endpoint\\({string}), Topic\\({string}), ConsumerGroup\\({string}), FilterExpressions\\({string}), Duration\\({string})")
+    public void createASimpleConsumerSetTheEndpointTopicConsumerGroupFilterExpressionsDuration(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @Then("Check SimpleConsumer pull a message once")
+    public void checkSimpleConsumerPullAMessageOnce() {
+        
+    }
+
+    @And("SimpleConsumer invokes receive method {string} and returns acks {string}")
+    public void simpleconsumerInvokesReceiveMethodAndReturnsAcks(String arg0, String arg1) {
+        
+    }
+
+    @Then("Check all messages are pulled by SimpleConsumer {string}")
+    public void checkAllMessagesArePulledBySimpleConsumer(String arg0) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), AwaitDuration\\({string}), SubscriptionExpressions\\(NULL)")
+    public void createASetTheClientConfigurationEndpointConsumerGroupAwaitDurationSubscriptionExpressionsNULL(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), AwaitDuration\\({string}), SubscriptionExpressions\\({string}, {string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupAwaitDurationSubscriptionExpressions(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+        
+    }
+
+    @Then("Consumer invoke receive\\(maxMessageNum:{int}, invisibleDuration:{int}s)")
+    public void consumerInvokeReceiveMaxMessageNumInvisibleDurationS(int arg0, int arg1) {
+        
+    }
+
+    @Then("Check {string} receive messages successfully")
+    public void checkReceiveMessagesSuccessfully(String arg0) {
+        
+    }
+
+    @And("Check the message request return duration between {int}s and {int}s")
+    public void checkTheMessageRequestReturnDurationBetweenSAndS(int arg0, int arg1) {
+        
+    }
+
+    @Then("Check build {string} successfully")
+    public void checkBuildSuccessfully(String arg0) {
+        
+    }
+
+    @When("Create a {string}, set the ConsumerGroup\\({string}), AwaitDuration\\({string}), SubscriptionExpressions\\({string}, {string})")
+    public void createASetTheConsumerGroupAwaitDurationSubscriptionExpressions(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), AwaitDuration\\({string}), SubscriptionExpressions\\({string}, {string})")
+    public void createASetTheClientConfigurationEndpointAwaitDurationSubscriptionExpressions(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), AwaitDuration\\({string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupAwaitDuration(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), SubscriptionExpressions\\({string}, {string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupSubscriptionExpressions(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @Given("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), SubscriptionExpressions\\({string}, {string}), ConsumptionThreadCount\\({int}), MaxCacheMessageCount\\({int}), MaxCacheMessageSizeInBytes\\({int}M), MessageListener\\({string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupSubscriptionExpressionsConsumptionThreadCountMaxCacheMessageCountMaxCacheMessageSizeInBytesMMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4, int arg5, int arg6, int arg7, String arg8) {
+        
+    }
+
+    @When("Create a {string}, set the ConsumerGroup\\({string}), SubscriptionExpressions\\({string}, {string}), MessageListener\\({string})")
+    public void createASetTheConsumerGroupSubscriptionExpressionsMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @And("Set {string} ClientConfiguration\\(Endpoint:{string}, AccessKey:{string}, SecretKey:{string})")
+    public void setClientConfigurationEndpointAccessKeySecretKey(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), SubscriptionExpressions\\({string}, {string}), MessageListener\\({string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupSubscriptionExpressionsMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), SubscriptionExpressions\\({string}, {string}), MessageListener\\({string})")
+    public void createASetTheClientConfigurationEndpointSubscriptionExpressionsMessageListener(String arg0, String arg1, String arg2, String arg3, String arg4) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), MessageListener\\({string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupMessageListener(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), ConsumerGroup\\({string}), SubscriptionExpressions\\(NULL), MessageListener\\({string})")
+    public void createASetTheClientConfigurationEndpointConsumerGroupSubscriptionExpressionsNULLMessageListener(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @Given("Create a {string} ConsumerGroup if not exist")
+    public void createAConsumerGroupIfNotExist(String arg0) {
+        
+    }
+
+    @When("Create a {string}, set the Endpoint\\({string}), ConsumerGroup\\({string}), AwaitDuration\\({string}), SubscriptionExpressions\\({string}, {string})")
+    public void createASetTheEndpointConsumerGroupAwaitDurationSubscriptionExpressions(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), Topics\\({string}), and MaxAttempts\\({int})")
+    public void createASetTheClientConfigurationEndpointTopicsAndMaxAttempts(String arg0, String arg1, String arg2, int arg3) {
+        
+    }
+
+    @When("Create a {string}, set the Topics\\({string})")
+    public void createASetTheTopics(String arg0, String arg1) {
+        
+    }
+
+    @And("Set {string} ClientConfiguration\\(Endpoint:{string}, AccessKey:NULL, SecretKey:{string})")
+    public void setClientConfigurationEndpointAccessKeyNULLSecretKey(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @And("Set {string} ClientConfiguration\\(Endpoint:{string}, AccessKey:{string}, SecretKey:NULL)")
+    public void setClientConfigurationEndpointAccessKeySecretKeyNULL(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(NULL), Topics\\({string}), and MaxAttempts\\({int})")
+    public void createASetTheClientConfigurationNULLTopicsAndMaxAttempts(String arg0, String arg1, int arg2) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), Topics\\({string}, {string}), and MaxAttempts\\({int})")
+    public void createASetTheClientConfigurationEndpointTopicsAndMaxAttempts(String arg0, String arg1, String arg2, String arg3, int arg4) {
+        
+    }
+
+    @When("Create a {string}, set the Topics\\({string}), and MaxAttempts\\({int})")
+    public void createASetTheTopicsAndMaxAttempts(String arg0, String arg1, int arg2) {
+        
+    }
+
+    @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), and MaxAttempts\\({int})")
+    public void createASetTheClientConfigurationEndpointAndMaxAttempts(String arg0, String arg1, int arg2) {
+    }
 }
