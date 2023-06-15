@@ -75,16 +75,15 @@ func TestMessageKeySize(t *testing.T) {
 	}
 }
 
-func TestMessageKeyContentWithChinese(t *testing.T) {
+func TestMessageKeyContent(t *testing.T) {
 	type args struct {
-		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
+		testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
 	}
 	tests := []struct {
 		name string
 		args args
 	}{
 		{
-			name: "Message key contains Chinese, expect send and consume success",
 			args: args{
 				testTopic:    GetTopicName(),
 				nameServer:   NAMESERVER,
@@ -100,7 +99,7 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("Message key contains Chinese, expect send and consume success", func(t *testing.T) {
 			var wg sync.WaitGroup
 
 			CreateTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
@@ -129,35 +128,7 @@ func TestMessageKeyContentWithChinese(t *testing.T) {
 
 			CheckMsgsWithAll(t, sendMsgCollector, recvMsgCollector)
 		})
-	}
-}
-
-func TestMessageWithMultiKey(t *testing.T) {
-	type args struct {
-		name, testTopic, nameServer, grpcEndpoint, clusterName, ak, sk, cm, msgtag, keys, body string
-	}
-	tests := []struct {
-		name string
-		args args
-	}{
-		{
-			name: "The message contains multiple keys, expect send and consume success",
-			args: args{
-				testTopic:    GetTopicName(),
-				nameServer:   NAMESERVER,
-				grpcEndpoint: GRPC_ENDPOINT,
-				clusterName:  CLUSTER_NAME,
-				ak:           "",
-				sk:           "",
-				cm:           GetGroupName(),
-				msgtag:       RandomString(8),
-				keys:         RandomString(64),
-				body:         RandomString(64),
-			},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
+		t.Run("The message contains multiple keys, expect send and consume success", func(t *testing.T) {
 			var wg sync.WaitGroup
 			var k1 = RandomString(64)
 
