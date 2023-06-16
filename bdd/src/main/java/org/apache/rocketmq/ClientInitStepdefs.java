@@ -179,7 +179,8 @@ public class ClientInitStepdefs {
 
     @And("Create a message, including the Topic\\({string}), Tag\\({string}), Body\\({string}), deliveryTimestamp\\({string})")
     public void createAMessageIncludingTheTopicTagBodyDeliveryTimestamp(String arg0, String arg1, String arg2, String arg3) {
-        
+
+
     }
 
     @And("Create a message, including the Topic\\({string}), Tag\\({string}), Body\\({string}), messageGroup\\({string})")
@@ -266,21 +267,6 @@ public class ClientInitStepdefs {
 
     @And("Create a SimpleConsumer, set the Endpoint\\({string}), Topic\\({string}), ConsumerGroup\\({string}), FilterExpressions\\({string}), Duration\\({string})")
     public void createASimpleConsumerSetTheEndpointTopicConsumerGroupFilterExpressionsDuration(String arg0, String arg1, String arg2, String arg3, String arg4) {
-        
-    }
-
-    @Then("Check SimpleConsumer pull a message once")
-    public void checkSimpleConsumerPullAMessageOnce() {
-        
-    }
-
-    @And("SimpleConsumer invokes receive method {string} and returns acks {string}")
-    public void simpleconsumerInvokesReceiveMethodAndReturnsAcks(String arg0, String arg1) {
-        
-    }
-
-    @Then("Check all messages are pulled by SimpleConsumer {string}")
-    public void checkAllMessagesArePulledBySimpleConsumer(String arg0) {
         
     }
 
@@ -416,5 +402,161 @@ public class ClientInitStepdefs {
 
     @When("Create a {string}, set the ClientConfiguration\\(Endpoint:{string}), and MaxAttempts\\({int})")
     public void createASetTheClientConfigurationEndpointAndMaxAttempts(String arg0, String arg1, int arg2) {
+    }
+
+    @Then("Check only the first message that can be pulled by SimpleConsumer")
+    public void checkOnlyTheFirstMessageThatCanBePulledBySimpleConsumer() {
+    }
+
+    @And("Create {string} messages, including the Topic\\({string}), Tag\\({string}), Key\\({string}), MessageGroup\\({string}), and Body\\({string})")
+    public void createMessagesIncludingTheTopicTagKeyMessageGroupAndBody(String arg0, String arg1, String arg2, String arg3, String arg4, String arg5) {
+
+    }
+
+    @And("Check the pulled messages that can be retried except the first one")
+    public void checkThePulledMessagesThatCanBeRetriedExceptTheFirstOne() {
+        
+    }
+
+    @And("Check the number of retried messages equals to {int}")
+    public void checkTheNumberOfRetriedMessagesEqualsTo(int arg0) {
+    }
+
+    @And("SimpleConsumer invokes the method receive\\(maxMessageNum:{string}, invisibleDuration:{string}) {string}")
+    public void simpleconsumerInvokesReceiveMaxMessageNumInvisibleDuration(String arg0, String arg1, String arg2) {
+        
+    }
+
+
+    @Then("Check the duration between each two retrying consumptions equals to {int}s")
+    public void checkTheDurationBetweenEachTwoRetryingConsumptionsEqualsToS(int arg0) {
+        
+    }
+
+    @And("SimpleConsumer returns an ack within {string}")
+    public void simpleconsumerReturnsAnAckWithin(String arg0) {
+
+    }
+
+    @And("Set a failed assertion with {string}")
+    public void setAFailedAssertionWith(String arg0) {
+
+    }
+
+    @And("Check a new {string} messages are pulled {string} and acked {string} by SimpleConsumer within {int}s {string}")
+    public void checkANewMessagesArePulledAndAckedBySimpleConsumerWithinS(String arg0, String arg1, String arg2, int arg3, String arg4) {
+
+    }
+
+    @And("SimpleConsumer invokes receive\\(maxMessageNum:{string}, invisibleDuration:{string}, changeInvisibleDuration:{string}) {string} without returning ack")
+    public void simpleconsumerInvokesReceiveMaxMessageNumInvisibleDurationChangeInvisibleDurationWithoutReturningAck(String arg0, String arg1, String arg2, String arg3) {
+        
+    }
+
+    @And("SimpleConsumer invokes receive\\(maxMessageNum:{string}, invisibleDuration:{string}) during next consumption and returns an ack")
+    public void simpleconsumerInvokesReceiveMaxMessageNumInvisibleDurationDuringNextConsumptionAndReturnsAnAck(String arg0, String arg1) {
+        
+    }
+
+    @Then("Check SimpleConsumer pulls the message and returns an ack within {int}s but over {int}s")
+    public void checkSimpleConsumerPullsTheMessageAndReturnsAnAckWithinSButOverS(int arg0, int arg1) {
+        
+    }
+
+    @And("SimpleConsumer invokes receive\\(maxMessageNum:{string}, invisibleDuration:{string}) during next consumption")
+    public void simpleconsumerInvokesReceiveMaxMessageNumInvisibleDurationDuringNextConsumption(String arg0, String arg1) {
+        
+    }
+
+    @Then("Set SimpleConsumer changeInvisibleDuration\\({string})")
+    public void setSimpleConsumerChangeInvisibleDuration(String arg0) {
+        
+    }
+
+    @And("Check changeInvisibleDuration after the ack is failed")
+    public void checkChangeInvisibleDurationAfterTheAckIsFailed() {
+        
+    }
+
+    @And("Check the consumption is failed")
+    public void checkTheConsumptionIsFailed() {
+        
+    }
+
+    @And("SimpleConsumer invokes the method receive\\(maxMessageNum:{string}, invisibleDuration:{string}) {string}")
+    public void simpleconsumerInvokesTheMethodReceiveMaxMessageNumInvisibleDuration(String arg0, String arg1, String arg2) {
+        
+    }
+
+    @Then("SimpleConsumer returns acks {string}")
+    public void simpleconsumerReturnsAcks(String arg0) {
+    }
+
+    @Then("Check all {string} messages are received and acked within {int}s {string}")
+    public void checkAllMessagesAreReceivedAndAckedWithinS(String arg0, int arg1, String arg2) {
+    }
+
+    @Then("SimpleConsumer returns acks for all received messages except the first one with Body\\({string})")
+    public void simpleconsumerReturnsAcksForAllReceivedMessagesExceptTheFirstOneWithBody(String arg0) {
+        
+    }
+
+    @Then("Check only the first {string} messages with Body\\({string}) that can be received")
+    public void checkOnlyTheFirstMessagesWithBodyThatCanBeReceived(String arg0, String arg1) {
+    }
+
+    @And("Check all received messages that can be consumed again {string}")
+    public void checkAllReceivedMessagesThatCanBeConsumedAgain(String arg0) {
+    }
+
+    @And("Check the number of consumptions equals to {int}")
+    public void checkTheNumberOfConsumptionsEqualsTo(int arg0) {
+    }
+
+    @And("SimpleConsumer returns an ack after DeliveryAttempt\\({int})")
+    public void simpleconsumerReturnsAnAckAfterDeliveryAttempt(int arg0) {
+    }
+
+    @And("Check all messages that can be consumed and acked within {int}s")
+    public void checkAllMessagesThatCanBeConsumedAndAckedWithinS(int arg0) {
+        
+    }
+
+    @Then("SimpleConsumer returns acks for all received messages except the first one")
+    public void simpleconsumerReturnsAcksForAllReceivedMessagesExceptTheFirstOne() {
+    }
+
+    @And("Check only the first message is not acked")
+    public void checkOnlyTheFirstMessageIsNotAcked() {
+    }
+
+    @And("SimpleConsumer returns acks for all received messages")
+    public void simpleconsumerReturnsAcksForAllReceivedMessages() {
+    }
+
+    @And("SimpleConsumer returns an ack when DeliveryAttempt value equals {int}")
+    public void simpleconsumerReturnsAnAckWhenDeliveryAttemptValueEquals(int arg0) {
+    }
+
+    @Then("Check SimpleConsumer receives only up to {int} messages once")
+    public void checkSimpleConsumerReceivesOnlyUpToMessagesOnce(int arg0) {
+    }
+
+    @And("Check no acked messages that can be consumed again")
+    public void checkNoAckedMessagesThatCanBeConsumedAgain() {
+        
+    }
+
+    @Then("SimpleConsumer returns ack for all received messages except the first one")
+    public void simpleconsumerReturnsAckForAllReceivedMessagesExceptTheFirstOne() {
+    }
+
+    @And("SimpleConsumer waits for {int}s after receiving the messages")
+    public void simpleconsumerWaitsForSAfterReceivingTheMessages(int arg0) {
+        
+    }
+
+    @Then("SimpleConsumer returns an ack")
+    public void simpleconsumerReturnsAnAck() {
     }
 }

@@ -328,6 +328,7 @@ public class SimpleOrderParamTest extends BaseOperate {
                     List<MessageView> viewList = entry.getValue();
                     long actual = viewList.stream().filter(msg -> msg.getDeliveryAttempt() == 2).count();
                     Assertions.assertEquals(1, actual, String.format("The number of message retries obtained was not expected, expect:%s, actual:%s", 1, actual));
+//                    DeliveryAttempt是从0开始计数的，判断重试应该让getDeliveryAttempt()==1, 一起拉取三条消息，第一条没重试，那重试的还剩两条，所以应该让actual==2
                 }
             }
         } catch (InterruptedException e) {
