@@ -1,0 +1,4 @@
+rocketmq-client-cpp-tests/bazel-bin
+rocketmq-client-cpp-tests/bazel-out
+rocketmq-client-cpp-tests/bazel-rocketmq-client-cpp-tests
+rocketmq-client-cpp-tests/bazel-testlogs
