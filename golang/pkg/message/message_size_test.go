@@ -1,10 +1,13 @@
 package rocketmqtest
 
 import (
+	"context"
 	. "rocketmq-go-e2e/utils"
 	"testing"
 	"time"
 )
+
+// todo Golang中不能发送4M的消息,初步认为是版本问题，后期将继续跟进
 
 func TestNormalMessageSize(t *testing.T) {
 	type args struct {
@@ -54,9 +57,11 @@ func TestNormalMessageSize(t *testing.T) {
 
 			msg := BuildNormalMessage(tt.args.testTopic, tt.args.body, tt.args.msgtag, tt.args.keys)
 
-			sendMsgCollector := NewSendMsgsCollector()
-
-			SendMessage(producer, msg, sendMsgCollector)
+			_, err := producer.Send(context.TODO(), msg)
+			if err != nil {
+				t.Fail()
+				t.Log("Error: ", err)
+			}
 		})
 	}
 }
@@ -112,9 +117,11 @@ func TestDelayMessageSize(t *testing.T) {
 
 			msg := BuildDelayMessage(tt.args.testTopic, tt.args.body, tt.args.msgtag, time.Duration(tt.args.deliveryTimestamp), tt.args.keys)
 
-			sendMsgCollector := NewSendMsgsCollector()
-
-			SendMessage(producer, msg, sendMsgCollector)
+			_, err := producer.Send(context.TODO(), msg)
+			if err != nil {
+				t.Fail()
+				t.Log("Error: ", err)
+			}
 		})
 	}
 }

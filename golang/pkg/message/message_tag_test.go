@@ -1,6 +1,7 @@
 package rocketmqtest
 
 import (
+	"context"
 	. "rocketmq-go-e2e/utils"
 	"sync"
 	"testing"
@@ -81,9 +82,11 @@ func TestMessageTagSizeAndSpecialCharacter(t *testing.T) {
 
 			msg := BuildNormalMessage(tt.args.testTopic, tt.args.body, tt.args.msgtag, tt.args.keys)
 
-			sendMsgCollector := NewSendMsgsCollector()
-
-			SendMessage(producer, msg, sendMsgCollector)
+			_, err := producer.Send(context.TODO(), msg)
+			if err != nil {
+				t.Fail()
+				t.Log("Error: ", err)
+			}
 		})
 	}
 }

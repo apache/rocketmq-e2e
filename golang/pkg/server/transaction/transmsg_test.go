@@ -18,9 +18,12 @@
 package transaction_test
 
 import (
+	"log"
 	. "rocketmq-go-e2e/utils"
 	"sync"
 	"testing"
+
+	rmq_client "github.com/apache/rocketmq-clients/golang"
 )
 
 func TestSendTransactionMessage(t *testing.T) {
@@ -47,7 +50,11 @@ func TestSendTransactionMessage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run("The synchronous test message is sent normally, expecting success", func(t *testing.T) {
-			var wg sync.WaitGroup
+			var (
+				recvMsgCollector *RecvMsgsCollector
+				sendMsgCollector *SendMsgsCollector
+				wg               sync.WaitGroup
+			)
 			CreateTransactionTopic(tt.args.testTopic, "", tt.args.clusterName, tt.args.nameServer)
 
 			simpleConsumer := BuildSimpleConsumer(tt.args.grpcEndpoint, tt.args.cm, tt.args.msgtag, tt.args.ak, tt.args.sk, tt.args.testTopic)
@@ -56,13 +63,28 @@ func TestSendTransactionMessage(t *testing.T) {
 			defer simpleConsumer.GracefulStop()
 
 			// new producer instance
-			producer := BuildProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, tt.args.testTopic)
+			var checker = &rmq_client.TransactionChecker{
+				Check: func(msgView *rmq_client.MessageView) rmq_client.TransactionResolution {
+					log.Printf("check transaction message: %v", msgView)
+					sendMsgCollector.MsgIds = append(sendMsgCollector.MsgIds, msgView.GetMessageId())
+					msg := &rmq_client.Message{
+						Topic: msgView.GetTopic(),
+						Body:  msgView.GetBody(),
+						Tag:   msgView.GetTag(),
+					}
+					msg.SetKeys(msgView.GetKeys()...)
+					//msg.SetMessageGroup(*msgView.GetMessageGroup())
+					//msg.SetDelayTimestamp(*msgView.GetDeliveryTimestamp())
+					sendMsgCollector.SendMsgs = append(sendMsgCollector.SendMsgs, msg)
+					return rmq_client.COMMIT
+				},
+			}
+
+			// new producer instance
+			producer := BuildTransactionProducer(tt.args.grpcEndpoint, tt.args.ak, tt.args.sk, checker, tt.args.testTopic)
 
 			// graceful stop producer
 			defer producer.GracefulStop()
-
-			var recvMsgCollector *RecvMsgsCollector
-			var sendMsgCollector *SendMsgsCollector
 
 			wg.Add(1)
 
