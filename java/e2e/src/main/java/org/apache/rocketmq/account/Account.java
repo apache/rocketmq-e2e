@@ -18,6 +18,7 @@
 package org.apache.rocketmq.account;
 
 public class Account {
+    protected Boolean aclEnable = false;
     /**
      * aliyun AccessKey
      */
@@ -27,65 +28,28 @@ public class Account {
      */
     protected String secretKey;
     /**
-     * instanceUserName
-     */
-    protected String instanceUserName;
-    /**
-     * instancePassword
-     */
-    protected String instancePassword;
-    /**
      * endpoint
      */
     protected String endpoint;
-    /**
-     * instanceId
-     */
-    protected String instanceId;
-    /**
-     * consoleEndpoint
-     */
-    protected String consoleEndpoint;
-    /**
-     * region
-     */
-    protected String regionId;
-    /**
-     * Account User ID
-     */
-    protected String userId;
-    /**
-     * Account User Name
-     */
-    protected String accountName;
-
-    public Account() {
-    }
 
     public Account(String endpoint) {
         this.endpoint = endpoint;
     }
 
-    public Account(String instanceUserName, String instancePassword) {
-        this.instanceUserName = instanceUserName;
-        this.instancePassword = instancePassword;
-    }
 
     public Account(String accessKey, String secretKey, String endpoint) {
         this.accessKey = accessKey;
         this.secretKey = secretKey;
         this.endpoint = endpoint;
+        this.aclEnable = true;
     }
 
-    public Account(String accessKey, String secretKey, String endpoint, String instanceId, String consoleEndpoint,
-        String regionId, String userId) {
-        this.accessKey = accessKey;
-        this.secretKey = secretKey;
-        this.endpoint = endpoint;
-        this.instanceId = instanceId;
-        this.consoleEndpoint = consoleEndpoint;
-        this.regionId = regionId;
-        this.userId = userId;
+    public Boolean getAclEnable() {
+        return aclEnable;
+    }
+
+    public void setAclEnable(Boolean aclEnable) {
+        this.aclEnable = aclEnable;
     }
 
     public String getAccessKey() {
@@ -104,67 +68,11 @@ public class Account {
         this.secretKey = secretKey;
     }
 
-    public String getInstanceUserName() {
-        return instanceUserName;
-    }
-
-    public void setInstanceUserName(String instanceUserName) {
-        this.instanceUserName = instanceUserName;
-    }
-
-    public String getInstancePassword() {
-        return instancePassword;
-    }
-
-    public void setInstancePassword(String instancePassword) {
-        this.instancePassword = instancePassword;
-    }
-
     public String getEndpoint() {
         return endpoint;
     }
 
     public void setEndpoint(String endpoint) {
         this.endpoint = endpoint;
-    }
-
-    public String getInstanceId() {
-        return instanceId;
-    }
-
-    public void setInstanceId(String instanceId) {
-        this.instanceId = instanceId;
-    }
-
-    public String getConsoleEndpoint() {
-        return consoleEndpoint;
-    }
-
-    public void setConsoleEndpoint(String consoleEndpoint) {
-        this.consoleEndpoint = consoleEndpoint;
-    }
-
-    public String getRegionId() {
-        return regionId;
-    }
-
-    public void setRegionId(String regionId) {
-        this.regionId = regionId;
-    }
-
-    public String getUserId() {
-        return userId;
-    }
-
-    public void setUserId(String userId) {
-        this.userId = userId;
-    }
-
-    public String getAccountName() {
-        return accountName;
-    }
-
-    public void setAccountName(String accountName) {
-        this.accountName = accountName;
     }
 }
