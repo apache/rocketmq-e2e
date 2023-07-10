@@ -1,6 +1,14 @@
-workspace(name = "org_apache_rocketmq")
+workspace(name = "org_apache_rocketmq_e2e")
+
 load("//bazel:rocketmq_deps.bzl", "rocketmq_deps")
 rocketmq_deps()
+
+load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
+http_archive(
+    name = "com_rocketmq_clients_cpp",
+    url = "https://github.com/apache/rocketmq-clients/archive/refs/heads/master.zip",
+    strip_prefix = "rocketmq-clients-master/cpp",
+)
 
 load("@com_github_grpc_grpc//bazel:grpc_deps.bzl", "grpc_deps", "grpc_test_only_deps")
 grpc_deps()

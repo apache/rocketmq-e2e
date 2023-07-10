@@ -30,7 +30,7 @@ def rocketmq_deps():
             "https://shutian.oss-cn-hangzhou.aliyuncs.com/cdn/filesystem/filesystem-1.5.0.tar.gz",
             "https://github.com/gulrak/filesystem/archive/v1.5.0.tar.gz",
         ],
-        build_file = "@org_apache_rocketmq//third_party:filesystem.BUILD",
+        build_file = "@com_rocketmq_clients_cpp//third_party:filesystem.BUILD",
     )
 
     maybe(
@@ -42,7 +42,7 @@ def rocketmq_deps():
             "https://shutian.oss-cn-hangzhou.aliyuncs.com/cdn/spdlog/spdlog-1.9.2.tar.gz",
             "https://github.com/gabime/spdlog/archive/refs/tags/v1.9.2.tar.gz",
         ],
-        build_file = "@org_apache_rocketmq//third_party:spdlog.BUILD",
+        build_file = "@com_rocketmq_clients_cpp//third_party:spdlog.BUILD",
     )
 
     maybe(
@@ -54,7 +54,7 @@ def rocketmq_deps():
             "https://shutian.oss-cn-hangzhou.aliyuncs.com/cdn/fmt/fmt-8.0.1.tar.gz",
             "https://github.com/fmtlib/fmt/archive/refs/tags/8.0.1.tar.gz",
         ],
-        build_file = "@org_apache_rocketmq//third_party:fmtlib.BUILD",
+        build_file = "@com_rocketmq_clients_cpp//third_party:fmtlib.BUILD",
     )
 
     maybe(
@@ -103,17 +103,6 @@ def rocketmq_deps():
 
     maybe(
         http_archive,
-        name = "com_github_gflags_gflags",
-        strip_prefix = "gflags-2.2.2",
-        sha256 = "34af2f15cf7367513b352bdcd2493ab14ce43692d2dcd9dfc499492966c64dcf",
-        urls = [
-            "https://shutian.oss-cn-hangzhou.aliyuncs.com/cdn/gflags/gflags-2.2.2.tar.gz",
-            "https://github.com/gflags/gflags/archive/refs/tags/v2.2.2.tar.gz",
-        ],
-    )
-
-    maybe(
-        http_archive,
         name = "com_github_grpc_grpc",
         strip_prefix = "grpc-1.46.3",
         sha256 = "d6cbf22cb5007af71b61c6be316a79397469c58c82a942552a62e708bce60964",
@@ -127,7 +116,7 @@ def rocketmq_deps():
         http_archive,
         name = "asio",
         sha256 = "c864363205f78768c795ba14a9989200075e732f877ddef01a19237c2eccf44b",
-        build_file = "@org_apache_rocketmq//third_party:asio.BUILD",
+        build_file = "@com_rocketmq_clients_cpp//third_party:asio.BUILD",
         strip_prefix = "asio-1.18.2",
         urls = [
             "https://shutian.oss-cn-hangzhou.aliyuncs.com/cdn/asio/asio-1.18.2.tar.gz",
