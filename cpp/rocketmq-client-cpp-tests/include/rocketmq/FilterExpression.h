@@ -14,24 +14,33 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
-#include <iostream>
+#pragma once
 
-#include "rocketmq/Logger.h"
-#include "test/server/DelayMessageTest.h"
-#include "utils/NameUtils.h"
+#include <string>
 
-std::unordered_map<std::string, std::string> NameUtils::alreadyUsed;
-std::mutex NameUtils::mtx;
+#include "ExpressionType.h"
+#include "Message.h"
 
-int main(int argc,char* argv[])
-{
-    // Adjust log level for file/console sinks
-    // auto& logger = ROCKETMQ_NAMESPACE::getLogger();
-    // logger.setConsoleLevel(ROCKETMQ_NAMESPACE::Level::Info);
-    // logger.setLevel(ROCKETMQ_NAMESPACE::Level::Info);
-    // logger.init();
+ROCKETMQ_NAMESPACE_BEGIN
 
-    testing::InitGoogleTest(&argc,argv);
-    return RUN_ALL_TESTS();
-}
+/**
+ * Server supported message filtering expression. At present, two types are supported: tag and SQL92.
+ */
+struct FilterExpression {
+  FilterExpression(std::string expression, ExpressionType expression_type = ExpressionType::TAG)
+      : content_(std::move(expression)), type_(expression_type), version_(std::chrono::steady_clock::now()) {
+    if (ExpressionType::TAG == type_ && content_.empty()) {
+      content_ = WILD_CARD_TAG;
+    }
+  }
+
+  bool accept(const Message& message) const;
+
+  std::string content_;
+  ExpressionType type_;
+  std::chrono::steady_clock::time_point version_;
+
+  static const char* WILD_CARD_TAG;
+};
+
+ROCKETMQ_NAMESPACE_END

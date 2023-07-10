@@ -14,14 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_library")
 
-cc_binary(
-    name = "rocketmq_test",
-    srcs = glob(["**/*.cpp"]),  
+cc_library(
+    name = "cc_include",
+    hdrs = glob([
+        "frame/**/*.h",
+        "test/**/*.h",
+        "utils/**/*.h",
+        ]),
+    strip_include_prefix = "//include",
+    visibility = ["//visibility:public"],
     deps = [
-        "@com_rocketmq_clients_cpp//source/rocketmq:rocketmq_library",
-        "@com_google_googletest//:gtest_main",
-        "//include:cc_include",
+        "@com_google_absl//absl/strings",
+        "@io_opencensus_cpp//opencensus/trace",
     ],
 )

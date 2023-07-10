@@ -14,24 +14,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
-#include <iostream>
+#pragma once
 
-#include "rocketmq/Logger.h"
-#include "test/server/DelayMessageTest.h"
-#include "utils/NameUtils.h"
+#include <functional>
+#include <system_error>
 
-std::unordered_map<std::string, std::string> NameUtils::alreadyUsed;
-std::mutex NameUtils::mtx;
+#include "RocketMQ.h"
+#include "SendReceipt.h"
 
-int main(int argc,char* argv[])
-{
-    // Adjust log level for file/console sinks
-    // auto& logger = ROCKETMQ_NAMESPACE::getLogger();
-    // logger.setConsoleLevel(ROCKETMQ_NAMESPACE::Level::Info);
-    // logger.setLevel(ROCKETMQ_NAMESPACE::Level::Info);
-    // logger.init();
+ROCKETMQ_NAMESPACE_BEGIN
 
-    testing::InitGoogleTest(&argc,argv);
-    return RUN_ALL_TESTS();
-}
+using SendCallback = std::function<void(const std::error_code&, const SendReceipt&)>;
+
+ROCKETMQ_NAMESPACE_END
