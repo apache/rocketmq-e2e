@@ -16,36 +16,40 @@
  */
 #include "frame/BaseOperate.h"
 #include <gtest/gtest.h>
-#include <string.h>
+#include <string>
+#include <vector>
+#include <mutex>
 #include "rocketmq/DefaultMQPushConsumer.h"
 
 extern std::string namesrv;
 extern std::string brokerAddr;
 extern std::string cluster;
 
+class MsgListener : public rocketmq::MessageListenerConcurrently {
+ public:
+  MsgListener() {}
+  virtual ~MsgListener() {}
+
+  virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt>& msgs) {
+    return rocketmq::CONSUME_SUCCESS;
+  }
+};
+
 TEST(PushConsumerInitTest, testNormalSetting){
+    SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
     std::string groupId = getGroupId("testNormalSetting");
     std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting", brokerAddr,namesrv,cluster);
-    rocketmq::DefaultMQPushConsumer consumer(groupId);
-    consumer.setNamesrvAddr(namesrv);
-    consumer.setGroupName(groupId);
-    consumer.setConsumeThreadCount(20);
-    consumer.subscribe(topic, "*");
-    consumer.setTcpTransportTryLockTimeout(1000);
-    consumer.setTcpTransportConnectTimeout(400);    
+    ASSERT_NO_FATAL_FAILURE({
+        rocketmq::DefaultMQPushConsumer consumer(groupId);
+        consumer.setNamesrvAddr(namesrv);
+        consumer.setGroupName(groupId);
+        consumer.setConsumeThreadCount(20);
+        consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
+        consumer.subscribe(topic, "*");
+        MsgListener msglistener;
+        consumer.registerMessageListener(&msglistener); 
 
-    if (info.syncpush)
-      consumer.setAsyncPull(false);  // set sync pull
-    if (info.broadcasting) {
-      consumer.setMessageModel(rocketmq::BROADCASTING);
-    }   
-    consumer.setInstanceName(info.groupname);   
-    
-    MyMsgListener msglistener;
-    consumer.registerMessageListener(&msglistener); 
-    try {
-      consumer.start();
-    } catch (MQClientException& e) {
-      cout << e << endl;
-    }
+        consumer.start();
+        consumer.shutdown();
+    });
 }

@@ -17,6 +17,8 @@
 #include <spdlog/spdlog.h>
 #include "utils/MQAdminUtils.h"
 
+extern std::shared_ptr<spdlog::logger> multi_logger;
+
 std::string MQAdminUtils::getRootPath() {
   std::string projectBasePath = std::getenv("PWD");
   std::string path = projectBasePath;
@@ -37,7 +39,7 @@ std::string MQAdminUtils::executeShellCommand(const std::string& command) {
     output += buffer;
   }
   pclose(pipe);
-  spdlog::info("{}", output);
+  multi_logger->info("{}", output);
   return output;
 }
 
@@ -54,7 +56,7 @@ std::string MQAdminUtils::createTopic(const std::string& topicName, const std::s
   if (!clusterName.empty()) {
     command = command + " -c " + clusterName;
   }
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }
 
@@ -72,7 +74,7 @@ std::string MQAdminUtils::createDelayTopic(const std::string& topicName, const s
     command = command + " -c " + clusterName;
   }
   command = command + " -a " + "+message.type=DELAY";
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }
 
@@ -90,7 +92,7 @@ std::string MQAdminUtils::createFIFOTopic(const std::string& topicName, const st
     command = command + " -c " + clusterName;
   }
   command = command + " -a " + "+message.type=FIFO";
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }
 
@@ -108,7 +110,7 @@ std::string MQAdminUtils::createTransactionTopic(const std::string& topicName, c
     command = command + " -c " + clusterName;
   }
   command = command + " -a " + "+message.type=TRANSACTION";
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }
 
@@ -126,7 +128,7 @@ std::string MQAdminUtils::createOrderlyConsumerGroup(const std::string& consumer
     command = command + " -c " + clusterName;
   }
   command = command + " -s true -o true -m false -d false ";
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }
 
@@ -136,6 +138,6 @@ std::string MQAdminUtils::clusterList(const std::string& nameserver) {
   if (!nameserver.empty()) {
     command = command + " -n " + nameserver;
   }
-  spdlog::info("{}", command);
+  multi_logger->info("{}", command);
   return executeShellCommand(command);
 }

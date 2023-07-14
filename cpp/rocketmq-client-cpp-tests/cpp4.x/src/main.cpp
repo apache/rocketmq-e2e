@@ -18,6 +18,7 @@
 #include <gtest/gtest.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
+#include <memory>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
@@ -25,14 +26,15 @@
 std::string namesrv;
 std::string brokerAddr;
 std::string cluster;
+std::shared_ptr<spdlog::logger> multi_logger;
 
 int main(int argc, char* argv[]) {
     //注册控制台和文件日志输出
     auto console_sink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
     auto file_sink = std::make_shared<spdlog::sinks::basic_file_sink_mt>("logs/output.log", true);
     spdlog::sinks_init_list sink_list = {console_sink, file_sink};
-    auto multi_logger = std::make_shared<spdlog::logger>("multi", sink_list.begin(), sink_list.end());
-    multi_logger->set_level(spdlog::level::info);
+    multi_logger = std::make_shared<spdlog::logger>("multi", sink_list.begin(), sink_list.end());
+    multi_logger->set_level(spdlog::level::trace);
     spdlog::register_logger(multi_logger);
 
     //读取配置文件

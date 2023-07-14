@@ -15,3 +15,8 @@
  * limitations under the License.
  */
 #pragma once
+
+enum class ConsumeResult {
+    SUCCESS,
+    FAILURE
+};

@@ -17,10 +17,12 @@
 
 #include "frame/BaseOperate.h"
 
+extern std::shared_ptr<spdlog::logger> multi_logger;
+
 std::string getTopic(MessageType messageType, const std::string& methodName,const std::string& brokerAddr,const std::string& namesrvAddr,const std::string& cluster){
     std::string messageTypeStr = MessageTypeToString[messageType];
     std::string topic = "topic_" + messageTypeStr + "_" + methodName + "_" + RandomUtils::getStringWithCharacter(6);
-    spdlog::info("[Topic] topic:{}, messageType:{}, methodName:{}", topic, messageTypeStr, methodName);
+    multi_logger->info("[Topic] topic:{}, messageType:{}, methodName:{}", topic, messageTypeStr, methodName);
     MQAdminUtils::createTopic(topic, brokerAddr , "", namesrvAddr);
     return topic;
 }
