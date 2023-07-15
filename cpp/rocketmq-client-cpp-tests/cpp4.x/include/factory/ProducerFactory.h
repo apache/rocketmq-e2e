@@ -14,12 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#pragma once
+ #include "resource/Resource.h"
 #include <memory>
-#include <rocketmq/DefaultMQPullConsumer.h>
+#include <rocketmq/DefaultMQProducer.h>
+#include <spdlog/logger.h>
 
-class VerifyUtils {
+extern std::shared_ptr<spdlog::logger> multi_logger;
+extern std::shared_ptr<Resource> resource;
+
+class ProducerFactory {
 public:
-    VerifyUtils() = delete;
-    static void tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer);
+    ProducerFactory()=delete;
+
+
+    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(std::string group){
+        auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
+        producer->setNamesrvAddr(resource->getNamesrv());
+        producer->setInstanceName(group);
+        producer->setTcpTransportTryLockTimeout(1000);
+        producer->setTcpTransportConnectTimeout(400);
+        producer->start();
+        return producer;
+    }
 };

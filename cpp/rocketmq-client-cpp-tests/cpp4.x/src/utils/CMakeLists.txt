@@ -2,6 +2,8 @@ set(SRC_FILES
     MQAdminUtils.cpp
     NameUtils.cpp
     RandomUtils.cpp
+    InitResourceUtils.cpp
+    VerifyUtils.cpp
 )
 
 add_library(utils STATIC ${SRC_FILES})

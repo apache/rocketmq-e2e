@@ -14,44 +14,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <stdlib.h>
-#include <chrono>
-#include <iomanip>
-#include <iostream>
-#include <map>
-#include <vector>
-#include <string>
 #include <gtest/gtest.h>
-#include <spdlog/spdlog.h>
-#include <rocketmq/MQClientException.h>
+#include <string>
+#include <vector>
+#include <mutex>
+#include <thread>
 #include <rocketmq/DefaultMQPullConsumer.h>
-#include <rocketmq/MQMessageQueue.h>
+#include <rocketmq/MQMessage.h>
 #include "resource/Resource.h"
-#include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
+
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(ConsumerGroupTest, testSystemInnerConsumerGroup) {
-//     std::string groupId = "DEFAULT_CONSUMER";
-//     std::string topic = getTopic(MessageType::NORMAL, "testSystemInnerConsumerGroup", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
-//     ASSERT_THROW({
+// TEST(PullConsumerInitTest, testNormalPullConsumer){
+//     SCOPED_TRACE("Start [PullConsumer] failed, expected success.");
+//     std::string groupId = getGroupId("testNoClientConfiguration");
+//     std::string topic = getTopic(MessageType::NORMAL, "testNoClientConfiguration",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+//     ASSERT_NO_FATAL_FAILURE({
 //         rocketmq::DefaultMQPullConsumer consumer(groupId);
 //         consumer.setNamesrvAddr(resource->getNamesrv());
 //         consumer.registerMessageQueueListener(topic, NULL);
 //         consumer.start();
-//         std::vector<rocketmq::MQMessageQueue> mqs;
-
-//         try {
-//             consumer.fetchSubscribeMessageQueues(topic, mqs);
-//             auto iter = mqs.begin();
-//             for (; iter != mqs.end(); ++iter) {
-//                 spdlog::info("mq: {}", (*iter).toString());
-//             }
-//         } catch (const rocketmq::MQException& e) {
-//             multi_logger->info("fetchSubscribeMessageQueues exception: {}", e.what());
-//         }
+//         std::this_thread::sleep_for(std::chrono::seconds(5));
 //         consumer.shutdown();
-//     },rocketmq::MQException);
+//     });
 // }

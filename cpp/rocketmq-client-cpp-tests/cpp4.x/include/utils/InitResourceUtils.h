@@ -15,11 +15,8 @@
  * limitations under the License.
  */
 #pragma once
-#include <memory>
-#include <rocketmq/DefaultMQPullConsumer.h>
 
-class VerifyUtils {
-public:
-    VerifyUtils() = delete;
-    static void tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer);
-};
+#include <memory>
+#include "resource/Resource.h"
+
+void initResource(std::shared_ptr<Resource> resource);

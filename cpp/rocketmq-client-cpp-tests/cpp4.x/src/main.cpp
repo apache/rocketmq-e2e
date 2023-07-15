@@ -16,17 +16,16 @@
  */
 #include <iostream>
 #include <gtest/gtest.h>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
 #include <memory>
+#include <string>
 #include "spdlog/spdlog.h"
 #include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/basic_file_sink.h"
+#include "resource/Resource.h"
+#include "utils/InitResourceUtils.h"
 
-std::string namesrv;
-std::string brokerAddr;
-std::string cluster;
 std::shared_ptr<spdlog::logger> multi_logger;
+std::shared_ptr<Resource> resource;
 
 int main(int argc, char* argv[]) {
     //注册控制台和文件日志输出
@@ -38,11 +37,8 @@ int main(int argc, char* argv[]) {
     spdlog::register_logger(multi_logger);
 
     //读取配置文件
-    boost::property_tree::ptree pt;
-    boost::property_tree::ini_parser::read_ini("config.ini", pt);
-    namesrv = pt.get<std::string>("rocketmq.namesrv");
-    brokerAddr = pt.get<std::string>("rocketmq.brokerAddr");
-    cluster = pt.get<std::string>("rocketmq.cluster");
+    resource = std::make_shared<Resource>();
+    initResource(resource);
     
     //启动测试
     testing::InitGoogleTest(&argc,argv);
