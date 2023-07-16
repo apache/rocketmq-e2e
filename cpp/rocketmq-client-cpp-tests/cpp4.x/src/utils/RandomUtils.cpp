@@ -14,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <algorithm>
 #include <random>
 #include <string>
 #include <sstream>
@@ -130,4 +131,14 @@ char RandomUtils::getChineseChar(int codePoint) {
     }
 
     return utf8Bytes[0];
+}
+
+std::string RandomUtils::randomAlphabetic(int length) {
+    std::string str("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    std::random_device rd;
+    std::mt19937 generator(rd());
+  
+    std::shuffle(str.begin(), str.end(), generator);
+
+    return str.substr(0, length); 
 }

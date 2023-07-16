@@ -33,9 +33,10 @@ public:
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setInstanceName(group);
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
-        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_FIRST_OFFSET);
         rmqPushConsumer->subscribe(topic, "*");
         rmqPushConsumer->registerMessageListener(&msglistener);
+        rmqPushConsumer->setConsumeThreadCount(4);
         rmqPushConsumer->start();
         return rmqPushConsumer;
     }

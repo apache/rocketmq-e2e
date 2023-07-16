@@ -27,35 +27,88 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-int async_function(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+bool async_function(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     std::vector<rocketmq::MQMessageQueue> mqs;
     try {
         pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
-        auto iter = mqs.begin();
-        for (; iter != mqs.end(); ++iter) {
-            // multi_logger->info("mq: {}", (*iter).toString());
+        for (auto& mq : mqs) {
+            long long offset = pullConsumer->fetchConsumeOffset(mq, true);
+            if(offset<0) continue;
+            rocketmq::PullResult pullResult = pullConsumer->pull(mq, "", offset, 32);
+            switch (pullResult.pullStatus) {
+                case rocketmq::FOUND:
+                    for (auto& msg : pullResult.msgFoundList) {
+                        multi_logger->info("Message: {}", msg.toString());
+                    }
+                    offset = pullResult.nextBeginOffset;
+                    pullConsumer->updateConsumeOffset(mq, offset);
+                    break;
+                case rocketmq::NO_MATCHED_MSG:
+                    break;
+                case rocketmq::NO_NEW_MSG:
+                    break;
+                case rocketmq::OFFSET_ILLEGAL:
+                    break;
+                default:
+                    break;
+            }
         }
     } catch (const rocketmq::MQException& e) {
-        multi_logger->info("fetchSubscribeMessageQueues exception: {}", e.what());
+        multi_logger->warn("fetchSubscribeMessageQueues exception: {}", e.what());
+        return false;
     }
-    return 1;
+    return true;
 }
 
-void VerifyUtils::tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
-    std::future<int> future1 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+bool VerifyUtils::tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+    // async_function(topic, pullConsumer);
+    std::future<bool> future1 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    // std::future<bool> future2 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    // std::future<bool> future3 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    // std::future<bool> future4 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    // std::future<bool> future5 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    
     auto status1 = future1.wait_for(std::chrono::seconds(30));
-    std::future<int> future2 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
-    auto status2 = future2.wait_for(std::chrono::seconds(30));
-    std::future<int> future3 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
-    auto status3 = future3.wait_for(std::chrono::seconds(30));
-    std::future<int> future4 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
-    auto status4 = future4.wait_for(std::chrono::seconds(30));
-    std::future<int> future5 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
-    auto status5 = future5.wait_for(std::chrono::seconds(30));
-    std::this_thread::sleep_for(std::chrono::seconds(30));
+    // auto status2 = future2.wait_for(std::chrono::seconds(30));
+    // auto status3 = future3.wait_for(std::chrono::seconds(30));
+    // auto status4 = future4.wait_for(std::chrono::seconds(30));
+    // auto status5 = future5.wait_for(std::chrono::seconds(30));
 
-    if (status1 == std::future_status::ready && status2 == std::future_status::ready && status3 == std::future_status::ready && status4 == std::future_status::ready && status5 == std::future_status::ready) {
+    if (status1 == std::future_status::ready && future1.get() == true) {
+        return true;
     } else {
-        FAIL() << "tryReceiveOnce error";
+        return false;
     }
 }
+
+std::vector<rocketmq::MQMessageExt> VerifyUtils::fetchMessages(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer, const std::string& topic) {
+        std::vector<rocketmq::MQMessageQueue> mqs;
+        pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+
+        //rocekmq获取队列中所有未消费的消息，首先判断消息数量是不是为1，然后判断消息体是否为空
+        std::vector<rocketmq::MQMessageExt> msgs;
+        for (auto& mq : mqs) {
+            long long offset = pullConsumer->fetchConsumeOffset(mq, true);
+            if(offset<0) continue;
+            rocketmq::PullResult pullResult = pullConsumer->pull(mq, "", offset, 32);
+            switch (pullResult.pullStatus) {
+                case rocketmq::FOUND:
+                    for (auto& msg : pullResult.msgFoundList) {
+                        msgs.push_back(msg);
+                        // std::cout << "msg body: " << msg.getBody() << std::endl;
+                    }
+                    offset = pullResult.nextBeginOffset;
+                    pullConsumer->updateConsumeOffset(mq, offset);
+                    break;
+                case rocketmq::NO_MATCHED_MSG:
+                    break;
+                case rocketmq::NO_NEW_MSG:
+                    break;
+                case rocketmq::OFFSET_ILLEGAL:
+                    break;
+                default:
+                    break;
+            }
+        }
+        return msgs;
+    }

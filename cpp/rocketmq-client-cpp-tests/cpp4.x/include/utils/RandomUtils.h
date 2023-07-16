@@ -31,6 +31,7 @@ public:
     static std::string getStringWithCharacter(int n);
     static int getIntegerBetween(int n, int m);
     static int getIntegerMoreThanZero();
+    static std::string randomAlphabetic(int length);
     
 private:
     static constexpr int UNICODE_START = 0x4E00;
