@@ -30,20 +30,22 @@ extern std::shared_ptr<Resource> resource;
 class MsgListener : public rocketmq::MessageListenerConcurrently {
 private:
     std::atomic<int> count;
-    std::vector<std::string> messages;
+    std::vector<rocketmq::MQMessageExt> messages;
 public:
     MsgListener() { count = 0; };
 
     void resetMsgCount() { count = 0; }
 
-    int getMsgCount() { return count; }
+    int getMsgCount() const { return count; }
+
+    std::vector<rocketmq::MQMessageExt> getMessages() const { return messages; }
 
     virtual ~MsgListener() {}
 
     virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt>& msgs) override {
         for (const auto& msg : msgs) {
                 multi_logger->info("Received message: {}",msg.toString());
-                messages.push_back(msg.toString());
+                messages.push_back(msg);
                 count++;
         }
         return rocketmq::CONSUME_SUCCESS;

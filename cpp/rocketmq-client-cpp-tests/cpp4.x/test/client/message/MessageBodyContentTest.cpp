@@ -39,10 +39,9 @@ extern std::shared_ptr<Resource> resource;
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsSpace");
 //     ASSERT_NO_FATAL_FAILURE({
-//         MsgListener msglistener;
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,msglistener);
+//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
-//         pushConsumer->shutdown();
 
 //         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
         
@@ -58,11 +57,13 @@ extern std::shared_ptr<Resource> resource;
 
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
+//         // std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
+//         auto msgs = msglistener->getMessages();
         
 //         ASSERT_EQ(msgs.size(), 1);
 //         ASSERT_EQ(msgs[0].getBody(), body);
 
+//         pushConsumer->shutdown();
 //         pullConsumer->shutdown();
 //         producer->shutdown();
 //     });
@@ -72,10 +73,9 @@ extern std::shared_ptr<Resource> resource;
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsChinese");
 //     ASSERT_NO_FATAL_FAILURE({
-//         MsgListener msglistener;
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,msglistener);
+//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
-//         pushConsumer->shutdown();
 
 //         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
         
@@ -91,11 +91,12 @@ extern std::shared_ptr<Resource> resource;
 
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
+//         auto msgs = msglistener->getMessages();
         
 //         ASSERT_EQ(msgs.size(), 1);
 //         ASSERT_EQ(msgs[0].getBody(), body);
 
+//         pushConsumer->shutdown();
 //         pullConsumer->shutdown();
 //         producer->shutdown();
 //     });
@@ -105,10 +106,9 @@ extern std::shared_ptr<Resource> resource;
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsEmoji");
 //     ASSERT_NO_FATAL_FAILURE({
-//         MsgListener msglistener;
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,msglistener);
+//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
-//         pushConsumer->shutdown();
 
 //         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
         
@@ -124,11 +124,12 @@ extern std::shared_ptr<Resource> resource;
 
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
+//         auto msgs = msglistener->getMessages();
         
 //         ASSERT_EQ(msgs.size(), 1);
 //         ASSERT_EQ(msgs[0].getBody(), body);
 
+//         pushConsumer->shutdown();
 //         pullConsumer->shutdown();
 //         producer->shutdown();
 //     });

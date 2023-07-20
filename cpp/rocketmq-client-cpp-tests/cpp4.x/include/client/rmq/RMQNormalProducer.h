@@ -14,7 +14,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "client/rmq/RMQNormalProducer.h"
+#pragma once
+#include "common/AbstractMQProducer.h"
 #include "resource/Resource.h"
 #include <memory>
 #include <rocketmq/DefaultMQProducer.h>
@@ -23,26 +24,40 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class ProducerFactory {
+class RMQNormalProducer : public AbstractMQProducer {
+private:
+    std::shared_ptr<rocketmq::DefaultMQProducer> producer;
 public:
-    ProducerFactory()=delete;
+    RMQNormalProducer(std::shared_ptr<rocketmq::DefaultMQProducer> producer){
+        this->producer = producer;
+    }
 
-
-    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(std::string group){
-        auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
-        producer->setNamesrvAddr(resource->getNamesrv());
-        producer->setTcpTransportTryLockTimeout(1000);
-        producer->setTcpTransportConnectTimeout(400);
-        producer->start();
+    std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(){
         return producer;
     }
 
-    static std::shared_ptr<RMQNormalProducer> getRMQProducer(std::string group){
-        auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
-        producer->setNamesrvAddr(resource->getNamesrv());
-        producer->setTcpTransportTryLockTimeout(1000);
-        producer->setTcpTransportConnectTimeout(400);
+    void start() {
         producer->start();
-        return std::make_shared<RMQNormalProducer>(producer);
+    }
+
+    void send(rocketmq::MQMessage& msg) {
+        try {
+            rocketmq::SendResult sendResult = producer->send(msg);
+            getEnqueueMessages()->addData(msg.getBody());
+            // Log sendResult
+        } catch (const std::exception& e) {
+            multi_logger->error("Producer send message failed, {}", e.what());
+        }
+    }
+
+    void send(const std::string& topic, const std::string& tags, const std::string& body) {
+        rocketmq::MQMessage msg(topic, // topic
+                                tags,  // tags
+                                body); // body
+        send(msg);
+    }
+
+    void shutdown() {
+        producer->shutdown();
     }
 };

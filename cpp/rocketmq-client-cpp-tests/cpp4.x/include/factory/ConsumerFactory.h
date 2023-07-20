@@ -28,15 +28,14 @@ class PushConsumerFactory {
 public:
     PushConsumerFactory()=delete;
 
-    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(std::string topic, std::string group,MsgListener& msglistener){
+    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(std::string topic, std::string group,std::string tag,std::shared_ptr<MsgListener> msglistener){
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
-        rmqPushConsumer->setInstanceName(group);
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
-        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_FIRST_OFFSET);
-        rmqPushConsumer->subscribe(topic, "*");
-        rmqPushConsumer->registerMessageListener(&msglistener);
-        rmqPushConsumer->setConsumeThreadCount(4);
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeThreadCount(1);
+        rmqPushConsumer->subscribe(topic, tag);
+        rmqPushConsumer->registerMessageListener(msglistener.get());
         rmqPushConsumer->start();
         return rmqPushConsumer;
     }
