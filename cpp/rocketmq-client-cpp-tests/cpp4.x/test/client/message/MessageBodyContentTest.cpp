@@ -40,10 +40,10 @@ extern std::shared_ptr<Resource> resource;
 //     std::string group = getGroupId("testMessageBodyContentIsSpace");
 //     ASSERT_NO_FATAL_FAILURE({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
+//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
 //         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
 
@@ -74,10 +74,10 @@ extern std::shared_ptr<Resource> resource;
 //     std::string group = getGroupId("testMessageBodyContentIsChinese");
 //     ASSERT_NO_FATAL_FAILURE({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
+//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
 //         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
 
@@ -107,10 +107,10 @@ extern std::shared_ptr<Resource> resource;
 //     std::string group = getGroupId("testMessageBodyContentIsEmoji");
 //     ASSERT_NO_FATAL_FAILURE({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = PushConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group);
+//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
 //         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
 

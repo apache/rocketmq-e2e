@@ -54,7 +54,7 @@ bool async_function(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullCo
             }
         }
     } catch (const rocketmq::MQException& e) {
-        multi_logger->warn("fetchSubscribeMessageQueues exception: {}", e.what());
+        multi_logger->error("fetchSubscribeMessageQueues exception: {}", e.what());
         return false;
     }
     return true;
@@ -82,33 +82,81 @@ bool VerifyUtils::tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::De
 }
 
 std::vector<rocketmq::MQMessageExt> VerifyUtils::fetchMessages(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer, const std::string& topic) {
-        std::vector<rocketmq::MQMessageQueue> mqs;
-        pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
-
-        //rocekmq获取队列中所有未消费的消息，首先判断消息数量是不是为1，然后判断消息体是否为空
-        std::vector<rocketmq::MQMessageExt> msgs;
-        for (auto& mq : mqs) {
-            long long offset = pullConsumer->fetchConsumeOffset(mq, true);
-            if(offset<0) continue;
-            rocketmq::PullResult pullResult = pullConsumer->pull(mq, "", offset, 32);
-            switch (pullResult.pullStatus) {
-                case rocketmq::FOUND:
-                    for (auto& msg : pullResult.msgFoundList) {
-                        msgs.push_back(msg);
-                        // std::cout << "msg body: " << msg.getBody() << std::endl;
-                    }
-                    offset = pullResult.nextBeginOffset;
-                    pullConsumer->updateConsumeOffset(mq, offset);
-                    break;
-                case rocketmq::NO_MATCHED_MSG:
-                    break;
-                case rocketmq::NO_NEW_MSG:
-                    break;
-                case rocketmq::OFFSET_ILLEGAL:
-                    break;
-                default:
-                    break;
-            }
+    std::vector<rocketmq::MQMessageQueue> mqs;
+    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+    //rocekmq获取队列中所有未消费的消息，首先判断消息数量是不是为1，然后判断消息体是否为空
+    std::vector<rocketmq::MQMessageExt> msgs;
+    for (auto& mq : mqs) {
+        long long offset = pullConsumer->fetchConsumeOffset(mq, true);
+        if(offset<0) continue;
+        rocketmq::PullResult pullResult = pullConsumer->pull(mq, "", offset, 32);
+        switch (pullResult.pullStatus) {
+            case rocketmq::FOUND:
+                for (auto& msg : pullResult.msgFoundList) {
+                    msgs.push_back(msg);
+                    // std::cout << "msg body: " << msg.getBody() << std::endl;
+                }
+                offset = pullResult.nextBeginOffset;
+                pullConsumer->updateConsumeOffset(mq, offset);
+                break;
+            case rocketmq::NO_MATCHED_MSG:
+                break;
+            case rocketmq::NO_NEW_MSG:
+                break;
+            case rocketmq::OFFSET_ILLEGAL:
+                break;
+            default:
+                break;
         }
-        return msgs;
     }
+    return msgs;
+}
+
+std::vector<std::string> VerifyUtils::waitForMessageConsume(DataCollector<std::string>& enqueueMessages,DataCollector<std::string>& dequeueMessages,long long timeoutMills, int consumedTimes){
+    multi_logger->info("Set timeout: {}ms",timeoutMills);
+
+    std::vector<std::string> sendMessages = enqueueMessages.getAllData();
+
+    auto currentTime = std::chrono::steady_clock::now();
+
+    while (!sendMessages.empty()) {
+        std::vector<std::string> receivedMessagesCopy = dequeueMessages.getAllData();
+        sendMessages.erase(std::remove_if(sendMessages.begin(), sendMessages.end(),
+                                          [&](const std::string& enqueueMessageId) {
+            auto count = std::count_if(receivedMessagesCopy.begin(), receivedMessagesCopy.end(),
+                                       [&](const std::string& msg) {
+                return msg == enqueueMessageId;
+            });
+            
+            if (count >= consumedTimes) {
+                if (count > consumedTimes) {
+                    multi_logger->error("More retry messages were consumed than expected (including one original message)"
+                              "Except: {}, Actual: {}, MsgId: {}", consumedTimes, count, enqueueMessageId);
+                    assert(false);
+                }
+                return true;
+            }
+            return false;
+        }), sendMessages.end());
+
+        if (sendMessages.empty()) {
+            break;
+        }
+
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - currentTime).count() >= timeoutMills) {
+            multi_logger->error("Timeout but not received all send messages");
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    return sendMessages;
+}
+
+bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
+    if (unConsumedMessages.size() > 0) {
+        multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", unConsumedMessages.size());
+        return false;
+    }
+    return true;
+}

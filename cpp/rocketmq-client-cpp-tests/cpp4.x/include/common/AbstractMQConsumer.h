@@ -16,9 +16,10 @@
  */
 #pragma once
 #include "common/MQCollector.h"
+#include <rocketmq/MQMessage.h>
 #include <string>
 
-class AbstractMQConsumer: public MQCollector{
+class AbstractMQConsumer: public MQCollector<std::string>{
 public:
     AbstractMQConsumer() = default;
 };

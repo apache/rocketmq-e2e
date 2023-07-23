@@ -19,6 +19,7 @@
 #include "resource/Resource.h"
 #include <memory>
 #include <rocketmq/DefaultMQProducer.h>
+#include <rocketmq/MQMessage.h>
 #include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
@@ -40,21 +41,22 @@ public:
         producer->start();
     }
 
-    void send(rocketmq::MQMessage& msg) {
+    rocketmq::SendResult send(rocketmq::MQMessage& msg) {
+        rocketmq::SendResult sendResult;
         try {
-            rocketmq::SendResult sendResult = producer->send(msg);
-            getEnqueueMessages()->addData(msg.getBody());
-            // Log sendResult
+            sendResult = producer->send(msg);
+            getEnqueueMessages()->addData(sendResult.getMsgId());
         } catch (const std::exception& e) {
             multi_logger->error("Producer send message failed, {}", e.what());
         }
+        return sendResult;
     }
 
-    void send(const std::string& topic, const std::string& tags, const std::string& body) {
+    rocketmq::SendResult send(const std::string& topic, const std::string& tags, const std::string& body) {
         rocketmq::MQMessage msg(topic, // topic
                                 tags,  // tags
                                 body); // body
-        send(msg);
+        return send(msg);
     }
 
     void shutdown() {

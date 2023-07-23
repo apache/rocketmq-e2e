@@ -22,17 +22,18 @@
 #include <string>
 #include "utils/data/collect/DataCollector.h"
 
-class ListDataCollectorImpl : public DataCollector {
+template <typename T>
+class ListDataCollectorImpl : public DataCollector<T> {
 private:
-    std::vector<std::string> data;
-    std::set<std::string> unduplicated_data;
+    std::vector<T> data;
+    std::set<T> unduplicated_data;
     bool lock = false;
     std::mutex mtx;
 
 public:
     ListDataCollectorImpl() {}
 
-    ListDataCollectorImpl(const std::vector<std::string>& initial_data) {
+    ListDataCollectorImpl(const std::vector<T>& initial_data) {
         for (const std::string& item : initial_data) {
             addData(item);
         }
@@ -45,17 +46,17 @@ public:
         unlockIncrement();
     }
 
-    std::vector<std::string> getAllData() override {
+    std::vector<T> getAllData() override {
         std::lock_guard<std::mutex> lock_this(mtx);
         return data;
     }
 
-    std::set<std::string> getAllDataWithoutDuplicate() override {
+    std::set<T> getAllDataWithoutDuplicate() override {
         std::lock_guard<std::mutex> lock_this(mtx);
         return unduplicated_data;
     }
 
-    void addData(const std::string& new_data) override {
+    void addData(const T& new_data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         if (!lock) {
             data.push_back(new_data);
@@ -73,17 +74,17 @@ public:
         return data.size();
     }
 
-    bool isRepeatedData(const std::string& data) override {
+    bool isRepeatedData(const T& data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         return std::count(this->data.begin(), this->data.end(), data) > 1;
     }
 
-    int getRepeatedTimeForData(const std::string& data) override {
+    int getRepeatedTimeForData(const T& data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         return std::count(this->data.begin(), this->data.end(), data);
     }
 
-    void removeData(const std::string& data) override {
+    void removeData(const T& data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         this->data.erase(std::remove(this->data.begin(), this->data.end(), data), this->data.end());
         unduplicated_data.erase(data);
@@ -102,3 +103,84 @@ public:
         return data.front();
     }
 };
+
+// class ListDataCollectorImpl : public DataCollector {
+// private:
+//     std::vector<std::string> data;
+//     std::set<std::string> unduplicated_data;
+//     bool lock = false;
+//     std::mutex mtx;
+
+// public:
+//     ListDataCollectorImpl() {}
+
+//     ListDataCollectorImpl(const std::vector<std::string>& initial_data) {
+//         for (const std::string& item : initial_data) {
+//             addData(item);
+//         }
+//     }
+
+//     void resetData() override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         data.clear();
+//         unduplicated_data.clear();
+//         unlockIncrement();
+//     }
+
+//     std::vector<std::string> getAllData() override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return data;
+//     }
+
+//     std::set<std::string> getAllDataWithoutDuplicate() override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return unduplicated_data;
+//     }
+
+//     void addData(const std::string& new_data) override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         if (!lock) {
+//             data.push_back(new_data);
+//             unduplicated_data.insert(new_data);
+//         }
+//     }
+
+//     size_t getDataSizeWithoutDuplicate() override {
+//         std::lock_guard<std::mutex> lock_thislock(mtx);
+//         return unduplicated_data.size();
+//     }
+
+//     size_t getDataSize() override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return data.size();
+//     }
+
+//     bool isRepeatedData(const std::string& data) override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return std::count(this->data.begin(), this->data.end(), data) > 1;
+//     }
+
+//     int getRepeatedTimeForData(const std::string& data) override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return std::count(this->data.begin(), this->data.end(), data);
+//     }
+
+//     void removeData(const std::string& data) override {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         this->data.erase(std::remove(this->data.begin(), this->data.end(), data), this->data.end());
+//         unduplicated_data.erase(data);
+//     }
+
+//     void lockIncrement() override {
+//         lock = true;
+//     }
+
+//     void unlockIncrement() override {
+//         lock = false;
+//     }
+
+//     std::string getFirstElement() {
+//         std::lock_guard<std::mutex> lock_this(mtx);
+//         return data.front();
+//     }
+// };

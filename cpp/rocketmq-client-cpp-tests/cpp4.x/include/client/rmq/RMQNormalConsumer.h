@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #pragma once
+#include "common/AbstractMQConsumer.h"
 #include "listener/MsgListener.h"
 #include "resource/Resource.h"
 #include "common/MQCollector.h"
@@ -36,11 +37,11 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class RMQNormalConsumer : public MQCollector {
+class RMQNormalConsumer : public AbstractMQConsumer {
 private:
     std::shared_ptr<rocketmq::DefaultMQPushConsumer> pushConsumer;
-    std::shared_ptr<rocketmq:DefaultMQPullConsumer> pullConsumer;
-    std::shared_ptr<rocketmq:DefaultMQPushConsumer> consumer;
+    std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer;
+    std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer;
     std::vector<std::future<void>> executorService;
     static constexpr int WAIT_RESPONSE_MILLS = 15 * 1000;
     std::shared_ptr<RMQNormalListener> listener = nullptr;
@@ -52,14 +53,14 @@ public:
     RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQNormalListener> listener) 
         : pushConsumer(consumer), listener(listener) {}
 
-    RMQNormalConsumer(std::shared_ptr<rocketmq:DefaultMQPullConsumer> consumer) 
+    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> consumer) 
         : pullConsumer(consumer) {}
 
     // void receiveThenNack(const std::string& topic,int maxMessageNum, std::optional<std::chrono::duration<double>> receiveInvisibleDuration, std::optional<std::chrono::duration<double>> changeInvisibleDuration) { 
         
     // }
 
-    void close() {
+    void shutdown() {
         if (pushConsumer) {
             pushConsumer->shutdown();
         }
@@ -76,11 +77,11 @@ public:
         this->pushConsumer = pushConsumer;
     }
 
-    std::shared_ptr<rocketmq:DefaultMQPullConsumer> getPullConsumer() {
+    std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer() {
         return pullConsumer;
     }
 
-    void setSimpleConsumer(std::shared_ptr<rocketmq:DefaultMQPullConsumer> pullConsumer) {
+    void setSimpleConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer) {
         this->pullConsumer = pullConsumer;
     }
 

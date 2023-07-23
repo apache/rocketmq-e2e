@@ -14,7 +14,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "client/rmq/RMQNormalConsumer.h"
 #include "listener/MsgListener.h"
+#include "listener/rmq/RMQNormalListener.h"
 #include "resource/Resource.h"
 #include <memory>
 #include <rocketmq/DefaultMQPullConsumer.h>
@@ -24,9 +26,9 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class PushConsumerFactory {
+class ConsumerFactory{
 public:
-    PushConsumerFactory()=delete;
+    ConsumerFactory()=delete;
 
     static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(std::string topic, std::string group,std::string tag,std::shared_ptr<MsgListener> msglistener){
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
@@ -39,11 +41,18 @@ public:
         rmqPushConsumer->start();
         return rmqPushConsumer;
     }
-};
 
-class PullConsumerFactory{
-public:
-    PullConsumerFactory()=delete;
+    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(std::string topic, std::string group,std::string tag,std::shared_ptr<RMQNormalListener> listener){
+        auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
+        rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
+        rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeThreadCount(1);
+        rmqPushConsumer->subscribe(topic, tag);
+        rmqPushConsumer->registerMessageListener(listener.get());
+        rmqPushConsumer->start();
+        return rmqPushConsumer;
+    }
 
     static std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer(std::string topic,std::string group){
         auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);
@@ -53,5 +62,15 @@ public:
         rmqPullConsumer->registerMessageQueueListener(topic, NULL);
         rmqPullConsumer->start();
         return rmqPullConsumer;
+    }
+
+    static std::shared_ptr<RMQNormalConsumer> getRMQPullConsumer(std::string topic, std::string group){
+        auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);
+        rmqPullConsumer->setNamesrvAddr(resource->getNamesrv());
+        rmqPullConsumer->setInstanceName(group);
+        rmqPullConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+        rmqPullConsumer->registerMessageQueueListener(topic, NULL);
+        rmqPullConsumer->start();
+        return std::make_shared<RMQNormalConsumer>(rmqPullConsumer);
     }
 };

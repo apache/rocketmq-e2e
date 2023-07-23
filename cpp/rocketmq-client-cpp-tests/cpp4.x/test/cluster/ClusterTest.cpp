@@ -28,6 +28,7 @@
 #include <rocketmq/DefaultMQPullConsumer.h>
 #include "frame/BaseOperate.h"
 #include "listener/MsgListener.h"
+#include "listener/rmq/RMQNormalListener.h"
 #include "resource/Resource.h"
 #include "factory/ConsumerFactory.h"
 #include "factory/ProducerFactory.h"
@@ -44,21 +45,21 @@ TEST(ClusterTest, testClusterConsume){
     std::string group2 = getGroupId("testClusterConsume2");
     std::string group3 = getGroupId("testClusterConsume3"); 
     ASSERT_NO_FATAL_FAILURE({
-        std::shared_ptr<MsgListener> msglistener1 = std::make_shared<MsgListener>();
-        std::shared_ptr<MsgListener> msglistener2 = std::make_shared<MsgListener>();
-        std::shared_ptr<MsgListener> msglistener3 = std::make_shared<MsgListener>();
-        auto pushConsumer1 = PushConsumerFactory::getPushConsumer(topic,group1,"*",msglistener1);
-        auto pushConsumer2 = PushConsumerFactory::getPushConsumer(topic,group2,"*",msglistener2);
-        auto pushConsumer3 = PushConsumerFactory::getPushConsumer(topic,group3,"*",msglistener3);
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::shared_ptr<RMQNormalListener> listener1 = std::make_shared<RMQNormalListener>("Listener1");
+        std::shared_ptr<RMQNormalListener> listener2 = std::make_shared<RMQNormalListener>("Listener2");
+        std::shared_ptr<RMQNormalListener> listener3 = std::make_shared<RMQNormalListener>("Listener3");
+        auto pushConsumer1 = ConsumerFactory::getPushConsumer(topic,group1,"*",listener1);
+        auto pushConsumer2 = ConsumerFactory::getPushConsumer(topic,group2,"*",listener2);
+        auto pushConsumer3 = ConsumerFactory::getPushConsumer(topic,group3,"*",listener3);
 
-        auto pullConsumer = PullConsumerFactory::getPullConsumer(topic,group1);
+        std::cout << "start push consumer" << std::endl;
+
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group1);
         std::this_thread::sleep_for(std::chrono::seconds(5));
         
-        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer->getPullConsumer()));
 
-        auto producer = ProducerFactory::getProducer(group1);
-        auto p = std::make_shared<RMQNormalProducer>(producer);
+        auto producer = ProducerFactory::getRMQProducer(group1);
 
         int count = 0;
         for(int i = 0; i < 100; i++){
@@ -72,6 +73,10 @@ TEST(ClusterTest, testClusterConsume){
         ASSERT_EQ(count, 100);
 
         std::this_thread::sleep_for(std::chrono::seconds(5));
+
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener1->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener2->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener3->getDequeueMessages())));
 
 
         pushConsumer1->shutdown();

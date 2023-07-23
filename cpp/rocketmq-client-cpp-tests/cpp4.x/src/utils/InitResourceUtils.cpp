@@ -17,6 +17,7 @@
 #include "utils/InitResourceUtils.h"
 #include "resource/Resource.h"
 #include "utils/data/collect/DataCollectorManager.h"
+#include "client/rmq/RMQNormalConsumer.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <spdlog/spdlog.h>
@@ -24,9 +25,13 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-static std::atomic<int> RMQNormalConsumer::receivedIndex(0);
-std::unique_ptr<DataCollectorManager> DataCollectorManager::instance = nullptr;
-std::mutex DataCollectorManager::mtx;
+std::atomic<int> RMQNormalConsumer::receivedIndex(0);
+
+template<typename T>
+std::unique_ptr<DataCollectorManager<T>> DataCollectorManager<T>::instance = nullptr;
+
+// template<typename T>
+// std::mutex DataCollectorManager<T>::mtx;
 
 void initResource(std::shared_ptr<Resource> resource){
     boost::property_tree::ptree pt;

@@ -23,10 +23,11 @@
 #include "utils/data/collect/impl/ListDataCollector.h"
 #include "utils/data/collect/impl/MapDataCollector.h"
 
+template <typename T>
 class DataCollectorManager {
 private:
-    static std::unique_ptr<DataCollectorManager> instance;
-    std::unordered_map<std::string, std::unique_ptr<DataCollector>> collectMap;
+    static std::unique_ptr<DataCollectorManager<T>> instance;
+    std::unordered_map<std::string, std::unique_ptr<DataCollector<T>>> collectMap;
     static std::mutex mtx;
 
     DataCollectorManager() {}
@@ -35,38 +36,38 @@ public:
         if (instance == nullptr) {
             std::lock_guard<std::mutex> lock(mtx);
             if (instance == nullptr)
-                instance = std::unique_ptr<DataCollectorManager>(new DataCollectorManager());
+                instance = std::unique_ptr<DataCollectorManager<T>>(new DataCollectorManager<T>());
         }
         return *instance;
     }
 
-    DataCollector& fetchDataCollector(const std::string& key) {
+    DataCollector<T>& fetchDataCollector(const std::string& key) {
         std::lock_guard<std::mutex> lock(mtx);
 
         if (collectMap.find(key) == collectMap.end()) {
-            collectMap[key] = std::make_unique<MapDataCollectorImpl>();
+            collectMap[key] = std::make_unique<MapDataCollectorImpl<T>>();
         }
 
         return *collectMap[key];
     }
 
-    DataCollector& fetchMapDataCollector(const std::string& key) {
+    DataCollector<T>& fetchMapDataCollector(const std::string& key) {
         std::lock_guard<std::mutex> lock(mtx);
         
         if (collectMap.find(key) == collectMap.end() || 
-            dynamic_cast<MapDataCollectorImpl*>(collectMap[key].get()) == nullptr) {
-            collectMap[key] = std::make_unique<MapDataCollectorImpl>();
+            dynamic_cast<MapDataCollectorImpl<T>*>(collectMap[key].get()) == nullptr) {
+            collectMap[key] = std::make_unique<MapDataCollectorImpl<T>>();
         }
 
         return *collectMap[key];
     }
 
-    DataCollector& fetchListDataCollector(const std::string& key) {
+    DataCollector<T>& fetchListDataCollector(const std::string& key) {
         std::lock_guard<std::mutex> lock(mtx);
 
         if (collectMap.find(key) == collectMap.end() ||
-            dynamic_cast<ListDataCollectorImpl*>(collectMap[key].get()) == nullptr) {
-            collectMap[key] = std::make_unique<ListDataCollectorImpl>();
+            dynamic_cast<ListDataCollectorImpl<T>*>(collectMap[key].get()) == nullptr) {
+            collectMap[key] = std::make_unique<ListDataCollectorImpl<T>>();
         }
 
         return *collectMap[key];
@@ -100,3 +101,84 @@ public:
         collectMap.clear();
     }
 };
+
+template<typename T>
+std::mutex DataCollectorManager<T>::mtx;
+
+// class DataCollectorManager {
+// private:
+//     static std::unique_ptr<DataCollectorManager> instance;
+//     std::unordered_map<std::string, std::unique_ptr<DataCollector>> collectMap;
+//     static std::mutex mtx;
+
+//     DataCollectorManager() {}
+// public:
+//     static DataCollectorManager& getInstance() {
+//         if (instance == nullptr) {
+//             std::lock_guard<std::mutex> lock(mtx);
+//             if (instance == nullptr)
+//                 instance = std::unique_ptr<DataCollectorManager>(new DataCollectorManager());
+//         }
+//         return *instance;
+//     }
+
+//     DataCollector& fetchDataCollector(const std::string& key) {
+//         std::lock_guard<std::mutex> lock(mtx);
+
+//         if (collectMap.find(key) == collectMap.end()) {
+//             collectMap[key] = std::make_unique<MapDataCollectorImpl>();
+//         }
+
+//         return *collectMap[key];
+//     }
+
+//     DataCollector& fetchMapDataCollector(const std::string& key) {
+//         std::lock_guard<std::mutex> lock(mtx);
+        
+//         if (collectMap.find(key) == collectMap.end() || 
+//             dynamic_cast<MapDataCollectorImpl*>(collectMap[key].get()) == nullptr) {
+//             collectMap[key] = std::make_unique<MapDataCollectorImpl>();
+//         }
+
+//         return *collectMap[key];
+//     }
+
+//     DataCollector& fetchListDataCollector(const std::string& key) {
+//         std::lock_guard<std::mutex> lock(mtx);
+
+//         if (collectMap.find(key) == collectMap.end() ||
+//             dynamic_cast<ListDataCollectorImpl*>(collectMap[key].get()) == nullptr) {
+//             collectMap[key] = std::make_unique<ListDataCollectorImpl>();
+//         }
+
+//         return *collectMap[key];
+//     }
+
+//     void resetDataCollect(const std::string& key) {
+//         std::lock_guard<std::mutex> lock(mtx);
+        
+//         if (collectMap.find(key) != collectMap.end()) {
+//             collectMap[key]->resetData();
+//         }
+//     }
+
+//     void resetAll() {
+//         std::lock_guard<std::mutex> lock(mtx);
+
+//         for (auto& pair : collectMap) {
+//             pair.second->resetData();
+//         }
+//     }
+
+//     void removeDataCollect(const std::string& key) {
+//         std::lock_guard<std::mutex> lock(mtx);
+        
+//         collectMap.erase(key);
+//     }
+
+//     void removeAll() {
+//         std::lock_guard<std::mutex> lock(mtx);
+
+//         collectMap.clear();
+//     }
+// };
