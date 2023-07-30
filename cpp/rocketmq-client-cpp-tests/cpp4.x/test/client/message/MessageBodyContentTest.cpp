@@ -38,14 +38,14 @@ extern std::shared_ptr<Resource> resource;
 // TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsSpace");
-//     ASSERT_NO_FATAL_FAILURE({
+//     ASSERT_NO_THROW({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
 //         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
 //         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
+//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
 //         auto producer = ProducerFactory::getProducer(group);
 
@@ -72,14 +72,14 @@ extern std::shared_ptr<Resource> resource;
 // TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsChinese");
-//     ASSERT_NO_FATAL_FAILURE({
+//     ASSERT_NO_THROW({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
 //         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
 //         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
+//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
 //         auto producer = ProducerFactory::getProducer(group);
 
@@ -105,14 +105,14 @@ extern std::shared_ptr<Resource> resource;
 // TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
 //     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 //     std::string group = getGroupId("testMessageBodyContentIsEmoji");
-//     ASSERT_NO_FATAL_FAILURE({
+//     ASSERT_NO_THROW({
 //         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
 //         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
 //         std::this_thread::sleep_for(std::chrono::seconds(5));
 
 //         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer));
+//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
 //         auto producer = ProducerFactory::getProducer(group);
 

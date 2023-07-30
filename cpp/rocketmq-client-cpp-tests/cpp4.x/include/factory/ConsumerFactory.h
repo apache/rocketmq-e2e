@@ -54,6 +54,18 @@ public:
         return rmqPushConsumer;
     }
 
+    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(std::string topic, std::string group,std::string tag,std::shared_ptr<RMQNormalListener> listener){
+        auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
+        rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
+        rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeThreadCount(1);
+        rmqPushConsumer->subscribe(topic, tag);
+        rmqPushConsumer->registerMessageListener(listener.get());
+        rmqPushConsumer->start();
+        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer,listener);
+    }
+
     static std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer(std::string topic,std::string group){
         auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);
         rmqPullConsumer->setNamesrvAddr(resource->getNamesrv());
@@ -63,6 +75,8 @@ public:
         rmqPullConsumer->start();
         return rmqPullConsumer;
     }
+
+
 
     static std::shared_ptr<RMQNormalConsumer> getRMQPullConsumer(std::string topic, std::string group){
         auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);

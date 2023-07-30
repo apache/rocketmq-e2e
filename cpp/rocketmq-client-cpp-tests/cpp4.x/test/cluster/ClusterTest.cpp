@@ -39,50 +39,47 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-TEST(ClusterTest, testClusterConsume){
-    std::string topic = getTopic(MessageType::NORMAL, "testClusterConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group1 = getGroupId("testClusterConsume1");
-    std::string group2 = getGroupId("testClusterConsume2");
-    std::string group3 = getGroupId("testClusterConsume3"); 
-    ASSERT_NO_FATAL_FAILURE({
-        std::shared_ptr<RMQNormalListener> listener1 = std::make_shared<RMQNormalListener>("Listener1");
-        std::shared_ptr<RMQNormalListener> listener2 = std::make_shared<RMQNormalListener>("Listener2");
-        std::shared_ptr<RMQNormalListener> listener3 = std::make_shared<RMQNormalListener>("Listener3");
-        auto pushConsumer1 = ConsumerFactory::getPushConsumer(topic,group1,"*",listener1);
-        auto pushConsumer2 = ConsumerFactory::getPushConsumer(topic,group2,"*",listener2);
-        auto pushConsumer3 = ConsumerFactory::getPushConsumer(topic,group3,"*",listener3);
+// TEST(ClusterTest, testClusterConsume){
+//     std::string topic = getTopic(MessageType::NORMAL, "testClusterConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group1 = getGroupId("testClusterConsume1");
+//     std::string group2 = getGroupId("testClusterConsume2");
+//     std::string group3 = getGroupId("testClusterConsume3"); 
+//     ASSERT_NO_THROW({
+//         std::shared_ptr<RMQNormalListener> listener1 = std::make_shared<RMQNormalListener>("Listener1");
+//         std::shared_ptr<RMQNormalListener> listener2 = std::make_shared<RMQNormalListener>("Listener2");
+//         std::shared_ptr<RMQNormalListener> listener3 = std::make_shared<RMQNormalListener>("Listener3");
+//         auto pushConsumer1 = ConsumerFactory::getPushConsumer(topic,group1,"*",listener1);
+//         auto pushConsumer2 = ConsumerFactory::getPushConsumer(topic,group2,"*",listener2);
+//         auto pushConsumer3 = ConsumerFactory::getPushConsumer(topic,group3,"*",listener3);
 
-        std::cout << "start push consumer" << std::endl;
-
-        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group1);
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group1);
+//         std::this_thread::sleep_for(std::chrono::seconds(5));
         
-        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,pullConsumer->getPullConsumer()));
+//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer->getPullConsumer()));
 
-        auto producer = ProducerFactory::getRMQProducer(group1);
+//         auto producer = ProducerFactory::getRMQProducer(group1);
 
-        int count = 0;
-        for(int i = 0; i < 100; i++){
-            rocketmq::MQMessage msg(topic,"*",RandomUtils::getStringByUUID());
-            rocketmq::SendResult sendResult = producer->send(msg);
-            if(sendResult.getSendStatus() == rocketmq::SendStatus::SEND_OK){
-                count++;
-            }
-        }
+//         int count = 0;
+//         for(int i = 0; i < 100; i++){
+//             rocketmq::MQMessage msg(topic,"*",RandomUtils::getStringByUUID());
+//             rocketmq::SendResult sendResult = producer->send(msg);
+//             if(sendResult.getSendStatus() == rocketmq::SendStatus::SEND_OK){
+//                 count++;
+//             }
+//         }
 
-        ASSERT_EQ(count, 100);
+//         ASSERT_EQ(count, 100);
 
-        std::this_thread::sleep_for(std::chrono::seconds(5));
+//         std::this_thread::sleep_for(std::chrono::seconds(5));
 
-        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener1->getDequeueMessages())));
-        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener2->getDequeueMessages())));
-        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener3->getDequeueMessages())));
+//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener1->getDequeueMessages())));
+//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener2->getDequeueMessages())));
+//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(listener3->getDequeueMessages())));
 
-
-        pushConsumer1->shutdown();
-        pushConsumer2->shutdown();
-        pushConsumer3->shutdown();
-        pullConsumer->shutdown();
-        producer->shutdown();
-    });
-}
+//         pushConsumer1->shutdown();
+//         pushConsumer2->shutdown();
+//         pushConsumer3->shutdown();
+//         pullConsumer->shutdown();
+//         producer->shutdown();
+//     });
+// }

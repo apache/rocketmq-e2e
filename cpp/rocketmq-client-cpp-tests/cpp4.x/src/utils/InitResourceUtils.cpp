@@ -18,12 +18,17 @@
 #include "resource/Resource.h"
 #include "utils/data/collect/DataCollectorManager.h"
 #include "client/rmq/RMQNormalConsumer.h"
+#include "utils/NameUtils.h"
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <spdlog/spdlog.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
+
+std::mutex NameUtils::mtx;
+
+std::unordered_map<std::string, std::string> NameUtils::alreadyUsed;
 
 std::atomic<int> RMQNormalConsumer::receivedIndex(0);
 

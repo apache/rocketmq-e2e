@@ -93,11 +93,11 @@ public:
         this->consumer = consumer;
     }
 
-    // std::shared_ptr<RMQNormalListener> getListener() {
-    //     return listener;
-    // }
+    std::shared_ptr<RMQNormalListener> getListener() {
+        return listener;
+    }
 
-    // void setListener(std::shared_ptr<RMQNormalListener> listener) {
-    //     this->listener = listener;
-    // }
+    void setListener(std::shared_ptr<RMQNormalListener> listener) {
+        this->listener = listener;
+    }
 };

@@ -56,7 +56,23 @@ public:
         rocketmq::MQMessage msg(topic, // topic
                                 tags,  // tags
                                 body); // body
-        return send(msg);
+        rocketmq::SendResult sendResult = send(msg);
+        getEnqueueMessages()->addData(sendResult.getMsgId());
+        return sendResult;
+    }
+
+    void send(const std::string& topic, const std::string& tags, int messageNim) {
+        for(int i = 0; i < messageNim; i++){
+            rocketmq::MQMessage msg(topic,tags,RandomUtils::getStringByUUID());
+            
+            try{
+                rocketmq::SendResult sendResult = producer->send(msg);
+                getEnqueueMessages()->addData(sendResult.getMsgId());
+            }catch(const std::exception& e){
+                multi_logger->error("Producer send message failed, {}", e.what());
+            }
+
+        }
     }
 
     void shutdown() {

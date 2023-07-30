@@ -34,7 +34,7 @@ extern std::shared_ptr<Resource> resource;
 //     SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
 //     std::string groupId = getGroupId("testNormalSetting");
 //     std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
-//     ASSERT_NO_FATAL_FAILURE({
+//     ASSERT_NO_THROW({
 //         rocketmq::DefaultMQPushConsumer consumer(groupId);
 //         consumer.setNamesrvAddr(resource->getNamesrv());
 //         consumer.setConsumeThreadCount(20);

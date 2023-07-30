@@ -27,14 +27,14 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-bool async_function(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+bool async_function(std::string topic,std::string tag, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     std::vector<rocketmq::MQMessageQueue> mqs;
     try {
         pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
         for (auto& mq : mqs) {
             long long offset = pullConsumer->fetchConsumeOffset(mq, true);
             if(offset<0) continue;
-            rocketmq::PullResult pullResult = pullConsumer->pull(mq, "", offset, 32);
+            rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, 32);
             switch (pullResult.pullStatus) {
                 case rocketmq::FOUND:
                     for (auto& msg : pullResult.msgFoundList) {
@@ -60,9 +60,9 @@ bool async_function(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullCo
     return true;
 }
 
-bool VerifyUtils::tryReceiveOnce(std::string topic, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+bool VerifyUtils::tryReceiveOnce(std::string& topic,std::string& tag, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     // async_function(topic, pullConsumer);
-    std::future<bool> future1 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
+    std::future<bool> future1 = std::async(std::launch::async, [topic,tag, pullConsumer](){ return async_function(topic,tag,pullConsumer); });
     // std::future<bool> future2 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
     // std::future<bool> future3 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
     // std::future<bool> future4 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
