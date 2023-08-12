@@ -1,3 +1,6 @@
 cpp4.x/rocketmq_test
 cpp4.x/build
+cpp4.x/.cache
+cpp4.x/logs
 nohup.out
+cpp5.x

@@ -26,7 +26,6 @@ template <typename T>
 class ListDataCollectorImpl : public DataCollector<T> {
 private:
     std::vector<T> data;
-    std::set<T> unduplicated_data;
     bool lock = false;
     std::mutex mtx;
 
@@ -42,31 +41,29 @@ public:
     void resetData() override {
         std::lock_guard<std::mutex> lock_this(mtx);
         data.clear();
-        unduplicated_data.clear();
         unlockIncrement();
     }
 
     std::vector<T> getAllData() override {
         std::lock_guard<std::mutex> lock_this(mtx);
-        return data;
+        return std::vector<T>(data.begin(), data.end());
     }
 
     std::set<T> getAllDataWithoutDuplicate() override {
         std::lock_guard<std::mutex> lock_this(mtx);
-        return unduplicated_data;
+        return std::set<T>(data.begin(), data.end());
     }
 
     void addData(const T& new_data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         if (!lock) {
             data.push_back(new_data);
-            unduplicated_data.insert(new_data);
         }
     }
 
     size_t getDataSizeWithoutDuplicate() override {
         std::lock_guard<std::mutex> lock_thislock(mtx);
-        return unduplicated_data.size();
+        return getAllDataWithoutDuplicate().size();
     }
 
     size_t getDataSize() override {
@@ -87,7 +84,6 @@ public:
     void removeData(const T& data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         this->data.erase(std::remove(this->data.begin(), this->data.end(), data), this->data.end());
-        unduplicated_data.erase(data);
     }
 
     void lockIncrement() override {

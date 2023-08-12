@@ -15,3 +15,14 @@
  * limitations under the License.
  */
 #pragma once
+#include <rocketmq/DefaultMQProducer.h>
+
+class MQMessageQueueSelector : public rocketmq::MessageQueueSelector {
+public:
+    rocketmq::MQMessageQueue select(const std::vector<rocketmq::MQMessageQueue> &mqs, const rocketmq::MQMessage &msg, void *arg) {
+        // 实现自定义分区逻辑，根据业务传入arg参数即分区键，计算路由到哪个队列。
+        int orderId = *static_cast<int *>(arg);
+        int index = orderId % mqs.size();
+        return mqs[index];
+    }
+};

@@ -23,11 +23,20 @@ std::string getTopic(MessageType messageType, const std::string& methodName,cons
     std::string messageTypeStr = MessageTypeToString[messageType];
     std::string topic = "topic_" + messageTypeStr + "_" + methodName + "_" + RandomUtils::getStringWithCharacter(6);
     multi_logger->info("[Topic] topic:{}, messageType:{}, methodName:{}", topic, messageTypeStr, methodName);
-    MQAdminUtils::createTopic(topic, brokerAddr , "", namesrvAddr);
+    if(messageType == MessageType::NORMAL){
+      MQAdminUtils::createTopic(topic, brokerAddr , "", namesrvAddr);
+    }else if(messageType == MessageType::DELAY){
+      MQAdminUtils::createDelayTopic(topic, brokerAddr , "", namesrvAddr);
+    }else if(messageType == MessageType::FIFO){
+      MQAdminUtils::createFIFOTopic(topic, brokerAddr , "", namesrvAddr);
+    }else if(messageType == MessageType::TRANSACTION){
+      MQAdminUtils::createTransactionTopic(topic, brokerAddr , "", namesrvAddr);
+    }
+    
     return topic;
 }
 
-std::string getGroupId(std::string methodName) {
+std::string getGroupId(const std::string& methodName) {
     std::string randomStr = "";
     static const char CHARACTERS[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
     static const int STRING_LENGTH = 6;

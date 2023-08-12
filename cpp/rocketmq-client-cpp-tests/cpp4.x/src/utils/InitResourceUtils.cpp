@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 #include "utils/InitResourceUtils.h"
+#include "utils/VerifyUtils.h"
 #include "resource/Resource.h"
 #include "utils/data/collect/DataCollectorManager.h"
 #include "client/rmq/RMQNormalConsumer.h"
@@ -32,11 +33,7 @@ std::unordered_map<std::string, std::string> NameUtils::alreadyUsed;
 
 std::atomic<int> RMQNormalConsumer::receivedIndex(0);
 
-template<typename T>
-std::unique_ptr<DataCollectorManager<T>> DataCollectorManager<T>::instance = nullptr;
-
-// template<typename T>
-// std::mutex DataCollectorManager<T>::mtx;
+std::vector<rocketmq::MQMessageExt> VerifyUtils::msgs;
 
 void initResource(std::shared_ptr<Resource> resource){
     boost::property_tree::ptree pt;

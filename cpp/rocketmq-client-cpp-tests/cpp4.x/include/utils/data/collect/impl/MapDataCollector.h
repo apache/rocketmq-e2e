@@ -16,15 +16,17 @@
  */
 #pragma once
 #include <atomic>
+#include <memory>
 #include <mutex>
-#include <unordered_map>
+#include <map>
+#include <set>
 #include <vector>
 #include <string>
 #include "utils/data/collect/DataCollector.h"
 
 template <typename T>
 class MapDataCollectorImpl : public DataCollector<T> {
-    std::unordered_map<T, std::atomic<int>> data;
+    std::map<T, std::atomic<int>> data;
     bool lock = false;
     mutable std::mutex mtx;
 
@@ -47,7 +49,9 @@ public:
         std::lock_guard<std::mutex> lock_this(mtx);
         std::vector<T> result;
         for (const auto& pair : data) {
-            result.insert(result.end(), pair.second, pair.first);
+            for (int i = 0; i < pair.second; i++) {
+                result.push_back(pair.first);
+            }
         }
         return result;
     }
@@ -60,7 +64,11 @@ public:
     void addData(const T& new_data) override {
         std::lock_guard<std::mutex> lock_this(mtx);
         if (!lock) {
-            data[new_data]++;
+            if(data.find(new_data) == data.end()) {
+                data[new_data] = 1;
+            } else {
+                data[new_data]++;
+            }
         }
     }
 

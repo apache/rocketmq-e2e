@@ -16,9 +16,11 @@
  */
 #include "utils/VerifyUtils.h"
 #include <gtest/gtest.h>
+#include <map>
 #include <memory>
 #include <resource/Resource.h>
 #include <spdlog/logger.h>
+#include <string>
 #include <vector>
 #include <future>
 #include <chrono>
@@ -27,14 +29,109 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-bool async_function(std::string topic,std::string tag, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+long long VerifyUtils::getDelayTime(int delayLevel){
+    long long delayTime = 0;
+    switch (delayLevel) {
+        case 1:
+            delayTime = 1*1000;
+            break;
+        case 2:
+            delayTime = 5*1000;
+            break;
+        case 3:
+            delayTime = 10*1000;
+            break;
+        case 4:
+            delayTime = 30*1000;
+            break;
+        case 5:
+            delayTime = 1*60*1000;
+            break;
+        case 6:
+            delayTime = 2*60*1000;
+            break;
+        case 7:
+            delayTime = 3*60*1000;
+            break;
+        case 8:
+            delayTime = 4*60*1000;
+            break;
+        case 9:
+            delayTime = 5*60*1000;
+            break;
+        case 10:
+            delayTime = 6*60*1000;
+            break;
+        case 11:
+            delayTime = 7*60*1000;
+            break;
+        case 12:
+            delayTime = 8*60*1000;
+            break;
+        case 13:
+            delayTime = 9*60*1000;
+            break;
+        case 14:
+            delayTime = 10*60*1000;
+            break;
+        case 15:
+            delayTime = 20*60*1000;
+            break;
+        case 16:
+            delayTime = 30*60*1000;
+            break;
+        case 17:
+            delayTime = 1*60*60*1000;
+            break;
+        case 18:
+            delayTime = 2*60*60*1000;
+            break;
+    }
+    return delayTime;
+}
+
+std::unordered_map<std::string, long> VerifyUtils::checkDelay(DataCollector<MQMsg>& dequeueMessages, int delayLevel){
+    std::unordered_map<std::string, long> map;
+    std::vector<MQMsg> receivedMessages = dequeueMessages.getAllData();
+    std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+    // 将时间点转换为时间戳（以秒为单位）
+    std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
+    long consumeTime = duration.count()*1000L;
+    // std::cout<<getDelayTime(delayLevel)<<std::endl;
+    for (auto& msg : receivedMessages) {
+        long bornTimestamp = msg.getBornTimestamp();
+        // std::cout<<consumeTime<<" "<<bornTimestamp<<std::endl;
+        if(std::abs((consumeTime-bornTimestamp)-getDelayTime(delayLevel))>5000){
+            map.insert(std::make_pair(msg.getMsgId(), consumeTime-bornTimestamp));
+        }
+    }
+    return map;
+}
+
+bool VerifyUtils::checkOrder(DataCollector<MQMsg>& dequeueMessages){
+    std::vector<MQMsg> receivedMessages = dequeueMessages.getAllData();
+    std::unordered_map<std::string, std::vector<MQMsg>> map;
+    for (const auto& receivedMessage : receivedMessages) {
+        const std::string& shardingKey = std::to_string(std::stoi(receivedMessage.getBody())%2);
+        std::vector<MQMsg> messages;
+        if (map.find(shardingKey) != map.end()) {
+            map[shardingKey].push_back(receivedMessage);
+        }else{
+            messages.push_back(receivedMessage);
+            map[shardingKey] = messages;
+        }
+    }
+    return checkOrderMessage(map);
+}
+
+bool async_function(std::string topic,std::string subExpression, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     std::vector<rocketmq::MQMessageQueue> mqs;
     try {
         pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
         for (auto& mq : mqs) {
             long long offset = pullConsumer->fetchConsumeOffset(mq, true);
             if(offset<0) continue;
-            rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, 32);
+            rocketmq::PullResult pullResult = pullConsumer->pull(mq, subExpression, offset, 32);
             switch (pullResult.pullStatus) {
                 case rocketmq::FOUND:
                     for (auto& msg : pullResult.msgFoundList) {
@@ -60,9 +157,9 @@ bool async_function(std::string topic,std::string tag, std::shared_ptr<rocketmq:
     return true;
 }
 
-bool VerifyUtils::tryReceiveOnce(std::string& topic,std::string& tag, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+bool VerifyUtils::tryReceiveOnce(const std::string& topic,const std::string& subExpression, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     // async_function(topic, pullConsumer);
-    std::future<bool> future1 = std::async(std::launch::async, [topic,tag, pullConsumer](){ return async_function(topic,tag,pullConsumer); });
+    std::future<bool> future1 = std::async(std::launch::async, [topic,subExpression, pullConsumer](){ return async_function(topic,subExpression,pullConsumer); });
     // std::future<bool> future2 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
     // std::future<bool> future3 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
     // std::future<bool> future4 = std::async(std::launch::async, [topic, pullConsumer](){ return async_function(topic, pullConsumer); });
@@ -73,7 +170,7 @@ bool VerifyUtils::tryReceiveOnce(std::string& topic,std::string& tag, std::share
     // auto status3 = future3.wait_for(std::chrono::seconds(30));
     // auto status4 = future4.wait_for(std::chrono::seconds(30));
     // auto status5 = future5.wait_for(std::chrono::seconds(30));
-
+    
     if (status1 == std::future_status::ready && future1.get() == true) {
         return true;
     } else {
@@ -85,7 +182,6 @@ std::vector<rocketmq::MQMessageExt> VerifyUtils::fetchMessages(std::shared_ptr<r
     std::vector<rocketmq::MQMessageQueue> mqs;
     pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
     //rocekmq获取队列中所有未消费的消息，首先判断消息数量是不是为1，然后判断消息体是否为空
-    std::vector<rocketmq::MQMessageExt> msgs;
     for (auto& mq : mqs) {
         long long offset = pullConsumer->fetchConsumeOffset(mq, true);
         if(offset<0) continue;
@@ -152,11 +248,139 @@ std::vector<std::string> VerifyUtils::waitForMessageConsume(DataCollector<std::s
     return sendMessages;
 }
 
+std::vector<std::string> VerifyUtils::waitForMessageConsume(DataCollector<std::string>& enqueueMessages,DataCollector<MQMsg>& dequeueMessages,long long timeoutMills, int consumedTimes){
+    multi_logger->info("Set timeout: {}ms",timeoutMills);
+
+    std::vector<std::string> sendMessages = enqueueMessages.getAllData();
+
+    auto currentTime = std::chrono::steady_clock::now();
+
+    while (!sendMessages.empty()) {
+        std::vector<MQMsg> receivedMessagesCopy = dequeueMessages.getAllData();
+        sendMessages.erase(std::remove_if(sendMessages.begin(), sendMessages.end(),
+                                          [&](const std::string& enqueueMessageId) {
+            auto count = std::count_if(receivedMessagesCopy.begin(), receivedMessagesCopy.end(),
+                                       [&](const MQMsg& msg) {
+                return msg.getMsgId() == enqueueMessageId;
+            });
+            
+            if (count >= consumedTimes) {
+                if (count > consumedTimes) {
+                    multi_logger->error("More retry messages were consumed than expected (including one original message)"
+                              "Except: {}, Actual: {}, MsgId: {}", consumedTimes, count, enqueueMessageId);
+                    assert(false);
+                }
+                return true;
+            }
+            return false;
+        }), sendMessages.end());
+
+        if (sendMessages.empty()) {
+            break;
+        }
+
+        if (std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - currentTime).count() >= timeoutMills) {
+            multi_logger->error("Timeout but not received all send messages");
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    }
+    return sendMessages;
+}
+
 bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages){
     std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
     if (unConsumedMessages.size() > 0) {
         multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", unConsumedMessages.size());
         return false;
+    }
+    return true;
+}
+
+bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
+    if (unConsumedMessages.size() > 0) {
+        multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", unConsumedMessages.size());
+        return false;
+    }
+    return true;
+}
+
+bool VerifyUtils::verifyNormalMessageWithUserProperties(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,std::map<std::string, std::string>& props,int expectedUnrecvMsgNum){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
+    std::vector<MQMsg> recvMessages = dequeueMessages.getAllData();
+    for(auto& recvMessage:recvMessages){
+        auto recvProps = recvMessage.getProperties();
+        for (auto& prop : props) {
+            auto it = recvProps.find(prop.first);
+            if (it != recvProps.end() && it->second == prop.second) {
+                multi_logger->error("sql attribute filtering is not in effect, consuming messages to other attributes");
+                return false;
+            }
+        }
+    }
+    if (unConsumedMessages.size() != expectedUnrecvMsgNum) {
+        multi_logger->error("Failed to consume all the sent data by sql filter");
+        return false;
+    }
+    return true;
+}
+
+bool VerifyUtils::verifyDelayMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,int delayLevel){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L+getDelayTime(delayLevel), 1);
+    if (unConsumedMessages.size() > 0) {
+        multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", unConsumedMessages.size());
+        return false;
+    }
+    std::unordered_map<std::string, long> delayUnExcept = checkDelay(dequeueMessages, delayLevel);
+    std::ostringstream oss;
+    oss << "The following messages do not meet the delay requirements \n";
+    for(const auto& pair : delayUnExcept){
+        std::string key = pair.first;
+        oss << key << " , interval:"<< delayUnExcept[key] << "\n";
+    }
+    if(delayUnExcept.size() > 0){
+        multi_logger->error(oss.str());
+        return false;
+    }
+    return true;
+}
+
+bool VerifyUtils::verifyOrderMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
+    if (unConsumedMessages.size() > 0) {
+        multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", unConsumedMessages.size());
+        return false;
+    }
+
+    bool result = checkOrder(dequeueMessages);
+
+    if(!result){
+        multi_logger->error("Message out of order");
+    }
+    return result;
+}
+
+bool VerifyUtils::checkOrderMessage(std::unordered_map<std::string, std::vector<MQMsg>>& receivedMessage){
+    for(auto& pair : receivedMessage){
+        std::ostringstream oss;
+        int preNode = -1;
+        std::string key = pair.first;
+        std::vector<MQMsg> msgs = pair.second;
+        std::string tag = msgs[0].getTags();
+        for(auto& msg : msgs){
+            if(msg.getTags() != tag){
+                preNode = -1;
+            }
+            int curNode = std::stoi(msg.getBody());
+            oss << curNode << ",";
+            if(preNode > curNode){
+                multi_logger->error(oss.str());
+                return false;
+            }
+            preNode = curNode;
+        }
+
     }
     return true;
 }

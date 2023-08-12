@@ -37,7 +37,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class RMQNormalConsumer : public AbstractMQConsumer {
+class RMQNormalConsumer{
 private:
     std::shared_ptr<rocketmq::DefaultMQPushConsumer> pushConsumer;
     std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer;

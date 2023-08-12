@@ -31,4 +31,4 @@
 
 std::string getTopic(MessageType messageType, const std::string& methodName,const std::string& brokerAddr,const std::string& namesrvAddr,const std::string& cluster);
 
-std::string getGroupId(std::string methodName);
+std::string getGroupId(const std::string& methodName);

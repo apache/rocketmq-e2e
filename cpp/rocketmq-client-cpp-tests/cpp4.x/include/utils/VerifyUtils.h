@@ -16,16 +16,29 @@
  */
 #pragma once
 #include "utils/data/collect/DataCollector.h"
+#include "common/MQMsg.h"
 #include <memory>
 #include <rocketmq/DefaultMQPullConsumer.h>
+#include <unordered_map>
+#include <sstream>
 
 class VerifyUtils {
 private:
     const static int TIMEOUT = 90;
+    static std::unordered_map<std::string, long> checkDelay(DataCollector<MQMsg>& dequeueMessages, int delayLevel);
+    static bool checkOrder(DataCollector<MQMsg>& dequeueMessages);
+    static std::vector<rocketmq::MQMessageExt> msgs;
     static std::vector<std::string> waitForMessageConsume(DataCollector<std::string>& enqueueMessages,DataCollector<std::string>& dequeueMessages,long long timeoutMills, int consumedTimes);
+    static std::vector<std::string> waitForMessageConsume(DataCollector<std::string>& enqueueMessages,DataCollector<MQMsg>& dequeueMessages,long long timeoutMills, int consumedTimes);
 public:
     VerifyUtils() = delete;
-    static bool tryReceiveOnce(std::string& topic,std::string& tag, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer);
+    static long long getDelayTime(int delayLevel);
+    static bool checkOrderMessage(std::unordered_map<std::string, std::vector<MQMsg>>& receivedMessage);
+    static bool tryReceiveOnce(const std::string& topic,const std::string& subExpression, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer);
     static std::vector<rocketmq::MQMessageExt> fetchMessages(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer, const std::string& topic);
     static bool verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages);
+    static bool verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages);
+    static bool verifyNormalMessageWithUserProperties(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,std::map<std::string, std::string>& props,int expectedUnrecvMsgNum);
+    static bool verifyDelayMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,int delayLevel);
+    static bool verifyOrderMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages);
 };

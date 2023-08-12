@@ -18,6 +18,7 @@
 #include "resource/Resource.h"
 #include <memory>
 #include <rocketmq/DefaultMQProducer.h>
+#include <rocketmq/TransactionMQProducer.h>
 #include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
@@ -28,7 +29,7 @@ public:
     ProducerFactory()=delete;
 
 
-    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(std::string group){
+    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(const std::string& group){
         auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
         producer->setNamesrvAddr(resource->getNamesrv());
         producer->setTcpTransportTryLockTimeout(1000);
@@ -37,12 +38,20 @@ public:
         return producer;
     }
 
-    static std::shared_ptr<RMQNormalProducer> getRMQProducer(std::string group){
+    static std::shared_ptr<RMQNormalProducer> getRMQProducer(const std::string& group){
         auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
         producer->setNamesrvAddr(resource->getNamesrv());
         producer->setTcpTransportTryLockTimeout(1000);
         producer->setTcpTransportConnectTimeout(400);
         producer->start();
         return std::make_shared<RMQNormalProducer>(producer);
+    }
+
+    static std::shared_ptr<RMQNormalProducer> getRMQTransProducer(const std::string& group,std::shared_ptr<rocketmq::TransactionListener> listener){
+        //rocketmq::LocalTransactionState& state
+        auto transProducer = std::make_shared<rocketmq::TransactionMQProducer>(group);
+        transProducer->setTransactionListener(listener.get());
+        transProducer->start();
+        return std::make_shared<RMQNormalProducer>(transProducer);
     }
 };

@@ -21,5 +21,5 @@
 
 class AbstractMQConsumer: public MQCollector<std::string>{
 public:
-    AbstractMQConsumer() = default;
+    // AbstractMQConsumer() = default;
 };

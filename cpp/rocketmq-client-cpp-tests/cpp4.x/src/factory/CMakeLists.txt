@@ -1,6 +1,7 @@
 set(SRC_FILES
     ConsumerFactory.cpp
     ProducerFactory.cpp
+    MessageFactory.cpp
 )
 
 add_library(factory STATIC ${SRC_FILES})
