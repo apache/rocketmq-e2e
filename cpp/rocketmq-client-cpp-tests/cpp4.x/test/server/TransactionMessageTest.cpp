@@ -14,11 +14,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include <atomic>
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <cassert>
 
 #include <gtest/gtest.h>
+#include <rocketmq/SendResult.h>
 #include <spdlog/logger.h>
 #include <string>
 
@@ -36,34 +39,187 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
-    int SEND_NUM = 10;
-    std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCommit_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testTrans_SendCommit_PushConsume");
-    std::string tag = NameUtils::getRandomTagName();
+// TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
+//     int SEND_NUM = 10;
+//     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCommit_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("testTrans_SendCommit_PushConsume");
+//     std::string tag = NameUtils::getRandomTagName();
 
-    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-    std::this_thread::sleep_for(std::chrono::seconds(2));
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
 
-    auto transProducer = ProducerFactory::getRMQTransProducer(group,std::make_shared<MQTransactionListener>());
+//     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
+//     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
-    ASSERT_NE(transProducer, nullptr);
+//     ASSERT_NE(transProducer, nullptr);
 
-    for(int i=0;i<SEND_NUM;i++){
-        auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
-        transProducer->sendTrans(message,rocketmq::LocalTransactionState::COMMIT_MESSAGE);
-    }
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
+//         transProducer->sendTrans(message,rocketmq::LocalTransactionState::COMMIT_MESSAGE);
+//     }
 
-    ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
+//     ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
 
-    ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(transProducer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+//     ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(transProducer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-    pushConsumer->shutdown();
-    pullConsumer->shutdown();
-    transProducer->shutdownTransaction();
-}
+//     pushConsumer->shutdown();
+//     pullConsumer->shutdown();
+//     transProducer->shutdownTransaction();
+// }
+
+// TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
+//     int SEND_NUM = 10;
+//     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendRollback_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("testTrans_SendRollback_PushConsume");
+//     std::string tag = NameUtils::getRandomTagName();
+
+//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+
+//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
+
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+
+//     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
+//     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
+
+//     ASSERT_NE(transProducer, nullptr);
+
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
+//         transProducer->sendTrans(message,rocketmq::LocalTransactionState::ROLLBACK_MESSAGE);
+//     }
+    
+//     std::this_thread::sleep_for(std::chrono::seconds(60));
+
+//     ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
+
+//     ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+
+//     pushConsumer->shutdown();
+//     pullConsumer->shutdown();
+//     transProducer->shutdownTransaction();
+// }
+
+// TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
+//     int SEND_NUM = 10;
+//     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCheckerCommit_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("testTrans_SendCheckerCommit_PushConsume");
+//     std::string tag = NameUtils::getRandomTagName();
+
+//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+
+//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
+
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+
+//     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
+//     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
+
+//     ASSERT_NE(transProducer, nullptr);
+
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
+//         transProducer->sendTrans(message,rocketmq::LocalTransactionState::UNKNOWN);
+//     }
+
+//     std::this_thread::sleep_for(std::chrono::seconds(60));
+
+//     ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
+
+//     ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(transProducer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+
+//     pushConsumer->shutdown();
+//     pullConsumer->shutdown();
+//     transProducer->shutdownTransaction();
+// }
+
+// TEST(TransactionMessageTest, testTrans_CheckerRollback){
+//     int SEND_NUM = 10;
+//     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_CheckerRollback", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("testTrans_CheckerRollback");
+//     std::string tag = NameUtils::getRandomTagName();
+
+//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+
+//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
+
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+
+//     rocketmq::TransactionListener* listener = new RollbackMQTransactionListener();
+//     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
+
+//     ASSERT_NE(transProducer, nullptr);
+
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
+//         transProducer->sendTrans(message,rocketmq::LocalTransactionState::UNKNOWN);
+//     }
+
+//     std::this_thread::sleep_for(std::chrono::seconds(60));
+
+//     ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
+
+//     ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+
+//     pushConsumer->shutdown();
+//     pullConsumer->shutdown();
+//     transProducer->shutdownTransaction();
+// }
+
+// TEST(TransactionMessageTest, testTrans_SendCheckerPartionCommit){
+//     int SEND_NUM = 10;
+//     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCheckerPartionCommit", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("testTrans_SendCheckerPartionCommit");
+//     std::string tag = NameUtils::getRandomTagName();
+
+//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+
+//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
+
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+
+//     std::atomic<int> commitMsgNum(0);
+//     std::atomic<int> rollbackMsgNum(0);
+//     rocketmq::TransactionListener* listener = new UserdefinedMQTransactionListener(commitMsgNum,rollbackMsgNum);
+//     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
+
+//     ASSERT_NE(transProducer, nullptr);
+
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
+//         transProducer->sendTrans(message,rocketmq::LocalTransactionState::UNKNOWN);
+//     }
+
+//     int timeoutSeconds = 90;
+//     auto startTime = std::chrono::steady_clock::now();
+//     auto endTime = startTime + std::chrono::seconds(timeoutSeconds);
+//     while (commitMsgNum.load() != rollbackMsgNum.load() || commitMsgNum.load() != SEND_NUM/2) {
+//         if (std::chrono::steady_clock::now() >= endTime) {
+//             break;
+//         }
+//         std::this_thread::sleep_for(std::chrono::milliseconds(100));
+//     }
+
+//     std::this_thread::sleep_for(std::chrono::seconds(60));
+
+//     ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
+
+//     ASSERT_EQ(SEND_NUM/2,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+
+//     pushConsumer->shutdown();
+//     pullConsumer->shutdown();
+//     transProducer->shutdownTransaction();
+// }

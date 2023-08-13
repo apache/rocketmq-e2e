@@ -16,6 +16,7 @@
  */
 #include "client/rmq/RMQNormalProducer.h"
 #include "resource/Resource.h"
+#include "common/MQTransactionListener.h"
 #include <memory>
 #include <rocketmq/DefaultMQProducer.h>
 #include <rocketmq/TransactionMQProducer.h>
@@ -47,10 +48,15 @@ public:
         return std::make_shared<RMQNormalProducer>(producer);
     }
 
-    static std::shared_ptr<RMQNormalProducer> getRMQTransProducer(const std::string& group,std::shared_ptr<rocketmq::TransactionListener> listener){
+    static std::shared_ptr<RMQNormalProducer> getRMQTransProducer(const std::string& group,rocketmq::TransactionListener* listener){
         //rocketmq::LocalTransactionState& state
         auto transProducer = std::make_shared<rocketmq::TransactionMQProducer>(group);
-        transProducer->setTransactionListener(listener.get());
+        transProducer->setNamesrvAddr(resource->getNamesrv());
+        transProducer->setTransactionListener(listener);
+        transProducer->setGroupName(group);
+        transProducer->setSendMsgTimeout(500);
+        transProducer->setTcpTransportTryLockTimeout(1000);
+        transProducer->setTcpTransportConnectTimeout(400);
         transProducer->start();
         return std::make_shared<RMQNormalProducer>(transProducer);
     }

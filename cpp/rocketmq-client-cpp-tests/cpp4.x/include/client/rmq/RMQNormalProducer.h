@@ -60,8 +60,6 @@ public:
         try{
             //COMMIT_MESSAGE, ROLLBACK_MESSAGE, UNKNOWN
             sendResult = transactionProducer->sendMessageInTransaction(msg, &state);
-            std::cout << "SendResult:" << sendResult.getSendStatus() << ", Message ID: " << sendResult.getMsgId()<< std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(1));
             getEnqueueMessages()->addData(sendResult.getMsgId());
         } catch (const std::exception& e) {
             multi_logger->error("TransProducer send message failed, {}", e.what());
