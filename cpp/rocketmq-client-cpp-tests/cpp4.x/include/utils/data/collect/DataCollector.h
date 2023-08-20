@@ -34,18 +34,3 @@ public:
     virtual void lockIncrement() = 0;
     virtual void unlockIncrement() = 0;
 };
-
-// class DataCollector {
-// public:
-//     virtual void resetData() = 0;
-//     virtual std::vector<std::string> getAllData() = 0;
-//     virtual std::set<std::string> getAllDataWithoutDuplicate() = 0;
-//     virtual void addData(const std::string& data) = 0;
-//     virtual std::size_t getDataSizeWithoutDuplicate() = 0;
-//     virtual std::size_t getDataSize() = 0;
-//     virtual bool isRepeatedData(const std::string& data) = 0;
-//     virtual int getRepeatedTimeForData(const std::string& data) = 0;
-//     virtual void removeData(const std::string& data) = 0;
-//     virtual void lockIncrement() = 0;
-//     virtual void unlockIncrement() = 0;
-// };

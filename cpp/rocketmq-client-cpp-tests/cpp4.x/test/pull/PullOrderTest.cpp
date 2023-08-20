@@ -33,6 +33,38 @@
 #include "utils/VerifyUtils.h"
 #include "factory/ConsumerFactory.h"
 #include "factory/ProducerFactory.h"
+#include "factory/MessageFactory.h"
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
+
+// TEST(PullOrderTest, waitFIFOReceiveThenAck){
+//     int SEND_NUM = 20;
+//     std::string topic = getTopic(MessageType::FIFO, "waitFIFOReceiveThenAck", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//     std::string group = getGroupId("waitFIFOReceiveThenAck");
+//     std::string tag = NameUtils::getRandomTagName();
+
+//     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
+
+//     std::this_thread::sleep_for(std::chrono::seconds(2));
+
+//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer));
+
+//     auto producer = ProducerFactory::getRMQProducer(group);
+
+//     ASSERT_NE(producer, nullptr);
+
+//     for(int i=0;i<SEND_NUM;i++){
+//         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
+//         producer->send(message);
+//     }
+
+//     std::this_thread::sleep_for(std::chrono::seconds(1));
+
+//     ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+//     //只能保证拉的队列里面的消息是有序的，不能保证整个队列的消息是有序的
+//     ASSERT_TRUE(VerifyUtils::waitFIFOReceiveThenAck(producer,pullConsumer,topic,tag,5));
+
+//     pullConsumer->shutdown();
+//     producer->shutdown();
+// }

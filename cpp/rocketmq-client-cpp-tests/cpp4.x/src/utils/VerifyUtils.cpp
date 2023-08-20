@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 #include "utils/VerifyUtils.h"
+#include "utils/data/collect/DataCollector.h"
+#include "utils/data/collect/DataCollectorManager.h"
 #include <gtest/gtest.h>
 #include <map>
 #include <memory>
@@ -25,9 +27,12 @@
 #include <future>
 #include <chrono>
 #include <thread>
+#include <absl/container/flat_hash_map.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
+
+std::atomic<int> VerifyUtils::receivedIndex(0);
 
 long long VerifyUtils::getDelayTime(int delayLevel){
     long long delayTime = 0;
@@ -94,7 +99,7 @@ std::unordered_map<std::string, long> VerifyUtils::checkDelay(DataCollector<MQMs
     std::unordered_map<std::string, long> map;
     std::vector<MQMsg> receivedMessages = dequeueMessages.getAllData();
     std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-    // 将时间点转换为时间戳（以秒为单位）
+    // 将时间点转换为时间戳（以毫秒为单位）
     std::chrono::seconds duration = std::chrono::duration_cast<std::chrono::seconds>(now.time_since_epoch());
     long consumeTime = duration.count()*1000L;
     // std::cout<<getDelayTime(delayLevel)<<std::endl;
@@ -124,7 +129,7 @@ bool VerifyUtils::checkOrder(DataCollector<MQMsg>& dequeueMessages){
     return checkOrderMessage(map);
 }
 
-bool async_function(std::string topic,std::string subExpression, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
+bool async_function(const std::string& topic,const std::string& subExpression, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer){
     std::vector<rocketmq::MQMessageQueue> mqs;
     try {
         pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
@@ -384,3 +389,404 @@ bool VerifyUtils::checkOrderMessage(std::unordered_map<std::string, std::vector<
     }
     return true;
 }
+
+void modifyString2Empty(const std::string &msgId,std::vector<std::string>& msgs,std::mutex& mtx,std::atomic<int>& recvCount) {
+    std::lock_guard<std::mutex> lock(mtx);
+    for (auto& msg : msgs) {
+        if(msgId == msg){
+            std::cout << "msg id: " << msg << std::endl;
+            msg = "";
+            std::cout << "msg id change: " << msg << std::endl;
+            recvCount--;
+            break;
+        }
+    }
+}
+
+bool VerifyUtils::waitReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+TIMEOUT* 1000L;
+
+    std::vector<std::function<bool()>> runnables;
+    std::vector<std::string> sendMsgs=producer->getEnqueueMessages()->getAllData();
+    std::atomic<int> recvCount(sendMsgs.size());
+    std::mutex mtx;
+
+    for(int i=0;i<defaultSimpleThreadNums;i++){
+        runnables.push_back([&](){
+            try{
+                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+                    std::vector<rocketmq::MQMessageQueue> mqs;
+                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+                    for (auto& mq : mqs) {
+                        std::unique_lock<std::mutex> lock(mtx);
+                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                        if(offset<0) continue;
+                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                        switch (pullResult.pullStatus) {
+                            case rocketmq::FOUND:
+                                for (auto& msg : pullResult.msgFoundList) {
+                                    for (auto& sendMsg : sendMsgs) {
+                                        if(msg.getMsgId() == sendMsg){
+                                            sendMsg = "";
+                                            recvCount--;
+                                            offset = pullResult.nextBeginOffset;
+                                            pullConsumer->updateConsumeOffset(mq, offset);
+                                        }
+                                    }
+                                }
+                                break;
+                            case rocketmq::NO_MATCHED_MSG:
+                                break;
+                            case rocketmq::NO_NEW_MSG:
+                                break;
+                            case rocketmq::OFFSET_ILLEGAL:
+                                break;
+                            default:
+                                break;
+                        }
+                        lock.unlock();
+                    }
+                    
+                    if(recvCount == 0){
+                        break;
+                    }
+                    
+                }
+                
+            }
+            catch(const std::exception& e){
+                multi_logger->error("{}", e.what());
+                return false;
+            }
+            return true;
+        });
+    }
+
+    std::vector<std::future<bool>> futures;
+    for (const auto& runnable : runnables) {
+        futures.push_back(std::async(std::launch::async, runnable));
+    }
+
+    // 等待所有函数对象完成并获取结果
+    for (auto& future : futures) {
+        bool result = future.get();
+        if(!result) return false;
+    }
+
+    if(recvCount != 0){
+        multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", recvCount);
+        return false;
+    }else{
+        return true;
+    }
+}
+
+bool VerifyUtils::waitFIFOParamReceiveThenNAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
+
+    std::vector<std::function<void()>> runnables;
+    std::vector<rocketmq::MQMessageExt> receivedMessage;
+    std::mutex mtx;
+
+    for(int i=0;i<4;i++){
+        runnables.push_back([&](){
+            try{
+                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+                    std::vector<rocketmq::MQMessageQueue> mqs;
+                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+                    for (auto& mq : mqs) {
+                        std::unique_lock<std::mutex> lock(mtx);
+                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                        if(offset<0) continue;
+                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                        switch (pullResult.pullStatus) {
+                            case rocketmq::FOUND:
+                                for (auto& msg : pullResult.msgFoundList) {
+                                    receivedMessage.push_back(msg);
+                                }
+                                break;
+                            case rocketmq::NO_MATCHED_MSG:
+                                break;
+                            case rocketmq::NO_NEW_MSG:
+                                break;
+                            case rocketmq::OFFSET_ILLEGAL:
+                                break;
+                            default:
+                                break;
+                        }
+                        lock.unlock();
+                    }
+                    
+                }
+                
+            }
+            catch(const std::exception& e){
+                multi_logger->error("{}", e.what());
+            }
+        });
+    }
+
+    std::vector<std::future<void>> futures;
+    for (const auto& runnable : runnables) {
+        futures.push_back(std::async(std::launch::async, runnable));
+    }
+
+    // 等待所有函数对象完成并获取结果
+    for (auto& future : futures) {
+        future.get();
+    }
+
+    for(auto& msg : receivedMessage){
+        int id = std::stoi(msg.getBody());
+        if(id>=8){
+            multi_logger->error("Consumption out of order, expected :Body=0 Actual :Body={}",id);
+            return false;
+        }
+    }
+    return true;
+}
+
+bool VerifyUtils::waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
+
+    std::vector<std::function<bool()>> runnables;
+    std::vector<rocketmq::MQMessageExt> receivedMessage;
+    absl::flat_hash_map<std::string,int> map;
+
+    std::mutex mtx;
+    for(int i=0;i<4;i++){
+        runnables.push_back([&](){
+            try{
+                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+                    std::vector<rocketmq::MQMessageQueue> mqs;
+                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+                    for (auto& mq : mqs) {
+                        std::unique_lock<std::mutex> lock(mtx);
+                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                        if(offset<0) continue;
+                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                        switch (pullResult.pullStatus) {
+                            case rocketmq::FOUND:
+                                for(int j=0;j<pullResult.msgFoundList.size();j++){
+                                    std::string msgId = pullResult.msgFoundList[j].getMsgId();
+                                    int id = std::stoi(pullResult.msgFoundList[j].getBody());
+
+                                    if(id != 19){
+                                        offset+=1;
+                                    }
+                                    pullConsumer->updateConsumeOffset(mq, offset);
+
+                                    if(map.find(msgId) != map.end()){
+                                        map[msgId] = map[msgId]+1;
+                                    }else{
+                                        map[msgId] = 1;
+                                    }
+                                }
+                                break;
+                            case rocketmq::NO_MATCHED_MSG:
+                                break;
+                            case rocketmq::NO_NEW_MSG:
+                                break;
+                            case rocketmq::OFFSET_ILLEGAL:
+                                break;
+                            default:
+                                break;
+                        }
+                        lock.unlock();
+                    }
+                    
+                    if(map.size() != 20){
+                        return false;
+                    }
+                    int count = 0;
+                    for(auto& pair : map){
+                        if(pair.second > 1){
+                            count += 1;
+                        }
+                    }
+
+                    if(count > 0 && count != 1){
+                        return false;
+                    }
+                }
+            }
+            catch(const std::exception& e){
+                multi_logger->error("{}", e.what());
+            }
+            return true;
+        });
+    }
+
+    std::vector<std::future<bool>> futures;
+    for (const auto& runnable : runnables) {
+        futures.push_back(std::async(std::launch::async, runnable));
+    }
+
+    // 等待所有函数对象完成并获取结果
+    for (auto& future : futures) {
+        bool result = future.get();
+        if(!result) return false;
+    }
+
+    return true;
+}
+
+bool VerifyUtils::waitFIFOReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+TIMEOUT* 1000L;
+
+    std::vector<std::string> sendCollection=producer->getEnqueueMessages()->getAllData();
+
+    try{
+        while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+            std::vector<rocketmq::MQMessageQueue> mqs;
+            pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+            for (auto& mq : mqs) {
+                std::unordered_map<std::string, std::vector<MQMsg>> receivedMessage;
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) continue;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for(int j=0;j<pullResult.msgFoundList.size();j++){
+                            int id = std::stoi(pullResult.msgFoundList[j].getBody())/20;
+                            offset+=1;
+                            pullConsumer->updateConsumeOffset(mq, offset);
+                            sendCollection.erase(std::remove_if(sendCollection.begin(), sendCollection.end(),
+                                                                [&](const std::string& enqueueMessageId) {
+                                if(pullResult.msgFoundList[j].getMsgId() == enqueueMessageId){
+                                    return true;
+                                }
+                                return false;
+                            }), sendCollection.end());
+
+                            std::string msgId(std::to_string(id));
+                            if(receivedMessage.find(msgId) != receivedMessage.end()){
+                                receivedMessage[msgId].push_back(MQMsg(pullResult.msgFoundList[j]));
+                            }else{
+                                std::vector<MQMsg> msgs;
+                                msgs.push_back(MQMsg(pullResult.msgFoundList[j]));
+                                receivedMessage[msgId] = msgs;
+                            }
+                        }
+                        break;
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
+                }
+                if(!checkOrderMessage(receivedMessage)){
+                    return false;
+                }
+            }
+            if(sendCollection.size() == 0) break;
+        }
+        if(sendCollection.size() != 0){
+            multi_logger->error("Not all messages were consumed, unConsumedMessages size: {}", sendCollection.size());
+            return false;
+        }
+    }
+    catch(const std::exception& e){
+        multi_logger->error("{}", e.what());
+    }
+    return true;
+}
+
+bool VerifyUtils::waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+60* 1000L;
+
+    try{
+        while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+            std::vector<rocketmq::MQMessageQueue> mqs;
+            pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+            for (auto& mq : mqs) {
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) continue;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for(int j=0;j<pullResult.msgFoundList.size();j++){
+                            multi_logger->info("Message: {}", pullResult.msgFoundList[j].toString());
+                            std::this_thread::sleep_for(std::chrono::seconds(11));
+                            offset+=1;
+                            pullConsumer->updateConsumeOffset(mq, offset);
+                        }
+                        break;
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+    catch(const std::exception& e){
+        multi_logger->error("{}", e.what());
+        return true;
+    }
+    return true;
+}
+
+ bool VerifyUtils::waitReceiveMaxsizeSync(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+TIMEOUT* 1000L;
+
+    absl::flat_hash_map<std::string,rocketmq::MQMessageExt> map;
+
+    try{
+        while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+            std::vector<rocketmq::MQMessageQueue> mqs;
+            pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+            for (auto& mq : mqs) {
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) continue;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for(int j=0;j<pullResult.msgFoundList.size();j++){
+                            multi_logger->info("Message: {}", pullResult.msgFoundList[j].toString());
+                            std::string msgId = pullResult.msgFoundList[j].getMsgId();
+                            if(map.find(msgId) != map.end()){
+                                multi_logger->error("Duplicate message");
+                                return false;
+                            }else{
+                                offset+=1;
+                                pullConsumer->updateConsumeOffset(mq, offset);
+                                map[msgId] = pullResult.msgFoundList[j];
+                            }
+                        }
+                        break;
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
+                }
+            }
+            multi_logger->info("receive {} messages",map.size());
+            if(map.size() == 300) break;
+
+        }
+        DataCollector<std::string>& dequeueMessages = DataCollectorManager<std::string>::getInstance().fetchListDataCollector(RandomUtils::getStringByUUID());
+        for(auto& pair : map){
+            dequeueMessages.addData(pair.second.getMsgId());
+        }
+        if(!VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()), dequeueMessages)){
+            return false;
+        }
+    }
+    catch(const std::exception& e){
+        multi_logger->error("{}", e.what());
+        return false;
+    }
+    return true;
+ }

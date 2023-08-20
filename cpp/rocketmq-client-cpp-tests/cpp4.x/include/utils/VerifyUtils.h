@@ -16,6 +16,7 @@
  */
 #pragma once
 #include "utils/data/collect/DataCollector.h"
+#include "client/rmq/RMQNormalProducer.h"
 #include "common/MQMsg.h"
 #include <memory>
 #include <rocketmq/DefaultMQPullConsumer.h>
@@ -25,6 +26,8 @@
 class VerifyUtils {
 private:
     const static int TIMEOUT = 90;
+    const static int defaultSimpleThreadNums = 4;
+    static std::atomic<int> receivedIndex;
     static std::unordered_map<std::string, long> checkDelay(DataCollector<MQMsg>& dequeueMessages, int delayLevel);
     static bool checkOrder(DataCollector<MQMsg>& dequeueMessages);
     static std::vector<rocketmq::MQMessageExt> msgs;
@@ -41,4 +44,10 @@ public:
     static bool verifyNormalMessageWithUserProperties(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,std::map<std::string, std::string>& props,int expectedUnrecvMsgNum);
     static bool verifyDelayMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,int delayLevel);
     static bool verifyOrderMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages);
+    static bool waitReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
+    static bool waitFIFOParamReceiveThenNAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
+    static bool waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum=3);
+    static bool waitFIFOReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
+    static bool waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
+    static bool waitReceiveMaxsizeSync(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
 };

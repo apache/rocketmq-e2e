@@ -19,6 +19,7 @@
 #include <chrono>
 #include <openssl/evp.h>
 #include <iomanip>
+#include <sstream>
 
 #include "utils/NameUtils.h"
 
