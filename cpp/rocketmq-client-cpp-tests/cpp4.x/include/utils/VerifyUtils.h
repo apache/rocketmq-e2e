@@ -21,6 +21,7 @@
 #include <memory>
 #include <rocketmq/DefaultMQPullConsumer.h>
 #include <unordered_map>
+#include <unordered_set>
 #include <sstream>
 
 class VerifyUtils {
@@ -41,6 +42,7 @@ public:
     static std::vector<rocketmq::MQMessageExt> fetchMessages(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer, const std::string& topic);
     static bool verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages);
     static bool verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages);
+    static bool verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages,std::unordered_set<std::string>& unconsumedMsgIds);
     static bool verifyNormalMessageWithUserProperties(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,std::map<std::string, std::string>& props,int expectedUnrecvMsgNum);
     static bool verifyDelayMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages,int delayLevel);
     static bool verifyOrderMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages);
@@ -50,4 +52,5 @@ public:
     static bool waitFIFOReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
     static bool waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
     static bool waitReceiveMaxsizeSync(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
+    static bool waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum);
 };

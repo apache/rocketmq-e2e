@@ -302,6 +302,24 @@ bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessage
     return true;
 }
 
+bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<std::string>& dequeueMessages,std::unordered_set<std::string>& unconsumedMsgIds){
+    std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, 30*1000L, 1);
+    for(auto& unConsumedMessage:unConsumedMessages){
+        auto it = unconsumedMsgIds.find(unConsumedMessage);
+        if(it == unconsumedMsgIds.end()){
+            multi_logger->error("Message {} should be consumed",unConsumedMessage);
+            return false;
+        }else{
+            unconsumedMsgIds.erase(it);
+        }
+    }
+    if (unconsumedMsgIds.size() > 0) {
+        multi_logger->error("UnConsumedMessages size: {}", unConsumedMessages.size());
+        return false;
+    }
+    return true;
+}
+
 bool VerifyUtils::verifyNormalMessage(DataCollector<std::string>& enqueueMessages, DataCollector<MQMsg>& dequeueMessages){
     std::vector<std::string> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT*1000L, 1);
     if (unConsumedMessages.size() > 0) {
@@ -790,3 +808,91 @@ bool VerifyUtils::waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer
     }
     return true;
  }
+
+bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
+
+    std::vector<std::function<bool()>> runnables;
+    absl::flat_hash_map<std::string,rocketmq::MQMessageExt> recvMsgs;
+    std::vector<bool> flag(20,true);
+    std::unordered_set<std::string> unconsumedMsgIds;
+
+    std::mutex mtx;
+    for(int i=0;i<4;i++){
+        runnables.push_back([&](){
+            
+            while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+                try{
+                    std::vector<rocketmq::MQMessageQueue> mqs;
+                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+                    for (auto& mq : mqs) {
+                        std::unique_lock<std::mutex> lock(mtx);
+                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                        if(offset<0) continue;
+                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                        switch (pullResult.pullStatus) {
+                            case rocketmq::FOUND:
+                                for(int j=0;j<pullResult.msgFoundList.size();j++){
+                                    int id = std::stoi(pullResult.msgFoundList[j].getBody());
+                                    if(id == 19 && flag[19]){
+                                        flag[19]=false;
+                                        unconsumedMsgIds.insert(pullResult.msgFoundList[j].getMsgId());
+                                    }else{
+                                        if(id == 19){
+                                            unconsumedMsgIds.insert(pullResult.msgFoundList[j].getMsgId());
+                                        }else{
+                                            multi_logger->info("Message: {}", pullResult.msgFoundList[j].toString());
+                                            offset+=1;
+                                            pullConsumer->updateConsumeOffset(mq, offset);
+                                            if(recvMsgs.find(pullResult.msgFoundList[j].getMsgId()) != recvMsgs.end()){
+                                                multi_logger->error("Duplicate message");
+                                                return false;
+                                            }else{
+                                                recvMsgs[pullResult.msgFoundList[j].getMsgId()] = pullResult.msgFoundList[j];
+                                            }
+                                        }
+                                    }
+                                }
+                                break;
+                            case rocketmq::NO_MATCHED_MSG:
+                                break;
+                            case rocketmq::NO_NEW_MSG:
+                                break;
+                            case rocketmq::OFFSET_ILLEGAL:
+                                break;
+                            default:
+                                break;
+                        }
+                        lock.unlock();
+                    }
+                }catch(const std::exception& e){
+                    multi_logger->error("{}", e.what());
+                    return false;
+                }
+                if(recvMsgs.size() == 20) return false;
+
+            }
+            return true;
+        });
+    }
+
+    std::vector<std::future<bool>> futures;
+    for (const auto& runnable : runnables) {
+        futures.push_back(std::async(std::launch::async, runnable));
+    }
+
+    // 等待所有函数对象完成并获取结果
+    for (auto& future : futures) {
+        bool res = future.get();
+        if(!res) return false;
+    }
+    DataCollector<std::string>& dequeueMessages = DataCollectorManager<std::string>::getInstance().fetchListDataCollector(RandomUtils::getStringByUUID());
+    for(auto& pair : recvMsgs){
+        dequeueMessages.addData(pair.second.getMsgId());
+    }
+    if(!verifyNormalMessage( *(producer->getEnqueueMessages()),dequeueMessages,unconsumedMsgIds)){
+        return false;
+    }
+
+    return true;
+}
