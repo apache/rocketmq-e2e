@@ -91,10 +91,10 @@ public class ResourceInit {
     private static void initAcl() {
         aclEnable = Boolean.parseBoolean(System.getProperty("aclEnable", properties.getProperty("aclEnable", "false")));
         if (aclEnable) {
-            String instanceUsername = System.getProperty("INSTANCE_USERNAME", properties.getProperty("INSTANCE_USERNAME"));
-            String instancePassword = System.getProperty("INSTANCE_PASSWORD", properties.getProperty("INSTANCE_PASSWORD"));
-            account = new Account(instanceUsername, instancePassword);
-            log.info("INIT - acl is enabled, [instanceUsername:{}, instancePassword:{}]", instanceUsername, instancePassword);
+            String accessKey = System.getProperty("accessKey", properties.getProperty("accessKey"));
+            String secretKey = System.getProperty("secretKey", properties.getProperty("secretKey"));
+            account = new Account(accessKey, secretKey, endPoint);
+            log.info("INIT - acl is enabled, [accessKey:{}, secretKey:{}]", accessKey, secretKey);
         } else {
             log.info("INIT - acl is disabled");
             account = new Account(endPoint);
