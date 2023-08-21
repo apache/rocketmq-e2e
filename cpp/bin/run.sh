@@ -21,4 +21,6 @@ cd ../common &&  mvn -Prelease -DskipTests clean package -U
 # set env for mqadmin (use source to set linux env variables in current shell)
 cd ../rocketmq-admintools && source bin/env.sh
 # run cpp e2e test case
-cd ../cpp/rocketmq-client-cpp-tests/
+cd ../cpp/rocketmq-client-cpp-tests/cpp4.x
+cmake . -B build && cmake --build build
+./rocketmq_test

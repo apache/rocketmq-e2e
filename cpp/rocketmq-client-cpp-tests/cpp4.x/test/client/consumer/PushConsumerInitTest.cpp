@@ -94,8 +94,6 @@ TEST(PushConsumerInitTest, testNormalNameserver){
     rocketmq::DefaultMQPushConsumer consumer(groupId);
     consumer.setNamesrvAddr(resource->getNamesrv());
     consumer.subscribe(topic, "*");
-    consumer.setTcpTransportTryLockTimeout(1000);
-    consumer.setTcpTransportConnectTimeout(400);
     consumer.setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
     consumer.setConsumeThreadCount(4);
     MsgListener *msglistener=new MsgListener();

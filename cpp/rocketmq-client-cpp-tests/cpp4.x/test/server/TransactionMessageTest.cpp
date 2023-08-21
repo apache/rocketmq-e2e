@@ -88,11 +88,14 @@ TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    pullConsumer->shutdown();
 
     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
     ASSERT_NE(transProducer, nullptr);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     for(int i=0;i<SEND_NUM;i++){
         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
@@ -107,7 +110,6 @@ TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
     ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     transProducer->shutdownTransaction();
 }
 
@@ -124,11 +126,14 @@ TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    pullConsumer->shutdown();
 
     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
     ASSERT_NE(transProducer, nullptr);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     for(int i=0;i<SEND_NUM;i++){
         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
@@ -143,7 +148,6 @@ TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
     ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(transProducer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     transProducer->shutdownTransaction();
 }
 
@@ -160,11 +164,14 @@ TEST(TransactionMessageTest, testTrans_CheckerRollback){
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    pullConsumer->shutdown();
 
     rocketmq::TransactionListener* listener = new RollbackMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
     ASSERT_NE(transProducer, nullptr);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     for(int i=0;i<SEND_NUM;i++){
         auto message = MessageFactory::buildMessage(topic,tag,RandomUtils::getStringByUUID());
@@ -179,7 +186,6 @@ TEST(TransactionMessageTest, testTrans_CheckerRollback){
     ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     transProducer->shutdownTransaction();
 }
 
@@ -196,6 +202,7 @@ TEST(TransactionMessageTest, testTrans_SendCheckerPartionCommit){
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    pullConsumer->shutdown();
 
     std::atomic<int> commitMsgNum(0);
     std::atomic<int> rollbackMsgNum(0);
@@ -203,6 +210,8 @@ TEST(TransactionMessageTest, testTrans_SendCheckerPartionCommit){
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
     ASSERT_NE(transProducer, nullptr);
+
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
     for(int i=0;i<SEND_NUM;i++){
         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
@@ -227,6 +236,5 @@ TEST(TransactionMessageTest, testTrans_SendCheckerPartionCommit){
     ASSERT_EQ(SEND_NUM/2,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     transProducer->shutdownTransaction();
 }
