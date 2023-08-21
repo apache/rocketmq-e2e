@@ -33,25 +33,25 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(ConsumerGroupTest, testSystemInnerConsumerGroup) {
-//     std::string groupId = "DEFAULT_CONSUMER";
-//     std::string topic = getTopic(MessageType::NORMAL, "testSystemInnerConsumerGroup", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
-//     ASSERT_THROW({
-//         rocketmq::DefaultMQPullConsumer consumer(groupId);
-//         consumer.setNamesrvAddr(resource->getNamesrv());
-//         consumer.registerMessageQueueListener(topic, NULL);
-//         consumer.start();
-//         std::vector<rocketmq::MQMessageQueue> mqs;
+TEST(ConsumerGroupTest, testSystemInnerConsumerGroup) {
+    std::string groupId = "DEFAULT_CONSUMER";
+    std::string topic = getTopic(MessageType::NORMAL, "testSystemInnerConsumerGroup", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    ASSERT_THROW({
+        rocketmq::DefaultMQPullConsumer consumer(groupId);
+        consumer.setNamesrvAddr(resource->getNamesrv());
+        consumer.registerMessageQueueListener(topic, NULL);
+        consumer.start();
+        std::vector<rocketmq::MQMessageQueue> mqs;
 
-//         try {
-//             consumer.fetchSubscribeMessageQueues(topic, mqs);
-//             auto iter = mqs.begin();
-//             for (; iter != mqs.end(); ++iter) {
-//                 spdlog::info("mq: {}", (*iter).toString());
-//             }
-//         } catch (const rocketmq::MQException& e) {
-//             multi_logger->info("fetchSubscribeMessageQueues exception: {}", e.what());
-//         }
-//         consumer.shutdown();
-//     },rocketmq::MQException);
-// }
+        try {
+            consumer.fetchSubscribeMessageQueues(topic, mqs);
+            auto iter = mqs.begin();
+            for (; iter != mqs.end(); ++iter) {
+                spdlog::info("mq: {}", (*iter).toString());
+            }
+        } catch (const rocketmq::MQException& e) {
+            multi_logger->info("fetchSubscribeMessageQueues exception: {}", e.what());
+        }
+        consumer.shutdown();
+    },rocketmq::MQException);
+}

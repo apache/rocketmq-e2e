@@ -40,226 +40,226 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(TagFilterTest, testSendTagA_SubTagAorTagB){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagAorTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSendTagA_SubTagAorTagB");
-//     std::string sendTag = NameUtils::getRandomTagName();
-//     std::string receiveTag = sendTag + "||TagB";
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSendTagA_SubTagAorTagB){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagAorTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSendTagA_SubTagAorTagB");
+    std::string sendTag = NameUtils::getRandomTagName();
+    std::string receiveTag = sendTag + "||TagB";
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         multi_logger->info("Wait for the SimpleConsumer");
+        multi_logger->info("Wait for the SimpleConsumer");
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTag,SEND_NUM);
+        producer->send(topic,sendTag,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
 
-// TEST(TagFilterTest, testSndTagATagB_SubTagATagB){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSndTagATagB_SubTagATagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSndTagATagB_SubTagATagB");
-//     std::string sendTagA = NameUtils::getRandomTagName();
-//     std::string sendTagB = NameUtils::getRandomTagName();
-//     std::string receiveTag = sendTagA + "||" + sendTagB;
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSndTagATagB_SubTagATagB){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSndTagATagB_SubTagATagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSndTagATagB_SubTagATagB");
+    std::string sendTagA = NameUtils::getRandomTagName();
+    std::string sendTagB = NameUtils::getRandomTagName();
+    std::string receiveTag = sendTagA + "||" + sendTagB;
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         multi_logger->info("Wait for the SimpleConsumer");
+        multi_logger->info("Wait for the SimpleConsumer");
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testSendTagAAndTagB_SubAll){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSendTagAAndTagB_SubAll", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSendTagAAndTagB_SubAll");
-//     std::string sendTagA = NameUtils::getRandomTagName();
-//     std::string sendTagB = NameUtils::getRandomTagName();
-//     std::string receiveTag = "*";
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSendTagAAndTagB_SubAll){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSendTagAAndTagB_SubAll", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSendTagAAndTagB_SubAll");
+    std::string sendTagA = NameUtils::getRandomTagName();
+    std::string sendTagB = NameUtils::getRandomTagName();
+    std::string receiveTag = "*";
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testSendTagA_SubTagB){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSendTagA_SubTagB");
-//     std::string sendTag = NameUtils::getRandomTagName();
-//     std::string receiveTag = NameUtils::getRandomTagName();
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSendTagA_SubTagB){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSendTagA_SubTagB");
+    std::string sendTag = NameUtils::getRandomTagName();
+    std::string receiveTag = NameUtils::getRandomTagName();
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTag,SEND_NUM);
+        producer->send(topic,sendTag,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//         std::this_thread::sleep_for(std::chrono::seconds(20));
+        std::this_thread::sleep_for(std::chrono::seconds(20));
 
-//         ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+        ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testSendTagA_SubTagA){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagA", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSendTagA_SubTagA");
-//     std::string sendTagA = NameUtils::getRandomTagName();
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,sendTagA,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSendTagA_SubTagA){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagA", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSendTagA_SubTagA");
+    std::string sendTagA = NameUtils::getRandomTagName();
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,sendTagA,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,sendTagA,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,sendTagA,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testLongTagSize){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testLongTagSize", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testLongTagSize");
-//     std::string sendTag = RandomUtils::getStringWithNumber(1024 * 10);
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,sendTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testLongTagSize){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testLongTagSize", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testLongTagSize");
+    std::string sendTag = RandomUtils::getStringWithNumber(1024 * 10);
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,sendTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,sendTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,sendTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTag,SEND_NUM);
+        producer->send(topic,sendTag,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testSubTagWithSpace){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSubTagWithSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSubTagWithSpace");
-//     std::string sendTagA = NameUtils::getRandomTagName();
-//     std::string sendTagB = NameUtils::getRandomTagName();
-//     std::string receiveTag = " " + sendTagA + " || " + sendTagB + " ";
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSubTagWithSpace){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSubTagWithSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSubTagWithSpace");
+    std::string sendTagA = NameUtils::getRandomTagName();
+    std::string sendTagB = NameUtils::getRandomTagName();
+    std::string receiveTag = " " + sendTagA + " || " + sendTagB + " ";
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
 
-//         ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+        ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
 ////TEST(TagFilterTest, testTagWithSpecialSymbol01){
 ////    int SEND_NUM = 10;
@@ -278,65 +278,65 @@ extern std::shared_ptr<Resource> resource;
 ////    producer->shutdown();
 ////}
 
-// TEST(TagFilterTest, testTagWithSpecialSymbol02){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol02", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testTagWithSpecialSymbol02");
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,"*",std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testTagWithSpecialSymbol02){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol02", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testTagWithSpecialSymbol02");
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,"*",std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,"*",SEND_NUM);
+        producer->send(topic,"*",SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//         VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testTagWithSpecialSymbol03){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol03", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testTagWithSpecialSymbol03");
-//     std::string sendTagA = NameUtils::getRandomTagName();
-//     std::string sendTagB = NameUtils::getRandomTagName();
-//     std::string receiveTag = sendTagA + "||||" + sendTagB;
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testTagWithSpecialSymbol03){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol03", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testTagWithSpecialSymbol03");
+    std::string sendTagA = NameUtils::getRandomTagName();
+    std::string sendTagB = NameUtils::getRandomTagName();
+    std::string receiveTag = sendTagA + "||||" + sendTagB;
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
+        ASSERT_EQ(SEND_NUM*2,producer->getEnqueueMessages()->getDataSize());
 
-//         VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
 ////TEST(TagFilterTest, testTagWithBlankSymbol){
 ////    int SEND_NUM = 10;
@@ -360,78 +360,78 @@ extern std::shared_ptr<Resource> resource;
 ////    });
 ////}
 
-// TEST(TagFilterTest, testSendTagWithSameHashCode_SubWithOne){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testSendTagWithSameHashCode_SubWithOne", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testSendTagWithSameHashCode_SubWithOne");
-//     std::string sendTagA = "BB";
-//     std::string sendTagB = "Aa";
-//     std::string receiveTag = "BB";
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testSendTagWithSameHashCode_SubWithOne){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testSendTagWithSameHashCode_SubWithOne", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testSendTagWithSameHashCode_SubWithOne");
+    std::string sendTagA = "BB";
+    std::string sendTagB = "Aa";
+    std::string receiveTag = "BB";
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
 
-//         VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
+        VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
 
-//         pushConsumer->getListener()->clearMsg();
+        pushConsumer->getListener()->clearMsg();
 
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
 
-//         ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+        ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
         
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(TagFilterTest, testTagCaseSensitive){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::NORMAL, "testTagCaseSensitive", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testTagCaseSensitive");
-//     std::string sendTagA = "BB";
-//     std::string sendTagB = "bb";
-//     std::string receiveTag = "BB";
-//     ASSERT_NO_THROW({
-//         auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
+TEST(TagFilterTest, testTagCaseSensitive){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "testTagCaseSensitive", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testTagCaseSensitive");
+    std::string sendTagA = "BB";
+    std::string sendTagB = "bb";
+    std::string receiveTag = "BB";
+    ASSERT_NO_THROW({
+        auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,receiveTag,std::make_shared<RMQNormalListener>());
 
-//         auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(2));
+        std::this_thread::sleep_for(std::chrono::seconds(2));
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-//         auto producer = ProducerFactory::getRMQProducer(group);
+        auto producer = ProducerFactory::getRMQProducer(group);
 
-//         ASSERT_NE(producer, nullptr);
+        ASSERT_NE(producer, nullptr);
 
-//         producer->send(topic,sendTagA,SEND_NUM);
+        producer->send(topic,sendTagA,SEND_NUM);
 
-//         VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
+        VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()));
 
-//         pushConsumer->getListener()->clearMsg();
+        pushConsumer->getListener()->clearMsg();
 
-//         producer->send(topic,sendTagB,SEND_NUM);
+        producer->send(topic,sendTagB,SEND_NUM);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::this_thread::sleep_for(std::chrono::seconds(10));
 
-//         ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
+        ASSERT_EQ(0,pushConsumer->getListener()->getDequeueMessages()->getDataSize());
         
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}

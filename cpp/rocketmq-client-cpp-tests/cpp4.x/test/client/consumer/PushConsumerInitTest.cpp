@@ -30,23 +30,23 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(PushConsumerInitTest, testNormalSetting){
-//     SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
-//     std::string groupId = getGroupId("testNormalSetting");
-//     std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
-//     ASSERT_NO_THROW({
-//         rocketmq::DefaultMQPushConsumer consumer(groupId);
-//         consumer.setNamesrvAddr(resource->getNamesrv());
-//         consumer.setConsumeThreadCount(20);
-//         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
-//         consumer.subscribe(topic, "*");
-//         MsgListener msglistener;
-//         consumer.registerMessageListener(&msglistener); 
-//         consumer.start();
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
-//         consumer.shutdown();
-//     });
-// }
+TEST(PushConsumerInitTest, testNormalSetting){
+    SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
+    std::string groupId = getGroupId("testNormalSetting");
+    std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    ASSERT_NO_THROW({
+        rocketmq::DefaultMQPushConsumer consumer(groupId);
+        consumer.setNamesrvAddr(resource->getNamesrv());
+        consumer.setConsumeThreadCount(20);
+        consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
+        consumer.subscribe(topic, "*");
+        MsgListener msglistener;
+        consumer.registerMessageListener(&msglistener); 
+        consumer.start();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        consumer.shutdown();
+    });
+}
 
 //// TEST(PushConsumerInitTest, testErrorAK){
 ////     SCOPED_TRACE("Expected Start [PushConsumer] ClientException to throw, but it didn't.");
@@ -86,38 +86,41 @@ extern std::shared_ptr<Resource> resource;
 ////     },rocketmq::MQException);
 //// }
 
-// TEST(PushConsumerInitTest, testNormalNameserver){
-//     SCOPED_TRACE("Start [PushConsumer] [Producer], expected success.");
-//     std::string groupId = getGroupId("testNormalNameserver");
-//     std::string topic = getTopic(MessageType::NORMAL, "testNormalNameserver", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+TEST(PushConsumerInitTest, testNormalNameserver){
+    SCOPED_TRACE("Start [PushConsumer] [Producer], expected success.");
+    std::string groupId = getGroupId("testNormalNameserver");
+    std::string topic = getTopic(MessageType::NORMAL, "testNormalNameserver", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
 
-//     rocketmq::DefaultMQPushConsumer consumer(groupId);
-//     consumer.setNamesrvAddr(resource->getNamesrv());
-//     consumer.subscribe(topic, "*");
-//     consumer.setTcpTransportTryLockTimeout(1000);
-//     consumer.setTcpTransportConnectTimeout(400);
-//     MsgListener msglistener;
-//     consumer.registerMessageListener(&msglistener);
-//     consumer.start();
+    rocketmq::DefaultMQPushConsumer consumer(groupId);
+    consumer.setNamesrvAddr(resource->getNamesrv());
+    consumer.subscribe(topic, "*");
+    consumer.setTcpTransportTryLockTimeout(1000);
+    consumer.setTcpTransportConnectTimeout(400);
+    consumer.setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+    consumer.setConsumeThreadCount(4);
+    MsgListener *msglistener=new MsgListener();
+    consumer.registerMessageListener(msglistener);
+    consumer.start();
 
-//     rocketmq::DefaultMQProducer producer(groupId);
-//     producer.setTcpTransportTryLockTimeout(1000);
-//     producer.setTcpTransportConnectTimeout(400);
-//     producer.setNamesrvAddr(resource->getNamesrv());
-//     producer.start();
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-//     int msgcount = 10;
-//     for (int i = 0; i < msgcount; ++i) {
-//         rocketmq::MQMessage msg(topic,"*",RandomUtils::getStringByUUID());
-//         producer.send(msg);
-//     }
+    rocketmq::DefaultMQProducer producer(groupId);
+    producer.setTcpTransportTryLockTimeout(1000);
+    producer.setTcpTransportConnectTimeout(400);
+    producer.setNamesrvAddr(resource->getNamesrv());
+    producer.start();
 
-//     producer.shutdown();
-//     std::this_thread::sleep_for(std::chrono::seconds(10));
-//     consumer.shutdown();
-
-//     ASSERT_EQ(msgcount, msglistener.getMsgCount());
-// }
+    int msgcount = 10;
+    for (int i = 0; i < msgcount; ++i) {
+        rocketmq::MQMessage msg(topic,"*",RandomUtils::getStringByUUID());
+        producer.send(msg);
+    }
+    std::this_thread::sleep_for(std::chrono::seconds(10));
+    ASSERT_EQ(msgcount, msglistener->getMsgCount());
+    producer.shutdown();
+    consumer.shutdown();
+    delete msglistener;
+}
 
 ////TEST(PushConsumerInitTest, testErrorNameserver){
 ////    SCOPED_TRACE("Error setting the 'EndPoint' of the consumer client,expect start failed.");

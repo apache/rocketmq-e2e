@@ -28,16 +28,16 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(PullConsumerInitTest, testNormalPullConsumer){
-//     SCOPED_TRACE("Start [PullConsumer] failed, expected success.");
-//     std::string groupId = getGroupId("testNoClientConfiguration");
-//     std::string topic = getTopic(MessageType::NORMAL, "testNoClientConfiguration",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
-//     ASSERT_NO_THROW({
-//         rocketmq::DefaultMQPullConsumer consumer(groupId);
-//         consumer.setNamesrvAddr(resource->getNamesrv());
-//         consumer.registerMessageQueueListener(topic, NULL);
-//         consumer.start();
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
-//         consumer.shutdown();
-//     });
-// }
+TEST(PullConsumerInitTest, testNormalPullConsumer){
+    SCOPED_TRACE("Start [PullConsumer] failed, expected success.");
+    std::string groupId = getGroupId("testNoClientConfiguration");
+    std::string topic = getTopic(MessageType::NORMAL, "testNoClientConfiguration",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    ASSERT_NO_THROW({
+        rocketmq::DefaultMQPullConsumer consumer(groupId);
+        consumer.setNamesrvAddr(resource->getNamesrv());
+        consumer.registerMessageQueueListener(topic, NULL);
+        consumer.start();
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        consumer.shutdown();
+    });
+}

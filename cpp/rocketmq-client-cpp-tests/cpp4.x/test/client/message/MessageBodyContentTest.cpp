@@ -35,102 +35,102 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
-//     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testMessageBodyContentIsSpace");
-//     ASSERT_NO_THROW({
-//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testMessageBodyContentIsSpace");
+    ASSERT_NO_THROW({
+        std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
-//         auto producer = ProducerFactory::getProducer(group);
+        auto producer = ProducerFactory::getProducer(group);
 
-//         std::string body = " ";
-//         rocketmq::MQMessage msg(topic,"*",body);
-//         rocketmq::SendResult sendResult = producer->send(msg);
+        std::string body = " ";
+        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::SendResult sendResult = producer->send(msg);
 
-//         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
+        ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         // std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
-//         auto msgs = msglistener->getMessages();
+        // std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
+        auto msgs = msglistener->getMessages();
         
-//         ASSERT_EQ(msgs.size(), 1);
-//         ASSERT_EQ(msgs[0].getBody(), body);
+        ASSERT_EQ(msgs.size(), 1);
+        ASSERT_EQ(msgs[0].getBody(), body);
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
-//     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testMessageBodyContentIsChinese");
-//     ASSERT_NO_THROW({
-//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testMessageBodyContentIsChinese");
+    ASSERT_NO_THROW({
+        std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
-//         auto producer = ProducerFactory::getProducer(group);
+        auto producer = ProducerFactory::getProducer(group);
 
-//         std::string body = "中文字符";
-//         rocketmq::MQMessage msg(topic,"*",body);
-//         rocketmq::SendResult sendResult = producer->send(msg);
+        std::string body = "中文字符";
+        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::SendResult sendResult = producer->send(msg);
 
-//         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
+        ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto msgs = msglistener->getMessages();
+        auto msgs = msglistener->getMessages();
         
-//         ASSERT_EQ(msgs.size(), 1);
-//         ASSERT_EQ(msgs[0].getBody(), body);
+        ASSERT_EQ(msgs.size(), 1);
+        ASSERT_EQ(msgs[0].getBody(), body);
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}
 
-// TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
-//     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testMessageBodyContentIsEmoji");
-//     ASSERT_NO_THROW({
-//         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-//         auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testMessageBodyContentIsEmoji");
+    ASSERT_NO_THROW({
+        std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
+        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
         
-//         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
+        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
-//         auto producer = ProducerFactory::getProducer(group);
+        auto producer = ProducerFactory::getProducer(group);
 
-//         std::string body = "😱";
-//         rocketmq::MQMessage msg(topic,"*",body);
-//         rocketmq::SendResult sendResult = producer->send(msg);
+        std::string body = "😱";
+        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::SendResult sendResult = producer->send(msg);
 
-//         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
+        ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
 
-//         std::this_thread::sleep_for(std::chrono::seconds(5));
+        std::this_thread::sleep_for(std::chrono::seconds(5));
 
-//         auto msgs = msglistener->getMessages();
+        auto msgs = msglistener->getMessages();
         
-//         ASSERT_EQ(msgs.size(), 1);
-//         ASSERT_EQ(msgs[0].getBody(), body);
+        ASSERT_EQ(msgs.size(), 1);
+        ASSERT_EQ(msgs[0].getBody(), body);
 
-//         pushConsumer->shutdown();
-//         pullConsumer->shutdown();
-//         producer->shutdown();
-//     });
-// }
+        pushConsumer->shutdown();
+        pullConsumer->shutdown();
+        producer->shutdown();
+    });
+}

@@ -72,7 +72,7 @@ public:
     ~UserdefinedMQTransactionListener() {};
     rocketmq::LocalTransactionState executeLocalTransaction(const rocketmq::MQMessage& msg, void* arg) {
         if (!arg) {
-            multi_logger->info("UserdefinedMQTransactionListener executeLocalTransaction transactionId:{}, return state: COMMIT_MESAGE", msg.getTransactionId());
+            multi_logger->info("UserdefinedMQTransactionListener executeLocalTransaction transactionId:{} , return state: COMMIT_MESAGE", msg.getTransactionId());
             return rocketmq::LocalTransactionState::COMMIT_MESSAGE;
         }
         rocketmq::LocalTransactionState state = (rocketmq::LocalTransactionState)(*(int*)arg % 3);
@@ -84,11 +84,11 @@ public:
         int content = std::stoi(msg.getBody());
         if(content % 2 == 0){
             commitMsgNum++;
-            multi_logger->info("UserdefinedMQTransactionListener checkLocalTransaction transactionId:{}, return state: COMMIT_MESAGE", msg.getTransactionId());
+            multi_logger->info("UserdefinedMQTransactionListener checkLocalTransaction transactionId:{}, message{}, return state: COMMIT_MESAGE", msg.getTransactionId(),msg.toString());
             return rocketmq::LocalTransactionState::COMMIT_MESSAGE;
         }else{
             rollbackMsgNum++;
-            multi_logger->info("UserdefinedMQTransactionListener checkLocalTransaction transactionId:{}, return state: ROLLBACK_MESSAGE", msg.getTransactionId());
+            multi_logger->info("UserdefinedMQTransactionListener checkLocalTransaction transactionId:{}, message{}, return state: ROLLBACK_MESSAGE", msg.getTransactionId(),msg.toString());
             return rocketmq::LocalTransactionState::ROLLBACK_MESSAGE;
         }
     }

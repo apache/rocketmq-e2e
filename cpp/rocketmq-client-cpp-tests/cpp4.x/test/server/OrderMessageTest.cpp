@@ -35,34 +35,34 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::FIFO, "testOrder_Send_PushConsumeOrderly", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testOrder_Send_PushConsumeOrderly");
-//     std::string tag = NameUtils::getRandomTagName();
+TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::FIFO, "testOrder_Send_PushConsumeOrderly", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testOrder_Send_PushConsumeOrderly");
+    std::string tag = NameUtils::getRandomTagName();
 
-//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//     std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
 
-//     auto producer = ProducerFactory::getRMQProducer(group);
+    auto producer = ProducerFactory::getRMQProducer(group);
 
-//     ASSERT_NE(producer, nullptr);
+    ASSERT_NE(producer, nullptr);
 
-//     for(int i=0;i<SEND_NUM;i++){
-//         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
-//         producer->sendOrderMessage(message,i%2);
-//     }
+    for(int i=0;i<SEND_NUM;i++){
+        auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
+        producer->sendOrderMessage(message,i%2);
+    }
 
-//     ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+    ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//     ASSERT_TRUE(VerifyUtils::verifyOrderMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+    ASSERT_TRUE(VerifyUtils::verifyOrderMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
-//     pushConsumer->shutdown();
-//     pullConsumer->shutdown();
-//     producer->shutdown();
-// }
+    pushConsumer->shutdown();
+    pullConsumer->shutdown();
+    producer->shutdown();
+}

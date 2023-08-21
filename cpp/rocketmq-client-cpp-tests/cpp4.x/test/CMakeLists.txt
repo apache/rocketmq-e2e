@@ -1,6 +1,6 @@
+add_subdirectory(server)
 add_subdirectory(client)
 add_subdirectory(cluster)
 add_subdirectory(filter)
-add_subdirectory(server)
 add_subdirectory(pull)
 set(SOURCE_FILES ${SOURCE_FILES} PARENT_SCOPE)

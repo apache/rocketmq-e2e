@@ -262,6 +262,7 @@ std::vector<std::string> VerifyUtils::waitForMessageConsume(DataCollector<std::s
 
     while (!sendMessages.empty()) {
         std::vector<MQMsg> receivedMessagesCopy = dequeueMessages.getAllData();
+        // std::cout << "receivedMessagesCopy size: " << receivedMessagesCopy.size() << std::endl;
         sendMessages.erase(std::remove_if(sendMessages.begin(), sendMessages.end(),
                                           [&](const std::string& enqueueMessageId) {
             auto count = std::count_if(receivedMessagesCopy.begin(), receivedMessagesCopy.end(),

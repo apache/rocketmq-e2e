@@ -34,37 +34,37 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-// TEST(DelayMessageTest, testDelay_Send_PushConsume){
-//     int SEND_NUM = 10;
-//     std::string topic = getTopic(MessageType::DELAY, "testDelay_Send_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testDelay_Send_PushConsume");
-//     std::string tag = NameUtils::getRandomTagName();
+TEST(DelayMessageTest, testDelay_Send_PushConsume){
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::DELAY, "testDelay_Send_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testDelay_Send_PushConsume");
+    std::string tag = NameUtils::getRandomTagName();
 
-//     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-//     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
+    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
-//     std::this_thread::sleep_for(std::chrono::seconds(2));
+    std::this_thread::sleep_for(std::chrono::seconds(2));
 
-//     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
+    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
 
-//     auto producer = ProducerFactory::getRMQProducer(group);
+    auto producer = ProducerFactory::getRMQProducer(group);
 
-//     ASSERT_NE(producer, nullptr);
+    ASSERT_NE(producer, nullptr);
 
-//     for(int i=0;i<SEND_NUM;i++){
-//         auto message = MessageFactory::buildDelayMessage(topic,tag,RandomUtils::getStringByUUID(),3);
-//         producer->send(message);
-//     }
+    for(int i=0;i<SEND_NUM;i++){
+        auto message = MessageFactory::buildDelayMessage(topic,tag,RandomUtils::getStringByUUID(),3);
+        producer->send(message);
+    }
 
-//     ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+    ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-//     ASSERT_TRUE(VerifyUtils::verifyDelayMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()),3));
+    ASSERT_TRUE(VerifyUtils::verifyDelayMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages()),3));
 
-//     pushConsumer->shutdown();
-//     pullConsumer->shutdown();
-//     producer->shutdown();
-// }
+    pushConsumer->shutdown();
+    pullConsumer->shutdown();
+    producer->shutdown();
+}
 
 ////TEST(DelayMessageTest, testDelay_SendAsync_PushConsume){
 ////    int SEND_NUM = 10;

@@ -37,6 +37,7 @@ private:
     std::atomic<int> msgIndex{0};
     std::string listenerName;
     int reconsumeTimes = 0;
+    int expectedMsgCount = 0;
     bool isEvenNumber = false;
     int workTime = 0;
 
@@ -76,7 +77,7 @@ public:
     // Overriding the consume method
     virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt>& msgs) override {
         rocketmq::ConsumeStatus result = consumeStatus;
-        
+
         for (const auto& msg : msgs) {
             if (reconsumeTimes == 0 || reconsumeTimes == msg.getReconsumeTimes()-1) {
                 dequeueMessages->addData(MQMsg(msg));
@@ -88,26 +89,22 @@ public:
                 //         dequeueMessages->addData(message.getBody());
                 //         result = rocketmq::CONSUME_SUCCESS;
                 //     }
-
                 // }
                 std::this_thread::sleep_for(std::chrono::milliseconds(workTime));
             }
-
             std::string consumeStatStr;
-            if(consumeStatus == rocketmq::RECONSUME_LATER) {
+            if(result == rocketmq::RECONSUME_LATER) {
                 consumeStatStr = "RECONSUME_LATER";
             } else {
                 consumeStatStr = "CONSUME_SUCCESS";
             }
-
             std::string propertiesStr("{");
             for (const auto& pair : msg.getProperties()) {
                 propertiesStr += pair.first + ":" + pair.second + ";";
             }
             propertiesStr += "}";
-
             multi_logger->info("{} - MessageId:{}, body:{}, tag:{},  key:{}, recvIndex:{}, property:{}, action:{}",listenerName,msg.getMsgId(),msg.getBody(),msg.getTags(),msg.getKeys(),std::to_string(msgIndex.fetch_add(1, std::memory_order_relaxed)),propertiesStr,consumeStatStr);
-        }
+        }   
 
         return result;
     }
