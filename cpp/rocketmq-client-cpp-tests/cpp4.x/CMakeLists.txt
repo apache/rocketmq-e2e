@@ -29,7 +29,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 # endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
-list(APPEND CMAKE_MODULE_PATH "/usr/local/lib/cmake/absl")
 
 find_package(GTest REQUIRED)
 find_package(Threads REQUIRED)
@@ -38,7 +37,6 @@ find_package(ZLIB REQUIRED)
 find_package(spdlog REQUIRED)
 find_package(fmt REQUIRED)
 find_package(RocketMQ REQUIRED)
-find_package(absl REQUIRED)
 
 
 set(SOURCE_FILES "")
@@ -49,101 +47,15 @@ list(APPEND SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp)
 
 add_executable(${PROJECT_NAME} ${SOURCE_FILES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE 
-    absl::flags_program_name
-    absl::log_internal_check_op
-    absl::log_globals
-    absl::log_internal_globals
-    absl::log_internal_message
-    absl::hash
-    absl::crc_cpu_detect
-    absl::cord_internal
-    absl::low_level_hash
-    absl::flags_marshalling
-    absl::random_internal_randen
-    absl::flags_internal
-    absl::log_internal_fnmatch
-    absl::log_internal_log_sink_set
-    absl::flags_usage_internal
-    absl::random_internal_randen_hwaes
-    absl::crc_internal
-    absl::crc32c
-    absl::stacktrace
-    absl::flags_usage
-    absl::flags_commandlineflag
-    absl::flags_config
-    absl::base
-    absl::debugging_internal
-    absl::spinlock_wait
-    absl::random_internal_platform
-    absl::graphcycles_internal
-    absl::log_internal_proto
-    absl::strings_internal
-    absl::malloc_internal
-    absl::random_internal_randen_slow
-    absl::flags_parse
-    absl::crc_cord_state
-    absl::log_entry
-    absl::random_internal_seed_material
-    absl::flags_reflection
-    absl::exponential_biased
-    absl::bad_optional_access
-    absl::random_seed_sequences
-    absl::status
-    absl::log_internal_nullguard
-    absl::periodic_sampler
-    absl::bad_variant_access
-    absl::examine_stack
-    absl::strings
-    absl::log_initialize
-    absl::time
-    absl::log_internal_conditions
-    absl::raw_hash_set
-    absl::log_sink
-    absl::city
-    absl::throw_delegate
-    absl::log_flags
-    absl::demangle_internal
-    absl::random_distributions
-    absl::flags_commandlineflag_internal
-    absl::failure_signal_handler
-    absl::raw_logging_internal
-    absl::cordz_functions
-    absl::random_internal_pool_urbg
-    absl::scoped_set_env
-    absl::log_severity
-    absl::cord
-    absl::die_if_null
-    absl::random_internal_distribution_test_util
-    absl::hashtablez_sampler
-    absl::string_view
-    absl::log_internal_format
-    absl::random_internal_randen_hwaes_impl
-    absl::kernel_timeout_internal
-    absl::flags_private_handle_accessor
-    absl::leak_check
-    absl::str_format_internal
-    absl::cordz_sample_token
-    absl::cordz_handle
-    absl::symbolize
-    absl::synchronization
-    absl::int128
-    absl::flags
-    absl::civil_time
-    absl::cordz_info
-    absl::statusor
-    absl::strerror
-    absl::bad_any_cast_impl
-    absl::time_zone
-    absl::random_seed_gen_exception
-    GTest::gtest
-    rocketmq
-    Threads::Threads
-    ZLIB::ZLIB
-    -ldl
-    -lrt
+target_link_libraries(${PROJECT_NAME} PRIVATE
+    ${GTEST_LIBRARIES}
+    ${RocketMQ_LIBRARIES}
+    ${ZLIB_LIBRARIES}
+    ${CMAKE_THREAD_LIBS_INIT}
     spdlog::spdlog
     fmt::fmt
+    dl
+    rt
     frame
     utils
     enums

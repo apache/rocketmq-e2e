@@ -17,6 +17,7 @@
 #include "utils/VerifyUtils.h"
 #include "utils/data/collect/DataCollector.h"
 #include "utils/data/collect/DataCollectorManager.h"
+#include "utils/SimpleConcurrentHashMapUtils.h"
 #include <gtest/gtest.h>
 #include <map>
 #include <memory>
@@ -27,7 +28,7 @@
 #include <future>
 #include <chrono>
 #include <thread>
-#include <absl/container/flat_hash_map.h>
+#include <atomic>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
@@ -570,7 +571,7 @@ bool VerifyUtils::waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNor
 
     std::vector<std::function<bool()>> runnables;
     std::vector<rocketmq::MQMessageExt> receivedMessage;
-    absl::flat_hash_map<std::string,int> map;
+    SimpleConcurrentHashMap<std::string,std::atomic<int>> map;
 
     std::mutex mtx;
     for(int i=0;i<4;i++){
@@ -594,11 +595,11 @@ bool VerifyUtils::waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNor
                                         offset+=1;
                                     }
                                     pullConsumer->updateConsumeOffset(mq, offset);
-
-                                    if(map.find(msgId) != map.end()){
-                                        map[msgId] = map[msgId]+1;
+                                    if(map.contains(msgId)){
+                                        map[msgId]++;
                                     }else{
-                                        map[msgId] = 1;
+                                        std::atomic<int> val(1);
+                                        map.insert(msgId,val.load());
                                     }
                                 }
                                 break;
@@ -618,8 +619,8 @@ bool VerifyUtils::waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNor
                         return false;
                     }
                     int count = 0;
-                    for(auto& pair : map){
-                        if(pair.second > 1){
+                    for(auto& value : map.getAllValues()){
+                        if(value > 1){
                             count += 1;
                         }
                     }
@@ -756,7 +757,7 @@ bool VerifyUtils::waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer
  bool VerifyUtils::waitReceiveMaxsizeSync(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
     long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+TIMEOUT* 1000L;
 
-    absl::flat_hash_map<std::string,rocketmq::MQMessageExt> map;
+    SimpleConcurrentHashMap<std::string,rocketmq::MQMessageExt> map;
 
     try{
         while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
@@ -771,13 +772,13 @@ bool VerifyUtils::waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer
                         for(int j=0;j<pullResult.msgFoundList.size();j++){
                             multi_logger->info("Message: {}", pullResult.msgFoundList[j].toString());
                             std::string msgId = pullResult.msgFoundList[j].getMsgId();
-                            if(map.find(msgId) != map.end()){
+                            if(map.contains(msgId)){
                                 multi_logger->error("Duplicate message");
                                 return false;
                             }else{
                                 offset+=1;
                                 pullConsumer->updateConsumeOffset(mq, offset);
-                                map[msgId] = pullResult.msgFoundList[j];
+                                map.insert(msgId, pullResult.msgFoundList[j]);
                             }
                         }
                         break;
@@ -796,8 +797,9 @@ bool VerifyUtils::waitAckExceptionReReceiveAck(std::shared_ptr<RMQNormalProducer
 
         }
         DataCollector<std::string>& dequeueMessages = DataCollectorManager<std::string>::getInstance().fetchListDataCollector(RandomUtils::getStringByUUID());
-        for(auto& pair : map){
-            dequeueMessages.addData(pair.second.getMsgId());
+
+        for(auto& value : map.getAllValues()){
+            dequeueMessages.addData(value.getMsgId());
         }
         if(!VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()), dequeueMessages)){
             return false;
@@ -814,7 +816,7 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
     long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
 
     std::vector<std::function<bool()>> runnables;
-    absl::flat_hash_map<std::string,rocketmq::MQMessageExt> recvMsgs;
+    SimpleConcurrentHashMap<std::string,rocketmq::MQMessageExt> recvMsgs;
     std::vector<bool> flag(20,true);
     std::unordered_set<std::string> unconsumedMsgIds;
 
@@ -845,11 +847,11 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
                                             multi_logger->info("Message: {}", pullResult.msgFoundList[j].toString());
                                             offset+=1;
                                             pullConsumer->updateConsumeOffset(mq, offset);
-                                            if(recvMsgs.find(pullResult.msgFoundList[j].getMsgId()) != recvMsgs.end()){
+                                            if(recvMsgs.contains(pullResult.msgFoundList[j].getMsgId())){
                                                 multi_logger->error("Duplicate message");
                                                 return false;
                                             }else{
-                                                recvMsgs[pullResult.msgFoundList[j].getMsgId()] = pullResult.msgFoundList[j];
+                                                recvMsgs.insert(pullResult.msgFoundList[j].getMsgId(), pullResult.msgFoundList[j]);
                                             }
                                         }
                                     }
@@ -888,8 +890,8 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
         if(!res) return false;
     }
     DataCollector<std::string>& dequeueMessages = DataCollectorManager<std::string>::getInstance().fetchListDataCollector(RandomUtils::getStringByUUID());
-    for(auto& pair : recvMsgs){
-        dequeueMessages.addData(pair.second.getMsgId());
+    for(auto& value : recvMsgs.getAllValues()){
+        dequeueMessages.addData(value.getMsgId());
     }
     if(!verifyNormalMessage( *(producer->getEnqueueMessages()),dequeueMessages,unconsumedMsgIds)){
         return false;
