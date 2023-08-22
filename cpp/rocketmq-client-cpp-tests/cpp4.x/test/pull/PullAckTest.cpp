@@ -38,10 +38,10 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-TEST(PullAckTest, testNormal_simple_receive_ack){
+TEST(PullAckTest, testNormal_pull_receive_ack){
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::NORMAL, "testNormal_simple_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testNormal_simple_receive_ack");
+    std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testNormal_pull_receive_ack");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);

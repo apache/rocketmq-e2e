@@ -64,10 +64,10 @@ extern std::shared_ptr<Resource> resource;
 ////    producer->shutdown();
 ////}
 
-TEST(PullParamTest, testNormal_simple_receive_maxsize_sync){
+TEST(PullParamTest, testNormal_pull_receive_maxsize_sync){
     int SEND_NUM = 300;
-    std::string topic = getTopic(MessageType::NORMAL, "testNormal_simple_receive_maxsize_sync", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testNormal_simple_receive_maxsize_sync");
+    std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_maxsize_sync", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testNormal_pull_receive_maxsize_sync");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
@@ -95,10 +95,10 @@ TEST(PullParamTest, testNormal_simple_receive_maxsize_sync){
     producer->shutdown();
 }
 
-TEST(PullParamTest, testNormal_simple_receive_multi_nack){
+TEST(PullParamTest, testNormal_pull_receive_multi_nack){
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::NORMAL, "testNormal_simple_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testNormal_simple_receive_multi_nack");
+    std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testNormal_pull_receive_multi_nack");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);

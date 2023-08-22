@@ -38,10 +38,10 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-TEST(PullOrderParamTest, testFIFO_simple_receive_nack){
+TEST(PullOrderParamTest, testFIFO_pull_receive_nack){
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::FIFO, "testFIFO_simple_receive_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testFIFO_simple_receive_nack");
+    std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testFIFO_pull_receive_nack");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
@@ -68,10 +68,10 @@ TEST(PullOrderParamTest, testFIFO_simple_receive_nack){
     producer->shutdown();
 }
 
-TEST(PullOrderParamTest, testFIFO_simple_receive_multi_nack){
+TEST(PullOrderParamTest, testFIFO_pull_receive_multi_nack){
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::FIFO, "testFIFO_simple_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("testFIFO_simple_receive_multi_nack");
+    std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testFIFO_pull_receive_multi_nack");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
