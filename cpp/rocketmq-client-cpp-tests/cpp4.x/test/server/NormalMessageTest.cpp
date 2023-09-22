@@ -35,6 +35,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 10 normal messages synchronously, expecting those 10 messages to be consumed through PushConsumer
 TEST(NormalMessageTest, testNormal_Send_PushConsume){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testNormal_Send_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

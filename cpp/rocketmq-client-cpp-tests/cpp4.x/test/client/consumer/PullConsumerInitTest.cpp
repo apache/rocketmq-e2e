@@ -28,6 +28,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Test the normal launch of PullConsumer and expect success
 TEST(PullConsumerInitTest, testNormalPullConsumer){
     SCOPED_TRACE("Start [PullConsumer] failed, expected success.");
     std::string groupId = getGroupId("testNoClientConfiguration");

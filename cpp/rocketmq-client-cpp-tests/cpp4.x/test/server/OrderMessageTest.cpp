@@ -35,6 +35,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 100 sequential messages synchronously, set 2 Messagegroups(message groups are divided by message content), and expect these 100 messages to be sequentially consumed by PushConsumer
 TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::FIFO, "testOrder_Send_PushConsumeOrderly", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

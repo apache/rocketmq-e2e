@@ -30,6 +30,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//PushConsumer all parameters are set properly, expect start success
 TEST(PushConsumerInitTest, testNormalSetting){
     SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
     std::string groupId = getGroupId("testNormalSetting");
@@ -86,6 +87,7 @@ TEST(PushConsumerInitTest, testNormalSetting){
 ////     },rocketmq::MQException);
 //// }
 
+//Correct setting the 'EndPoint' of the consumer client,expect start failed
 TEST(PushConsumerInitTest, testNormalNameserver){
     SCOPED_TRACE("Start [PushConsumer] [Producer], expected success.");
     std::string groupId = getGroupId("testNormalNameserver");

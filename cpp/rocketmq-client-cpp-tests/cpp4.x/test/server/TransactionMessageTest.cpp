@@ -39,6 +39,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 10 transaction messages and synchronously commit the transaction (Checker performs rollback), expecting those 10 messages to be consumed via PushConsumer
 TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCommit_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -75,6 +76,7 @@ TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
     transProducer->shutdownTransaction();
 }
 
+//Send 10 transaction messages and rollback directly (Checker does commit), expecting that these 10 messages cannot be consumed by PushConsumer
 TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendRollback_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -113,6 +115,7 @@ TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
     transProducer->shutdownTransaction();
 }
 
+//Send 10 transaction messages and COMMIT the transaction by Checker (perform COMMIT), expecting the 10 messages to be consumed by PushConsumer
 TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_SendCheckerCommit_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -151,6 +154,7 @@ TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
     transProducer->shutdownTransaction();
 }
 
+//Send 10 transaction messages and roll back the transaction by Checker (performing ROLLBACK), expecting that the 10 messages will not be consumed by PushConsumer
 TEST(TransactionMessageTest, testTrans_CheckerRollback){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::TRANSACTION, "testTrans_CheckerRollback", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

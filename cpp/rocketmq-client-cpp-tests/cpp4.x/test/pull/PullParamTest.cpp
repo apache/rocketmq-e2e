@@ -64,6 +64,7 @@ extern std::shared_ptr<Resource> resource;
 ////    producer->shutdown();
 ////}
 
+//Send 300 normal messages synchronously, and after using PullConsumer receive(30,10s) messages, ack them after consuming them, expecting each receive to be less than or equal to 32 messages, and never receive the ack messages again
 TEST(PullParamTest, testNormal_pull_receive_maxsize_sync){
     int SEND_NUM = 300;
     std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_maxsize_sync", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -95,6 +96,7 @@ TEST(PullParamTest, testNormal_pull_receive_maxsize_sync){
     producer->shutdown();
 }
 
+//Twenty ordinary messages are sent synchronously, and receive(50) messages are received in batch. All the pulled messages are ack() messages except the first one. expected the ack messages will not be consumed repeatedly and subsequent consumption will not be affected
 TEST(PullParamTest, testNormal_pull_receive_multi_nack){
     int SEND_NUM = 20;
     std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

@@ -38,10 +38,11 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-TEST(PullOrderTest, waitFIFOReceiveThenAck){
+//Send 20 sequential messages synchronously, and expect PullConsumer to receive and ack messages properly and maintain the sequence
+TEST(PullOrderTest, testFIFO_pull_receive_ack){
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::FIFO, "waitFIFOReceiveThenAck", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("waitFIFOReceiveThenAck");
+    std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string group = getGroupId("testFIFO_pull_receive_ack");
     std::string tag = NameUtils::getRandomTagName();
 
     auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);

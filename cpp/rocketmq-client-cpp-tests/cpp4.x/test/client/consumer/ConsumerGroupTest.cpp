@@ -33,6 +33,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Use the built-in ConsumerGroup[DEFAULT_CONSUMER] to consume messages and expect consume failed
 TEST(ConsumerGroupTest, testSystemInnerConsumerGroup) {
     std::string groupId = "DEFAULT_CONSUMER";
     std::string topic = getTopic(MessageType::NORMAL, "testSystemInnerConsumerGroup", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());

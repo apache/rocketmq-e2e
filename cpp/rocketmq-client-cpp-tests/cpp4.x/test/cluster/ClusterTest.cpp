@@ -39,6 +39,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages
 TEST(ClusterTest, testClusterConsume){
     std::string topic = getTopic(MessageType::NORMAL, "testClusterConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
     std::string group1 = getGroupId("testClusterConsume1");

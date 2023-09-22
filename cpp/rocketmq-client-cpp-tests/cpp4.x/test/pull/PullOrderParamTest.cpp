@@ -38,6 +38,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//When sending 20 sequential messages synchronously using the same MessageGroup, PullConsumer normally receives messages, but does not ack messages, and keeps the sequence; the messages are stuck at the first
 TEST(PullOrderParamTest, testFIFO_pull_receive_nack){
     int SEND_NUM = 20;
     std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -68,6 +69,7 @@ TEST(PullOrderParamTest, testFIFO_pull_receive_nack){
     producer->shutdown();
 }
 
+//Twenty sequential messages are sent synchronously and receive 3 messages in batch. All pulled messages are ack messages except the first one. It is expected that all messages remain sequential and are consumed again after a certain time
 TEST(PullOrderParamTest, testFIFO_pull_receive_multi_nack){
     int SEND_NUM = 20;
     std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

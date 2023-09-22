@@ -38,6 +38,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 20 normal messages synchronously and expect consume with receive and ack messages successful
 TEST(PullAckTest, testNormal_pull_receive_ack){
     int SEND_NUM = 20;
     std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

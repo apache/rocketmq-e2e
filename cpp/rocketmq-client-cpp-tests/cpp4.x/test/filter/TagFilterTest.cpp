@@ -40,6 +40,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Using tagA sent 10 messages, the use of tagA | | tagB filter messages, expect consumption to send 10 messages
 TEST(TagFilterTest, testSendTagA_SubTagAorTagB){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagAorTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -72,7 +73,7 @@ TEST(TagFilterTest, testSendTagA_SubTagAorTagB){
     });
 }
 
-
+//Use tagA sent 10 messages first, after using tagB sent 10 messages, use tagA | | tagB filter messages, expect consumption to send 20 messages
 TEST(TagFilterTest, testSndTagATagB_SubTagATagB){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSndTagATagB_SubTagATagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -107,6 +108,7 @@ TEST(TagFilterTest, testSndTagATagB_SubTagATagB){
     });
 }
 
+//The tagA is used to send 10 messages, then the tagB is used to send 10 messages, and the * is used to filter the messages, expecting to consume 20 messages sent
 TEST(TagFilterTest, testSendTagAAndTagB_SubAll){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSendTagAAndTagB_SubAll", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -139,6 +141,7 @@ TEST(TagFilterTest, testSendTagAAndTagB_SubAll){
     });
 }
 
+//Send 10 tagA messages, subscribe to tagB messages, expect to consume up to 0 messages
 TEST(TagFilterTest, testSendTagA_SubTagB){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagB", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -171,6 +174,7 @@ TEST(TagFilterTest, testSendTagA_SubTagB){
     });
 }
 
+//Send 10 tagA messages, subscribe to tagA messages, expect to consume up to 10 messages
 TEST(TagFilterTest, testSendTagA_SubTagA){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSendTagA_SubTagA", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -200,6 +204,7 @@ TEST(TagFilterTest, testSendTagA_SubTagA){
     });
 }
 
+//Consumption uses a very long tagA, sending 10 messages, expecting to consume 10 tagA messages
 TEST(TagFilterTest, testLongTagSize){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testLongTagSize", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -229,6 +234,7 @@ TEST(TagFilterTest, testLongTagSize){
     });
 }
 
+//The consumption uses a space-spaced tag, and two tags are used to send 10 messages each, with the expectation of consuming up to 20 messages
 TEST(TagFilterTest, testSubTagWithSpace){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSubTagWithSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -278,6 +284,7 @@ TEST(TagFilterTest, testSubTagWithSpace){
 ////    producer->shutdown();
 ////}
 
+//Send 10 messages with tag='*', subscribe to messages with tag='*', expect to consume the message
 TEST(TagFilterTest, testTagWithSpecialSymbol02){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol02", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -306,6 +313,7 @@ TEST(TagFilterTest, testTagWithSpecialSymbol02){
     });
 }
 
+//Consumer use | | separators between the tag, respectively using two tag each 10 messages sent, and expect consumption to 20 messages
 TEST(TagFilterTest, testTagWithSpecialSymbol03){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testTagWithSpecialSymbol03", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -360,6 +368,7 @@ TEST(TagFilterTest, testTagWithSpecialSymbol03){
 ////    });
 ////}
 
+//The sent tag uses two strings with the same hash value, and the consumed tag uses BB, expecting to consume messages with tag=BB
 TEST(TagFilterTest, testSendTagWithSameHashCode_SubWithOne){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testSendTagWithSameHashCode_SubWithOne", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
@@ -398,6 +407,7 @@ TEST(TagFilterTest, testSendTagWithSameHashCode_SubWithOne){
     });
 }
 
+//Send 10 messages with tag=BB, 10 messages with tag=bb, subscribe with tag=BB, expect case-sensitive messages to be consumed to tag=BB
 TEST(TagFilterTest, testTagCaseSensitive){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::NORMAL, "testTagCaseSensitive", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

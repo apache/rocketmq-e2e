@@ -34,6 +34,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send 10 messages timed 10 seconds later synchronously, and expect these 10 messages to be consumed by PushConsumer 10 seconds(level 3) later
 TEST(DelayMessageTest, testDelay_Send_PushConsume){
     int SEND_NUM = 10;
     std::string topic = getTopic(MessageType::DELAY, "testDelay_Send_PushConsume", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());

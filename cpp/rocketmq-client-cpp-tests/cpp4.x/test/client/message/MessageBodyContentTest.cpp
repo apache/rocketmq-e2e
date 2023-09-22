@@ -35,6 +35,7 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
+//Send normal message, setting message body with space character, expect consume success
 TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsSpace");
@@ -69,6 +70,7 @@ TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
     });
 }
 
+//Send normal message, setting message body with chinese character, expect consume success
 TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsChinese");
@@ -102,6 +104,7 @@ TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
     });
 }
 
+//Send normal message, setting message body with emoji(😱) character, expect consume success
 TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
     std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsEmoji");
