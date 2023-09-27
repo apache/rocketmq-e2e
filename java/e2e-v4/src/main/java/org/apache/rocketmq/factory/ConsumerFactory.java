@@ -17,6 +17,8 @@
 
 package org.apache.rocketmq.factory;
 
+import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
@@ -43,6 +45,46 @@ public class ConsumerFactory {
         }
         consumer.setInstanceName(RandomUtils.getStringByUUID());
         consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook){
+        DefaultLitePullConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultLitePullConsumer(consumerGroup, rpcHook);
+        } else {
+            consumer = new DefaultLitePullConsumer(consumerGroup);
+        }
+        consumer.setNamesrvAddr(nsAddr);
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setConsumerPullTimeoutMillis(5000);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook, int batchSize){
+        DefaultLitePullConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultLitePullConsumer(consumerGroup, rpcHook);
+        } else {
+            consumer = new DefaultLitePullConsumer(consumerGroup);
+        }
+        consumer.setNamesrvAddr(nsAddr);
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setConsumerPullTimeoutMillis(5000);
+        consumer.setPullBatchSize(batchSize);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQPullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook){
+        DefaultMQPullConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPullConsumer(consumerGroup, rpcHook);
+        } else {
+            consumer = new DefaultMQPullConsumer(consumerGroup);
+        }
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setNamesrvAddr(nsAddr);
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
         return new RMQNormalConsumer(consumer);
     }
 }

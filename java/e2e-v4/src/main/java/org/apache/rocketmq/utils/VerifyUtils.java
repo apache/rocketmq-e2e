@@ -17,29 +17,36 @@
 
 package org.apache.rocketmq.utils;
 
+import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
+import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
+import org.apache.rocketmq.client.consumer.PullResult;
+import org.apache.rocketmq.client.exception.MQBrokerException;
+import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.client.rmq.DelayConf;
+import org.apache.rocketmq.client.rmq.RMQNormalProducer;
 import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.common.message.MessageExt;
+import org.apache.rocketmq.common.message.MessageQueue;
+import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.utils.data.collect.DataCollector;
 import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class VerifyUtils {
     private static Logger logger = LoggerFactory.getLogger(VerifyUtils.class);
+    private static AtomicInteger receivedIndex = new AtomicInteger(0);
     private static final int TIMEOUT = 60;
+    private static int defaultSimpleThreadNums = 4;
 
     /**
      * 检验顺序消息
@@ -94,6 +101,50 @@ public class VerifyUtils {
         if (unConsumedMessages.size() > 0) {
             Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
         }
+    }
+
+    public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages,
+                                           DataCollector<MessageExt> dequeueMessages, Set<String> unconsumedMsgIds, int timeout) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, timeout * 1000L, 1);
+        Set<MessageExt> unConsumedMessagesCopy = new HashSet<>(unConsumedMessages);
+        System.out.println(unConsumedMessagesCopy.size());
+        Set<String> finalUnconsumedMsgIds = unconsumedMsgIds;
+        unConsumedMessagesCopy = unConsumedMessagesCopy.stream().filter(msgExt-> !finalUnconsumedMsgIds.contains(msgExt.getMsgId())).collect(Collectors.toSet());
+        System.out.println(unConsumedMessagesCopy.size());
+        StringBuilder sb = new StringBuilder();
+        boolean allInUnConsumedMessages = true;
+        for(String unconsumedMsgId:unconsumedMsgIds){
+            boolean check = false;
+            for(MessageExt unConsumedMessage : unConsumedMessages){
+                if (unConsumedMessage.getMsgId().equals(unconsumedMsgId)){
+                    check = true;
+                }
+            }
+            if (!check){
+                allInUnConsumedMessages = false;
+                break;
+            }
+        }
+        if (!allInUnConsumedMessages) {
+            unconsumedMsgIds = unconsumedMsgIds.stream().filter(msgId -> {
+                for(MessageExt unConsumedMessage:unConsumedMessages){
+                    if (unConsumedMessage.getMsgId().equals(msgId)){
+                        return false;
+                    }
+                }
+                return true;
+            }).collect(Collectors.toSet());
+            logger.info(unconsumedMsgIds.size() + "messages are consumed:" + unconsumedMsgIds.size());
+            sb.append("The following ").append(unconsumedMsgIds.size()).append(" messages are consumed:").append(unconsumedMsgIds);
+            Assertions.fail(sb.toString());
+        }
+        if (unConsumedMessagesCopy.size() > 0) {
+            logger.info(unConsumedMessagesCopy.size() + "messages are not consumed:" + unConsumedMessagesCopy);
+            MessageExt messageExt = dequeueMessages.getFirstElement();
+            sb.append(messageExt.getTopic()).append(" The following").append(unConsumedMessagesCopy.size()).append("messages are not consumed:").append(unConsumedMessagesCopy);
+            Assertions.fail(sb.toString());
+        }
+
     }
 
     /**
@@ -431,5 +482,394 @@ public class VerifyUtils {
             }
             TestUtils.waitForSeconds(5);
         }
+    }
+
+    public static void tryReceiveOnce(DefaultLitePullConsumer consumer) {
+        tryReceiveOnce(consumer, false, false);
+    }
+
+    public static void tryReceiveOnce(DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
+        tryReceiveOnce(consumer,topic,tag,maxNums,false,false);
+    }
+
+    public static void tryReceiveOnce(DefaultMQPullConsumer consumer,String topic, String tag,int maxNums, Boolean useExistTopic, Boolean useExistGid) {
+        Set<MessageQueue> messageQueues = null;
+        try {
+            messageQueues = consumer.fetchSubscribeMessageQueues(topic);
+        } catch (MQClientException e) {
+            Assertions.fail("Fail to fetchSubscribeMessageQueues");
+        }
+
+        long start = System.currentTimeMillis();
+        if (!useExistTopic || !useExistGid) {
+            for (int i = 0; i < 5; i++) {
+                logger.info("Try pulling a message once");
+                Set<MessageQueue> finalMessageQueues = messageQueues;
+                CompletableFuture[] futures = new CompletableFuture[messageQueues.size()];
+                int mqCount = 0;
+                for (MessageQueue mq : finalMessageQueues) {
+                    CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+                        try {
+                            long offset = consumer.fetchConsumeOffset(mq, false);
+                            if (offset< 0 ) return null;
+                            boolean shouldContinue = true;
+                            while (shouldContinue) {
+                                PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
+                                switch (pullResult.getPullStatus()) {
+                                    case FOUND:
+                                        List<MessageExt> messages = pullResult.getMsgFoundList();
+                                        for (MessageExt message : messages) {
+                                            receivedIndex.getAndIncrement();
+                                            logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
+                                                    StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
+                                        }
+                                        offset = pullResult.getNextBeginOffset();
+                                        consumer.updateConsumeOffset(mq, offset);
+                                        break;
+                                    case NO_MATCHED_MSG:
+                                        shouldContinue = false; // 当没有匹配的消息时退出循环
+                                        break;
+                                    case NO_NEW_MSG:
+                                        shouldContinue = false; // 当没有新的消息时退出循环
+                                        break;
+                                    case OFFSET_ILLEGAL:
+                                        shouldContinue = false; // 当偏移量非法时退出循环
+                                        break;
+                                    default:
+                                        break;
+                                }
+                            }
+                        } catch (MQBrokerException e) {
+                            e.printStackTrace();
+                            Assertions.fail("Pull fetch message error");
+                        } catch (RemotingException e) {
+                            e.printStackTrace();
+                            Assertions.fail("Pull fetch message error");
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                            Assertions.fail("Pull fetch message error");
+                        } catch (MQClientException e) {
+                            e.printStackTrace();
+                            Assertions.fail("Pull fetch message error");
+                        }
+                        return null;
+                    });
+                    futures[mqCount++] = future;
+                }
+                try {
+                    CompletableFuture.allOf(futures).get(6, TimeUnit.SECONDS);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    Assertions.fail("receive response count not match");
+                }
+            }
+        }
+        logger.info("receive server response, cost={}ms", System.currentTimeMillis() - start);
+    }
+
+    public static void tryReceiveOnce(DefaultLitePullConsumer consumer, Boolean useExistTopic, Boolean useExistGid) {
+        long start = System.currentTimeMillis();
+        if (!useExistTopic || !useExistGid) {
+            CompletableFuture[] cfs = new CompletableFuture[5];
+            for (int i = 0; i < 5; i++) {
+                logger.info("Try pulling a message once");
+                int finalI = i;
+                CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> consumer.poll(2000))
+                        .thenAcceptAsync(extList -> {
+                            if (extList.size() > 0) {
+                                for (MessageExt ext : extList) {
+                                    receivedIndex.getAndIncrement();
+                                    logger.info("MessageId:{}, Body:{}, Property:{}, Index:{}, Retry:{}", ext.getMsgId(),
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody())), ext.getProperties(), finalI, ext.getReconsumeTimes());
+                                }
+                            }
+                        });
+                cfs[i] = future;
+            }
+            try {
+                CompletableFuture.allOf(cfs).get(30, TimeUnit.SECONDS);
+                logger.info("receive server response, cost={}ms", System.currentTimeMillis() - start);
+            } catch (Exception e) {
+                e.printStackTrace();
+                Assertions.fail("receive response count not match");
+            }
+        }
+    }
+
+    private static synchronized int getRepeatedTimes(Collection<MessageExt> recvMsgs, String enqueueMessageId) {
+        int count = 0;
+        for (MessageExt recvMsg : recvMsgs) {
+            if (recvMsg.getMsgId().equals(enqueueMessageId)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+
+    /**
+     * Verifying Cluster Consumption
+     *
+     * @param enqueueMessages    All messages sent
+     * @param dequeueAllMessages Multiple consumer end, consumption of all messages
+     */
+    @SafeVarargs
+    public static void verifyClusterConsume(DataCollector<MessageExt> enqueueMessages,
+                                            DataCollector<MessageExt>... dequeueAllMessages) {
+        long currentTime = System.currentTimeMillis();
+        List<MessageExt> sendMessagesCopy = new ArrayList<>(enqueueMessages.getAllData());
+
+        while (!sendMessagesCopy.isEmpty()) {
+            Collection<MessageExt> noDupMsgs = new ArrayList<>();
+            for (DataCollector<MessageExt> messages : dequeueAllMessages) {
+                noDupMsgs.addAll(messages.getAllData());
+                logger.info("consumer received message: {}", messages.getDataSize());
+            }
+            logger.info("sendMessagesCopy left: {}", sendMessagesCopy.size());
+
+            List<MessageExt> receivedMessagesCopy = new ArrayList<>(noDupMsgs);
+            Iterator<MessageExt> iter = sendMessagesCopy.iterator();
+            while (iter.hasNext()) {
+                MessageExt messageExt = iter.next();
+                String messageId = messageExt.getMsgId();
+                long msgCount = receivedMessagesCopy.stream().filter(msg -> msg.getMsgId().equals(messageId)).count();
+                if (msgCount > 0 && getRepeatedTimes(receivedMessagesCopy, messageId) == 1) {
+                    iter.remove();
+                }
+            }
+            if (sendMessagesCopy.isEmpty()) {
+                break;
+            }
+            if (System.currentTimeMillis() - currentTime >= 60000L) {
+                logger.error("Timeout but not received all send messages, not received msg: {}\n received msg:{}\n", sendMessagesCopy, receivedMessagesCopy);
+                break;
+            }
+            TestUtils.waitForMoment(500L);
+        }
+
+        Assertions.assertEquals(0, sendMessagesCopy.size(), String.format("The following %s messages are not consumed: %s", sendMessagesCopy.size(), sendMessagesCopy));
+
+    }
+
+    /**
+     * Validation of sql attribute filtering
+     *
+     * @param enqueueMessages A message sent
+     * @param dequeueMessages News of consumption
+     * @param props           The desired attribute condition is not met
+     */
+    public static void verifyNormalMessageWithUserProperties(DataCollector<MessageExt> enqueueMessages,
+                                                             DataCollector<MessageExt> dequeueMessages, HashMap<String, String> props, int expectedUnrecvMsgNum) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+        Collection<MessageExt> recvMsgs = dequeueMessages.getAllData();
+        for (MessageExt unConsumedMessage : recvMsgs) {
+            for (Map.Entry<String, String> entry : props.entrySet()) {
+                Map<String, String> msgProperties = unConsumedMessage.getProperties();
+                for (Map.Entry<String, String> property : msgProperties.entrySet()) {
+                    if (property.getKey().equals(entry.getKey()) && property.getValue().equals(entry.getValue())) {
+                        Assertions.fail("sql attribute filtering is not in effect, consuming messages to other attributes," + unConsumedMessage.getProperties().toString());
+                    }
+                }
+            }
+        }
+        if (unConsumedMessages.size() != expectedUnrecvMsgNum) {
+            Assertions.fail("Failed to consume all the sent data by sql filter");
+        }
+    }
+
+    public static void waitLitePullReceiveThenAck(RMQNormalProducer producer, DefaultLitePullConsumer consumer,String topic,String tag) {
+        Assertions.assertFalse(consumer.isAutoCommit());
+        ArrayList<MessageQueue>  assignList = null;
+        try {
+            assignList = new ArrayList<>(consumer.fetchMessageQueues(topic));
+        } catch (MQClientException e) {
+            Assertions.fail("PullConsumer fetchMessageQueues error");
+        }
+        Assertions.assertNotNull(assignList);
+        consumer.assign(assignList);
+
+        long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
+        Collection<MessageExt> sendCollection = producer.getEnqueueMessages().getAllData();
+        try {
+            while (endTime > System.currentTimeMillis()) {
+                final List<MessageExt> extList = consumer.poll();
+                if (extList.size() > 0) {
+                    for (MessageExt messageExt : extList) {
+                        receivedIndex.getAndIncrement();
+                        String tags = messageExt.getTags();
+                        FilterUtils.inTags(tags, tag);
+                        logger.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}", messageExt.getMsgId(),
+                                StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())), messageExt.getTags(), messageExt.getProperties(), receivedIndex.get());
+                        sendCollection.removeIf(sendMessageExt -> sendMessageExt.getMsgId().equals(messageExt.getMsgId()));
+                    }
+                }
+                consumer.commitSync();
+                logger.info("Pull message: {} bar, remaining unconsumed message: {} bar", extList.size(), sendCollection.size());
+                if (sendCollection.size() == 0) {
+                    break;
+                }
+            }
+            Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+        } catch (Exception e) {
+            Assertions.fail(e.getMessage());
+        }
+    }
+
+    public static void waitPullReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
+        Set<MessageQueue> messageQueues = null;
+        try {
+            messageQueues = consumer.fetchSubscribeMessageQueues(topic);
+        } catch (MQClientException e) {
+            Assertions.fail("Fail to fetchSubscribeMessageQueues");
+        }
+
+//        long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
+        Collection<MessageExt> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
+        Set<MessageQueue> finalMessageQueues = messageQueues;
+        CompletableFuture[] futures = new CompletableFuture[messageQueues.size()];
+        int mqCount = 0;
+        for (MessageQueue mq : finalMessageQueues) {
+            CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    long offset = consumer.fetchConsumeOffset(mq, false);
+                    if (offset< 0 ) return null;
+                    boolean shouldContinue = true;
+                    while (shouldContinue) {
+                        PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
+                        switch (pullResult.getPullStatus()) {
+                            case FOUND:
+                                List<MessageExt> messages = pullResult.getMsgFoundList();
+                                for (MessageExt message : messages) {
+                                    receivedIndex.getAndIncrement();
+                                    logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
+                                    offset = message.getQueueOffset()+1;
+                                    consumer.updateConsumeOffset(mq, offset);
+                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                }
+                                break;
+                            case NO_MATCHED_MSG:
+                                shouldContinue = false; // 当没有匹配的消息时退出循环
+                                break;
+                            case NO_NEW_MSG:
+                                shouldContinue = false; // 当没有新的消息时退出循环
+                                break;
+                            case OFFSET_ILLEGAL:
+                                shouldContinue = false; // 当偏移量非法时退出循环
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } catch (MQBrokerException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (RemotingException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (MQClientException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                }
+                return null;
+            });
+            futures[mqCount++] = future;
+        }
+        try {
+            CompletableFuture.allOf(futures).get(6, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assertions.fail("receive response count not match");
+        }
+    }
+
+    public static void waitFIFOReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
+        Set<MessageQueue> messageQueues = null;
+        try {
+            messageQueues = consumer.fetchSubscribeMessageQueues(topic);
+        } catch (MQClientException e) {
+            Assertions.fail("Fail to fetchSubscribeMessageQueues");
+        }
+
+        long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
+        Collection<MessageExt> sendCollection = producer.getEnqueueMessages().getAllData();
+        ConcurrentHashMap<String, LinkedList<MessageExt>> map = new ConcurrentHashMap<>();
+
+        Set<MessageQueue> finalMessageQueues = messageQueues;
+        CompletableFuture[] futures = new CompletableFuture[messageQueues.size()];
+        int mqCount = 0;
+        for (MessageQueue mq : finalMessageQueues) {
+            CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
+                try {
+                    long offset = consumer.fetchConsumeOffset(mq, false);
+                    if (offset< 0 ) return null;
+                    boolean shouldContinue = true;
+                    while (shouldContinue) {
+                        PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
+                        switch (pullResult.getPullStatus()) {
+                            case FOUND:
+                                List<MessageExt> messages = pullResult.getMsgFoundList();
+                                for (MessageExt message : messages) {
+                                    receivedIndex.getAndIncrement();
+                                    logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
+                                    offset = message.getQueueOffset()+1;
+                                    consumer.updateConsumeOffset(mq, offset);
+                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                    String shardingKey = String.valueOf(mq.getQueueId());
+                                    LinkedList<MessageExt> messagesList;
+                                    if (map.containsKey(shardingKey)) {
+                                        messagesList = map.get(shardingKey);
+                                        messagesList.add(message);
+                                    } else {
+                                        messagesList = new LinkedList<>();
+                                        messagesList.add(message);
+                                        map.put(shardingKey, messagesList);
+                                    }
+                                    if (sendCollection.size() == 0) {
+                                        Assertions.assertTrue(checkOrderMessage(map), "Consumption is not sequential");
+                                    }
+                                }
+                                break;
+                            case NO_MATCHED_MSG:
+                                shouldContinue = false; // 当没有匹配的消息时退出循环
+                                break;
+                            case NO_NEW_MSG:
+                                shouldContinue = false; // 当没有新的消息时退出循环
+                                break;
+                            case OFFSET_ILLEGAL:
+                                shouldContinue = false; // 当偏移量非法时退出循环
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                } catch (MQBrokerException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (RemotingException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                } catch (MQClientException e) {
+                    e.printStackTrace();
+                    Assertions.fail("Pull fetch message error");
+                }
+                return null;
+            });
+            futures[mqCount++] = future;
+        }
+        try {
+            CompletableFuture.allOf(futures).get(6, TimeUnit.SECONDS);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Assertions.fail("receive response count not match");
+        }
+        Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
     }
 }

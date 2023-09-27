@@ -18,6 +18,8 @@
 package org.apache.rocketmq.frame;
 
 import org.apache.rocketmq.utils.MQAdmin;
+import org.apache.rocketmq.utils.RandomUtils;
+import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,5 +33,19 @@ public class BaseOperate extends ResourceInit {
                 logger.info("Shutdown Hook is running !");
             }
         });
+    }
+
+    protected static String getTopic(String methodName) {
+        String topic = String.format("topic_%s_%s", methodName, RandomUtils.getStringWithCharacter(6));
+        logger.info("[Topic] topic:{}, methodName:{}", topic, methodName);
+        boolean result = MQAdmin.createTopic(namesrvAddr,cluster, topic, 8);
+        Assertions.assertTrue(result, String.format("Create topic:%s failed", topic));
+        return topic;
+    }
+
+    protected static String getGroupId(String methodName) {
+        String groupId = String.format("GID_%s_%s", methodName, RandomUtils.getStringWithCharacter(6));
+        logger.info("[ConsumerGroupId] groupId:{}, methodName:{}", groupId, methodName);
+        return groupId;
     }
 }

@@ -40,6 +40,11 @@ public class RMQNormalListener extends AbstractListener implements MessageListen
         logger.info("启动监听:{}", listenerName);
     }
 
+    public RMQNormalListener(String listenerName) {
+        this.listenerName = listenerName;
+        logger.info("启动监听:{}", listenerName);
+    }
+
     public RMQNormalListener(ConsumeConcurrentlyStatus consumeStatus) {
         this.consumeStatus = consumeStatus;
         this.listenerName = RandomUtils.getStringByUUID();

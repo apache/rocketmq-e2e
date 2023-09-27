@@ -108,6 +108,58 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
+     * 向哪些Queue发送顺序消息
+     *
+     * @param mqs        Queue列表
+     * @param messageNum 每个Queue发送的消息数量
+     */
+    public void sendWithQueue(List<MessageQueue> mqs,String tag, int messageNum) {
+        logger.info("Producer start to send messages");
+        for (MessageQueue mq : mqs) {
+            for (int i = 0; i < messageNum; i++) {
+                Message message = MessageFactory.buildOneMessageWithTagAndBody(mq.getTopic(), tag, String.valueOf(i));
+                try {
+                    SendResult sendResult = producer.send(message, mq);
+                    MessageExt messageExt = new MessageExt();
+                    messageExt.setMsgId(sendResult.getMsgId());
+                    messageExt.setBody(message.getBody());
+                    logger.info("{}, index: {}, tag: {}", sendResult, i, tag);
+                    this.enqueueMessages.addData(messageExt);
+                } catch (Exception e) {
+                    logger.error("DefaultMQProducer send message failed");
+                }
+            }
+        }
+        logger.info("Producer send messages finished");
+    }
+
+    /**
+     * 向Queue发送顺序消息
+     *
+     * @param mqs        Queue列表
+     * @param messageNum 每个Queue发送的消息数量
+     */
+    public void sendWithQueue(List<MessageQueue> mqs, int messageNum, String tag) {
+        logger.info("Producer start to send messages");
+        for (MessageQueue mq : mqs) {
+            for (int i = 0; i < messageNum; i++) {
+                Message message = MessageFactory.buildOneMessageWithTagAndBody(mq.getTopic(), tag, String.valueOf(i));
+                try {
+                    SendResult sendResult = producer.send(message, mq);
+                    MessageExt messageExt = new MessageExt();
+                    messageExt.setMsgId(sendResult.getMsgId());
+                    messageExt.setBody(message.getBody());
+                    logger.info("{}, index: {}, tag: {}", sendResult, i, tag);
+                    this.enqueueMessages.addData(messageExt);
+                } catch (Exception e) {
+                    logger.error("DefaultMQProducer send message failed");
+                }
+            }
+        }
+        logger.info("Producer send messages finished");
+    }
+
+    /**
      * 发送指定正常的properties的普通消息l
      *
      * @param topic       topic名称
@@ -211,6 +263,34 @@ public class RMQNormalProducer extends AbstractMQProducer {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
+        }
+        logger.info("Producer async send messages finished");
+        if (enqueueFailedMessages.getAllData().size() > 0) {
+            logger.warn("send failed messages: {}", enqueueFailedMessages.getAllData());
+        }
+    }
+
+    public void sendAsync(Message message, RMQSendCallBack callBack) {
+        logger.info("Producer start to async send messages");
+
+        MessageExt messageExt = null;
+        try {
+            producer.send(message, callBack);
+            callBack.waitResponse();
+            if (callBack.isbSuccessResponse()) {
+                messageExt = new MessageExt();
+                messageExt.setMsgId(callBack.getMessageId());
+                this.enqueueMessages.addData(messageExt);
+            }
+            if (callBack.isbFailResponse()) {
+                this.enqueueFailedMessages.addData(messageExt);
+            }
+        } catch (MQClientException e) {
+            e.printStackTrace();
+        } catch (RemotingException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
         logger.info("Producer async send messages finished");
         if (enqueueFailedMessages.getAllData().size() > 0) {
@@ -383,10 +463,36 @@ public class RMQNormalProducer extends AbstractMQProducer {
     //    logger.info("Producer send messages finished");
     //}
 
+    public void send(String topic, String tag, String body) {
+        logger.info("Producer start to send messages");
+
+        Message message = null;
+        try {
+            message = MessageFactory.buildMessage(topic, tag,body);
+        } catch (Exception e) {
+            logger.error("build message failed");
+        }
+        try {
+            SendResult sendResult = producer.send(message);
+            MessageExt messageExt = new MessageExt();
+            messageExt.setMsgId(sendResult.getMsgId());
+            logger.info("{}, tag: {}", sendResult, tag);
+            this.enqueueMessages.addData(messageExt);
+        } catch (Exception e) {
+            logger.error("DefaultMQProducer send message failed");
+        }
+
+        logger.info("Producer send messages finished");
+    }
+
     public void send(Message message) {
         SendResult sendResult = null;
+        MessageExt messageExt = null;
         try {
             sendResult = producer.send(message);
+            messageExt = new MessageExt();
+            messageExt.setMsgId(sendResult.getMsgId());
+            logger.info("{}", sendResult);
         } catch (MQClientException e) {
             e.printStackTrace();
         } catch (RemotingException e) {
@@ -397,7 +503,7 @@ public class RMQNormalProducer extends AbstractMQProducer {
             e.printStackTrace();
         }
         logger.info(sendResult.toString());
-        this.enqueueMessages.addData((MessageExt)message);
+        this.enqueueMessages.addData(messageExt);
     }
 
     public List<MessageQueue> fetchPublishMessageQueues(String topic) {

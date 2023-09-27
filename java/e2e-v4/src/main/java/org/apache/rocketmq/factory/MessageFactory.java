@@ -23,6 +23,7 @@ import org.apache.rocketmq.utils.RandomUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
 public class MessageFactory {
@@ -61,6 +62,47 @@ public class MessageFactory {
         return msgList;
     }
 
+    /**
+     * 生成一条消息，自定义topic，tags，body，检测body为null抛出异常的问题
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildMessage(String topic, String tags, String body) throws Exception{
+        return new Message(topic, tags, body.getBytes());
+    }
+
+    /**
+     * 生成一条消息，自定义topic，tags，body
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildNormalMessage(String topic, String tags, String body){
+        return new Message(topic, tags, body.getBytes());
+    }
+
+    public static Message buildMessageWithProperty(String topic, Map<String,String> userProperties, String body){
+        Message msg = new Message(topic, body.getBytes());
+        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+            msg.putUserProperty(entry.getKey(), entry.getValue());
+        }
+        return msg;
+    }
+
+    /**
+     * 生成一条消息，自定义topic及属性
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildMessageWithProperty(String topic, Map<String,String> userProperties){
+        Message msg = new Message(topic, RandomUtils.getStringByUUID().getBytes());
+        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+            msg.putUserProperty(entry.getKey(), entry.getValue());
+        }
+        return msg;
+    }
 
     /**
      * 生成一条消息，tag不设置， body使用随机字符串
