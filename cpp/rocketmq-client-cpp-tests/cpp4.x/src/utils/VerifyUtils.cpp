@@ -426,71 +426,57 @@ void modifyString2Empty(const std::string &msgId,std::vector<std::string>& msgs,
 bool VerifyUtils::waitReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
     long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+TIMEOUT* 1000L;
 
-    std::vector<std::function<bool()>> runnables;
+    std::vector<rocketmq::MQMessageQueue> mqs;
+    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+
     std::vector<std::string> sendMsgs=producer->getEnqueueMessages()->getAllData();
     std::atomic<int> recvCount(sendMsgs.size());
-    std::mutex mtx;
 
-    for(int i=0;i<defaultSimpleThreadNums;i++){
-        runnables.push_back([&](){
-            try{
-                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
-                    std::vector<rocketmq::MQMessageQueue> mqs;
-                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
-                    for (auto& mq : mqs) {
-                        std::unique_lock<std::mutex> lock(mtx);
-                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
-                        if(offset<0) continue;
-                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
-                        switch (pullResult.pullStatus) {
-                            case rocketmq::FOUND:
-                                for (auto& msg : pullResult.msgFoundList) {
-                                    for (auto& sendMsg : sendMsgs) {
-                                        if(msg.getMsgId() == sendMsg){
-                                            sendMsg = "";
-                                            recvCount--;
-                                            offset = pullResult.nextBeginOffset;
-                                            pullConsumer->updateConsumeOffset(mq, offset);
-                                        }
-                                    }
+    while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+        std::vector<std::function<void()>> runnables;
+        for (auto& mq : mqs) {
+            runnables.push_back([&](){
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) return;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for (auto& msg : pullResult.msgFoundList) {
+                            for (auto& sendMsg : sendMsgs) {
+                                if(msg.getMsgId() == sendMsg){
+                                    sendMsg = "";
+                                    recvCount--;
+                                    offset += 1;
+                                    pullConsumer->updateConsumeOffset(mq, offset);
                                 }
-                                break;
-                            case rocketmq::NO_MATCHED_MSG:
-                                break;
-                            case rocketmq::NO_NEW_MSG:
-                                break;
-                            case rocketmq::OFFSET_ILLEGAL:
-                                break;
-                            default:
-                                break;
+                            }
                         }
-                        lock.unlock();
-                    }
-                    
-                    if(recvCount == 0){
                         break;
-                    }
-                    
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
                 }
-                
-            }
-            catch(const std::exception& e){
-                multi_logger->error("{}", e.what());
-                return false;
-            }
-            return true;
-        });
-    }
+            });
+        }
+        
+        if(recvCount == 0){
+            break;
+        }
 
-    std::vector<std::future<bool>> futures;
-    for (const auto& runnable : runnables) {
-        futures.push_back(std::async(std::launch::async, runnable));
-    }
+        std::vector<std::future<void>> futures;
+        for (const auto& runnable : runnables) {
+            futures.push_back(std::async(std::launch::async, runnable));
+        }
 
-    // 等待所有函数对象完成并获取结果
-    for (auto& future : futures) {
-        bool result = future.get();
-        if(!result) return false;
+        // 等待所有函数对象完成
+        for (auto& future : futures) {
+            future.get();
+        }
     }
 
     if(recvCount != 0){
@@ -504,59 +490,50 @@ bool VerifyUtils::waitReceiveThenAck(std::shared_ptr<RMQNormalProducer> producer
 bool VerifyUtils::waitFIFOParamReceiveThenNAck(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
     long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
 
-    std::vector<std::function<void()>> runnables;
-    std::vector<rocketmq::MQMessageExt> receivedMessage;
-    std::mutex mtx;
+    std::vector<rocketmq::MQMessageQueue> mqs;
+    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
 
-    for(int i=0;i<4;i++){
-        runnables.push_back([&](){
-            try{
-                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
-                    std::vector<rocketmq::MQMessageQueue> mqs;
-                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
-                    for (auto& mq : mqs) {
-                        std::unique_lock<std::mutex> lock(mtx);
-                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
-                        if(offset<0) continue;
-                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
-                        switch (pullResult.pullStatus) {
-                            case rocketmq::FOUND:
-                                for (auto& msg : pullResult.msgFoundList) {
-                                    receivedMessage.push_back(msg);
-                                }
-                                break;
-                            case rocketmq::NO_MATCHED_MSG:
-                                break;
-                            case rocketmq::NO_NEW_MSG:
-                                break;
-                            case rocketmq::OFFSET_ILLEGAL:
-                                break;
-                            default:
-                                break;
+    SimpleConcurrentHashMap<std::string,rocketmq::MQMessageExt> receivedMap;
+
+    while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+        std::vector<std::function<void()>> runnables;
+        for (auto& mq : mqs) {
+            runnables.push_back([&](){
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) return;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for (auto& msg : pullResult.msgFoundList) {
+                            if(receivedMap.contains(msg.getMsgId())){
+                                receivedMap.insert(msg.getMsgId(),msg);
+                            }
                         }
-                        lock.unlock();
-                    }
-                    
+                        break;
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
                 }
-                
-            }
-            catch(const std::exception& e){
-                multi_logger->error("{}", e.what());
-            }
-        });
+            });
+        }
+        std::vector<std::future<void>> futures;
+        for (const auto& runnable : runnables) {
+            futures.push_back(std::async(std::launch::async, runnable));
+        }
+
+        // 等待所有函数对象完成并获取结果
+        for (auto& future : futures) {
+            future.get();
+        }
+        
     }
 
-    std::vector<std::future<void>> futures;
-    for (const auto& runnable : runnables) {
-        futures.push_back(std::async(std::launch::async, runnable));
-    }
-
-    // 等待所有函数对象完成并获取结果
-    for (auto& future : futures) {
-        future.get();
-    }
-
-    for(auto& msg : receivedMessage){
+    for(auto& msg : receivedMap.getAllValues()){
         int id = std::stoi(msg.getBody());
         if(id>=8){
             multi_logger->error("Consumption out of order, expected :Body=0 Actual :Body={}",id);
@@ -569,83 +546,74 @@ bool VerifyUtils::waitFIFOParamReceiveThenNAck(std::shared_ptr<RMQNormalProducer
 bool VerifyUtils::waitFIFOParamReceiveThenAckExceptedLast(std::shared_ptr<RMQNormalProducer> producer, std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer,std::string &topic,std::string &tag, int maxMessageNum){
     long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
 
-    std::vector<std::function<bool()>> runnables;
+    std::vector<rocketmq::MQMessageQueue> mqs;
+    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
+
     std::vector<rocketmq::MQMessageExt> receivedMessage;
     SimpleConcurrentHashMap<std::string,std::atomic<int>> map;
 
-    std::mutex mtx;
-    for(int i=0;i<4;i++){
-        runnables.push_back([&](){
-            try{
-                while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
-                    std::vector<rocketmq::MQMessageQueue> mqs;
-                    pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
-                    for (auto& mq : mqs) {
-                        std::unique_lock<std::mutex> lock(mtx);
-                        long long offset = pullConsumer->fetchConsumeOffset(mq, false);
-                        if(offset<0) continue;
-                        rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
-                        switch (pullResult.pullStatus) {
-                            case rocketmq::FOUND:
-                                for(int j=0;j<pullResult.msgFoundList.size();j++){
-                                    std::string msgId = pullResult.msgFoundList[j].getMsgId();
-                                    int id = std::stoi(pullResult.msgFoundList[j].getBody());
-
-                                    if(id != 19){
-                                        offset+=1;
-                                    }
-                                    pullConsumer->updateConsumeOffset(mq, offset);
-                                    if(map.contains(msgId)){
-                                        map[msgId]++;
-                                    }else{
-                                        std::atomic<int> val(1);
-                                        map.insert(msgId,val.load());
-                                    }
+    while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+        std::vector<std::function<bool()>> runnables;
+        for (auto& mq : mqs) {
+            runnables.push_back([&](){
+                int count = 0; //same message queue,so dont't need atomic
+                long long offset = pullConsumer->fetchConsumeOffset(mq, false);
+                if(offset<0) return true;
+                rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
+                switch (pullResult.pullStatus) {
+                    case rocketmq::FOUND:
+                        for(int j=0;j<pullResult.msgFoundList.size();j++){
+                            std::string msgId = pullResult.msgFoundList[j].getMsgId();
+                            int id = std::stoi(pullResult.msgFoundList[j].getBody());
+                            if(id != 19 && count!=id) {
+                                multi_logger->error("Consumption out of order, expected :order={} Actual :order={}",count,id);
+                                return false;
+                            }
+                            count++;
+                            if(id != 19){
+                                offset+=1;
+                                pullConsumer->updateConsumeOffset(mq, offset);
+                                if(map.contains(msgId)){
+                                    map[msgId]++;
+                                }else{
+                                    std::atomic<int> val(1);
+                                    map.insert(msgId,val.load());
                                 }
-                                break;
-                            case rocketmq::NO_MATCHED_MSG:
-                                break;
-                            case rocketmq::NO_NEW_MSG:
-                                break;
-                            case rocketmq::OFFSET_ILLEGAL:
-                                break;
-                            default:
-                                break;
+                            }
                         }
-                        lock.unlock();
-                    }
-                    
-                    if(map.size() != 20){
-                        return false;
-                    }
-                    int count = 0;
-                    for(auto& value : map.getAllValues()){
-                        if(value > 1){
-                            count += 1;
-                        }
-                    }
-
-                    if(count > 0 && count != 1){
-                        return false;
-                    }
+                        break;
+                    case rocketmq::NO_MATCHED_MSG:
+                        break;
+                    case rocketmq::NO_NEW_MSG:
+                        break;
+                    case rocketmq::OFFSET_ILLEGAL:
+                        break;
+                    default:
+                        break;
                 }
-            }
-            catch(const std::exception& e){
-                multi_logger->error("{}", e.what());
-            }
-            return true;
-        });
-    }
+                return true;
+            });
+        }
+        if(map.size() >= 20){
+            return false;
+        }
 
-    std::vector<std::future<bool>> futures;
-    for (const auto& runnable : runnables) {
-        futures.push_back(std::async(std::launch::async, runnable));
-    }
+        for(auto& value : map.getAllValues()){
+            if(value > 1){
+                return false;
+            }
+        }
+        
+        std::vector<std::future<bool>> futures;
+        for (const auto& runnable : runnables) {
+            futures.push_back(std::async(std::launch::async, runnable));
+        }
 
-    // 等待所有函数对象完成并获取结果
-    for (auto& future : futures) {
-        bool result = future.get();
-        if(!result) return false;
+        // 等待所有函数对象完成并获取结果
+        for (auto& future : futures) {
+            bool result = future.get();
+            if(!result) return false;
+        }
     }
 
     return true;
@@ -817,19 +785,15 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
 
     std::vector<std::function<bool()>> runnables;
     SimpleConcurrentHashMap<std::string,rocketmq::MQMessageExt> recvMsgs;
-    std::vector<bool> flag(20,true);
+    bool flag{true};
     std::unordered_set<std::string> unconsumedMsgIds;
 
-    std::mutex mtx;
     for(int i=0;i<4;i++){
-        runnables.push_back([&](){
-            
             while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
                 try{
                     std::vector<rocketmq::MQMessageQueue> mqs;
                     pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
                     for (auto& mq : mqs) {
-                        std::unique_lock<std::mutex> lock(mtx);
                         long long offset = pullConsumer->fetchConsumeOffset(mq, false);
                         if(offset<0) continue;
                         rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, maxMessageNum);
@@ -837,8 +801,8 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
                             case rocketmq::FOUND:
                                 for(int j=0;j<pullResult.msgFoundList.size();j++){
                                     int id = std::stoi(pullResult.msgFoundList[j].getBody());
-                                    if(id == 19 && flag[19]){
-                                        flag[19]=false;
+                                    if(id == 19 && flag){
+                                        flag=false;
                                         unconsumedMsgIds.insert(pullResult.msgFoundList[j].getMsgId());
                                     }else{
                                         if(id == 19){
@@ -866,7 +830,6 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
                             default:
                                 break;
                         }
-                        lock.unlock();
                     }
                 }catch(const std::exception& e){
                     multi_logger->error("{}", e.what());
@@ -876,19 +839,8 @@ bool VerifyUtils::waitReceiveMultiNack(std::shared_ptr<RMQNormalProducer> produc
 
             }
             return true;
-        });
     }
 
-    std::vector<std::future<bool>> futures;
-    for (const auto& runnable : runnables) {
-        futures.push_back(std::async(std::launch::async, runnable));
-    }
-
-    // 等待所有函数对象完成并获取结果
-    for (auto& future : futures) {
-        bool res = future.get();
-        if(!res) return false;
-    }
     DataCollector<std::string>& dequeueMessages = DataCollectorManager<std::string>::getInstance().fetchListDataCollector(RandomUtils::getStringByUUID());
     for(auto& value : recvMsgs.getAllValues()){
         dequeueMessages.addData(value.getMsgId());

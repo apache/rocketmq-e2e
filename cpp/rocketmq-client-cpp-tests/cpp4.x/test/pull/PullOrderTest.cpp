@@ -57,7 +57,7 @@ TEST(PullOrderTest, testFIFO_pull_receive_ack){
 
     for(int i=0;i<SEND_NUM;i++){
         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
-        producer->send(message);
+        producer->sendOrderMessage(message,0);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));

@@ -31,6 +31,7 @@
 #include "factory/ConsumerFactory.h"
 #include "factory/ProducerFactory.h"
 #include "factory/MessageFactory.h"
+#include "listener/rmq/RMQOrderListener.h"
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
@@ -42,7 +43,7 @@ TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
     std::string group = getGroupId("testOrder_Send_PushConsumeOrderly");
     std::string tag = NameUtils::getRandomTagName();
 
-    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
+    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQOrderListener>());
 
     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
 
@@ -61,7 +62,7 @@ TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
 
     ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
 
-    ASSERT_TRUE(VerifyUtils::verifyOrderMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
+    ASSERT_TRUE(VerifyUtils::verifyOrderMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getOrderListener()->getDequeueMessages())));
 
     pushConsumer->shutdown();
     pullConsumer->shutdown();

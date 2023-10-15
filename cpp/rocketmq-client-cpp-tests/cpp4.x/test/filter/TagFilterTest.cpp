@@ -55,7 +55,7 @@ TEST(TagFilterTest, testSendTagA_SubTagAorTagB){
         
         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-        multi_logger->info("Wait for the SimpleConsumer");
+        multi_logger->info("Wait for the PullConsumer");
 
         auto producer = ProducerFactory::getRMQProducer(group);
 
@@ -89,7 +89,7 @@ TEST(TagFilterTest, testSndTagATagB_SubTagATagB){
         
         ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,receiveTag,pullConsumer->getPullConsumer()));
 
-        multi_logger->info("Wait for the SimpleConsumer");
+        multi_logger->info("Wait for the PullConsumer");
 
         auto producer = ProducerFactory::getRMQProducer(group);
 

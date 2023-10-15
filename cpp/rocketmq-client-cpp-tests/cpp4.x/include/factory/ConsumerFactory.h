@@ -17,6 +17,7 @@
 #include "client/rmq/RMQNormalConsumer.h"
 #include "listener/MsgListener.h"
 #include "listener/rmq/RMQNormalListener.h"
+#include "listener/rmq/RMQOrderListener.h"
 #include "resource/Resource.h"
 #include <memory>
 #include <rocketmq/DefaultMQPullConsumer.h>
@@ -55,6 +56,18 @@ public:
     }
 
     static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<RMQNormalListener> listener){
+        auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
+        rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
+        rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeThreadCount(4);
+        rmqPushConsumer->subscribe(topic, subExpression);
+        rmqPushConsumer->registerMessageListener(listener.get());
+        rmqPushConsumer->start();
+        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer,listener);
+    }
+
+    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<RMQOrderListener> listener){
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());

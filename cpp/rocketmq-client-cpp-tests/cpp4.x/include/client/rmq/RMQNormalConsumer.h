@@ -20,6 +20,7 @@
 #include "resource/Resource.h"
 #include "common/MQCollector.h"
 #include "listener/rmq/RMQNormalListener.h"
+#include "listener/rmq/RMQOrderListener.h"
 #include <future>
 #include <mutex>
 #include <atomic>
@@ -44,14 +45,18 @@ private:
     std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer;
     std::vector<std::future<void>> executorService;
     static constexpr int WAIT_RESPONSE_MILLS = 15 * 1000;
-    std::shared_ptr<RMQNormalListener> listener = nullptr;
+    std::shared_ptr<RMQNormalListener> normalListener = nullptr;
+    std::shared_ptr<RMQOrderListener> orderListener = nullptr;
     bool needRun = true;
     int consumerThreadNum = 20;
     static std::atomic<int> receivedIndex;
 
 public:
     RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQNormalListener> listener) 
-        : pushConsumer(consumer), listener(listener) {}
+        : pushConsumer(consumer), normalListener(listener) {}
+
+    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQOrderListener> listener) 
+        : pushConsumer(consumer), orderListener(listener) {}
 
     RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> consumer) 
         : pullConsumer(consumer) {}
@@ -94,10 +99,18 @@ public:
     }
 
     std::shared_ptr<RMQNormalListener> getListener() {
-        return listener;
+        return normalListener;
+    }
+
+    std::shared_ptr<RMQOrderListener> getOrderListener() {
+        return orderListener;
     }
 
     void setListener(std::shared_ptr<RMQNormalListener> listener) {
-        this->listener = listener;
+        this->normalListener = listener;
+    }
+
+    void setOrderListener(std::shared_ptr<RMQOrderListener> listener) {
+        this->orderListener = listener;
     }
 };

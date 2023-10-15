@@ -13,7 +13,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 file(GLOB CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
-file(GLOB CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/abnormal/*.cpp)
-file(GLOB CPP_FILES ${CMAKE_CURRENT_SOURCE_DIR}/batch/*.cpp)
 list(APPEND SOURCE_FILES ${CPP_FILES})
 set(SOURCE_FILES ${SOURCE_FILES} PARENT_SCOPE)

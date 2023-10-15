@@ -14,6 +14,7 @@
 # limitations under the License.
 add_subdirectory(client)
 add_subdirectory(cluster)
+add_subdirectory(offset)
 add_subdirectory(filter)
 add_subdirectory(server)
 add_subdirectory(pull)

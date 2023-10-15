@@ -96,7 +96,7 @@ TEST(PullParamTest, testNormal_pull_receive_maxsize_sync){
     producer->shutdown();
 }
 
-//Twenty ordinary messages are sent synchronously, and receive(50) messages are received in batch. All the pulled messages are ack() messages except the first one. expected the ack messages will not be consumed repeatedly and subsequent consumption will not be affected
+//Twenty ordinary messages are sent synchronously, and receive(50) messages are received in batch. All the pulled messages are ack() messages except the last one. expected the ack messages will not be consumed repeatedly
 TEST(PullParamTest, testNormal_pull_receive_multi_nack){
     int SEND_NUM = 20;
     std::string topic = getTopic(MessageType::NORMAL, "testNormal_pull_receive_multi_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
