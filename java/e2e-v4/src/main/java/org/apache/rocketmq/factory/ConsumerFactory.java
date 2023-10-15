@@ -17,11 +17,13 @@
 
 package org.apache.rocketmq.factory;
 
+import org.apache.rocketmq.client.consumer.AllocateMessageQueueStrategy;
 import org.apache.rocketmq.client.consumer.DefaultLitePullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPullConsumer;
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
+import org.apache.rocketmq.common.protocol.heartbeat.MessageModel;
 import org.apache.rocketmq.remoting.RPCHook;
 import org.apache.rocketmq.utils.RandomUtils;
 
@@ -40,6 +42,18 @@ public class ConsumerFactory {
         DefaultMQPushConsumer consumer;
         if (aclEnable) {
             consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely());
+        } else {
+            consumer = new DefaultMQPushConsumer(consumerGroup);
+        }
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook,AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+        DefaultMQPushConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, allocateMessageQueueStrategy);
         } else {
             consumer = new DefaultMQPushConsumer(consumerGroup);
         }

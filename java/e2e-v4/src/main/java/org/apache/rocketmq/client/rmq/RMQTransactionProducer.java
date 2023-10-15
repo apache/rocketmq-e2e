@@ -72,5 +72,25 @@ public class RMQTransactionProducer extends AbstractMQProducer {
         }
         logger.info("Producer send messages finished");
     }
+    
+    public void sendTrans(String topic, String tag, int messageNum) {
+        logger.info("Producer start to send transaction messages");
+        for (int i = 0; i < messageNum; i++) {
+            //Message message = MessageFactory.buildOneMessageWithTagAndBody(topic, tag, String.valueOf(i));
+            Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
+            SendResult sendResult = null;
+            MessageExt messageExt = null;
+            try {
+                sendResult = producer.sendMessageInTransaction(message, null);
+                messageExt = new MessageExt();
+                messageExt.setMsgId(sendResult.getMsgId());
+                logger.info("{}, index: {}, tag: {}", sendResult, i, tag);
+                this.enqueueMessages.addData(messageExt);
+            } catch (MQClientException e) {
+                e.printStackTrace();
+            }
+        }
+        logger.info("Producer send messages finished");
+    }
 
 }

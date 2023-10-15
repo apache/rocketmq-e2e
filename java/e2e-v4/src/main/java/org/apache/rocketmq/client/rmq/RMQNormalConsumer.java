@@ -24,6 +24,7 @@ import org.apache.rocketmq.client.consumer.MessageSelector;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.AbstractMQConsumer;
 import org.apache.rocketmq.listener.AbstractListener;
+import org.apache.rocketmq.listener.rmq.concurrent.RMQIdempotentListener;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQOrderListener;
 import org.apache.rocketmq.utils.TestUtils;
@@ -52,6 +53,19 @@ public class RMQNormalConsumer extends AbstractMQConsumer {
     }
 
     public void subscribeAndStart(String topic, String tag, RMQNormalListener listener) {
+        Assertions.assertNotNull(pushConsumer);
+        this.listener = listener;
+        try {
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageListener(listener);
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            logger.info("Start DefaultMQPushConsumer failed, {}", e.getMessage());
+        }
+        logger.info("DefaultMQPushConsumer started - topic: {}, tag: {}", topic, tag);
+    }
+
+    public void subscribeAndStart(String topic, String tag, RMQIdempotentListener listener) {
         Assertions.assertNotNull(pushConsumer);
         this.listener = listener;
         try {

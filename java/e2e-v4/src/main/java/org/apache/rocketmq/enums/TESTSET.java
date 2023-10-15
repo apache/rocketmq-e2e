@@ -50,4 +50,7 @@ public class TESTSET {
     public static final String BROADCAST = "broadcast";
     public static final String ACL = "acl";
     public static final String MODEL = "model";
+    public static final String LOAD_BALANCING = "loadBalancing";
+    public static final String BATCHPRODUCER = "batchProducer";
+    public static final String OFFSET = "offset";
 }

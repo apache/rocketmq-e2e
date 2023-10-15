@@ -502,7 +502,6 @@ public class RMQNormalProducer extends AbstractMQProducer {
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
-        logger.info(sendResult.toString());
         this.enqueueMessages.addData(messageExt);
     }
 
