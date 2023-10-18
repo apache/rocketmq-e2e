@@ -33,7 +33,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(TESTSET.MODEL)
-@Tag(TESTSET.SMOKE)
 public class ClusterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(ClusterTest.class);
     private String tag;
@@ -80,17 +79,41 @@ public class ClusterTest extends BaseOperate {
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
-        pushConsumer01 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId01, rpcHook);
-        pushConsumer02 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId02, rpcHook);
-        pushConsumer03 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId03, rpcHook);
+        pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId01, rpcHook);
+        pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId02, rpcHook);
+        pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId03, rpcHook);
         pushConsumer01.subscribeAndStart(topic,tag, listenerA);
         pushConsumer02.subscribeAndStart(topic,tag, listenerB);
         pushConsumer03.subscribeAndStart(topic,tag, listenerC);
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId01, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        Assertions.assertNotNull(producer, "Get Producer failed");
+        for (int i = 0; i < SEND_NUM; i++) {
+            Message message = new Message(topic, tag, RandomUtils.getStringByUUID().getBytes());
+            producer.send(message);
+        }
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+        VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerA.getDequeueMessages());
+        VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerB.getDequeueMessages());
+        VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerC.getDequeueMessages());
+    }
+
+    @Test
+    @DisplayName("Send 100 normal messages synchronously, start three consumers on same GroupId, and expect each client to consume up to 100 messages")
+    public void testBroadcastConsumeWithSameGroupId() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+
+        RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
+        RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
+        RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
+        pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer01.subscribeAndStart(topic,tag, listenerA);
+        pushConsumer02.subscribeAndStart(topic,tag, listenerB);
+        pushConsumer03.subscribeAndStart(topic,tag, listenerC);
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get Producer failed");
@@ -113,17 +136,12 @@ public class ClusterTest extends BaseOperate {
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
-        pushConsumer01 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer02 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer03 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer01 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer02 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
+        pushConsumer03 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer01.subscribeAndStart(topic,tag, listenerA);
         pushConsumer02.subscribeAndStart(topic,tag, listenerB);
         pushConsumer03.subscribeAndStart(topic,tag, listenerC);
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");

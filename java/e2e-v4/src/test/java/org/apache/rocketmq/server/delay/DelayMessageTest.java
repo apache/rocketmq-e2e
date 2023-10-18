@@ -49,7 +49,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Tag(TESTSET.DELAY)
 public class DelayMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(DelayMessageTest.class);
-    //private RMQOrderConsumer consumer;
+    // private RMQOrderConsumer consumer;
     private String tag;
     private String topic;
     private String groupId;
@@ -75,10 +75,11 @@ public class DelayMessageTest extends BaseOperate {
         int delayLevel = 1;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         producer.sendDelay(topic, delayLevel, SEND_NUM);
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);
+        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(),
+                delayLevel);
 
         producer.shutdown();
         consumer.shutdown();
@@ -90,10 +91,11 @@ public class DelayMessageTest extends BaseOperate {
         int delayLevel = 4;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         producer.sendDelay(topic, delayLevel, SEND_NUM);
-        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(), delayLevel);
+        VerifyUtils.verifyDelayMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages(),
+                delayLevel);
 
         producer.shutdown();
         consumer.shutdown();
@@ -104,7 +106,7 @@ public class DelayMessageTest extends BaseOperate {
     @DisplayName("Send one delay message and set the delay test negative delay level, expecting message building wrong")
     public void testNegativeDelayLevel() {
         int delayLevel = -1;
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         assertThrows(Exception.class, () -> {
             Message msg = new Message(topic, "*", RandomUtils.getStringByUUID().getBytes());
@@ -121,7 +123,7 @@ public class DelayMessageTest extends BaseOperate {
     @DisplayName("Send one delay message and set the delay test delay level=19, expecting message building wrong")
     public void testDelayLevelWith19() {
         int delayLevel = 19;
-        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         assertThrows(Exception.class, () -> {
             Message msg = new Message(topic, "*", RandomUtils.getStringByUUID().getBytes());

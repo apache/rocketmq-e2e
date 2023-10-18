@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
  * Test message body
  */
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class MessageBodyContentTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageBodyContentTest.class);
     private String tag;
@@ -74,20 +73,16 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer.subscribeAndStart(topic,tag, new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = " ";
-        producer.send(topic,tag,body);
+        producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), body);
+        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
+                pushConsumer.getListener().getDequeueMessages(), body);
     }
 
     @Test
@@ -97,20 +92,16 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer.subscribeAndStart(topic,tag, new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = "中文字符";
-        producer.send(topic,tag,body);
+        producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), body);
+        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
+                pushConsumer.getListener().getDequeueMessages(), body);
     }
 
     @Test
@@ -120,21 +111,15 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer.subscribeAndStart(topic,tag, new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = "😱";
-        producer.send(topic,tag,body);
+        producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), body);
+        VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
+                pushConsumer.getListener().getDequeueMessages(), body);
     }
 }
-
-

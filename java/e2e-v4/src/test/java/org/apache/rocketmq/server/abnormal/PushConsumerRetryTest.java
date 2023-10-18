@@ -20,6 +20,7 @@ package org.apache.rocketmq.server.abnormal;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,8 @@ import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.rocketmq.client.consumer.DefaultMQPushConsumer;
 import org.apache.rocketmq.client.consumer.MessageSelector;
@@ -63,6 +66,7 @@ import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,7 +75,6 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag(TESTSET.RETRY)
-@Tag(TESTSET.SMOKE)
 public class PushConsumerRetryTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PushConsumerRetryTest.class);
     private String tag;
@@ -83,55 +86,76 @@ public class PushConsumerRetryTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("Simulate pushconsumer consumption fail, expect that the original message was not received, and capture all messages after message retry")
-    public void testExceptionConsumption(){
+    @Timeout(value = 180, unit = TimeUnit.SECONDS)
+    @DisplayName("Send normal messages, set the maximum number of retries and set the received messages to RECONSUME_LATER. The expected retry time is about 10s for the first time and about 30s for the second time")
+    public void testNormalMessageReconsumeTime() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        Map<String, Instant> msgsReConsumeTime = new ConcurrentHashMap<>();
+        Map<String, Boolean> msgsReachedTwoReconsumeTimes = new ConcurrentHashMap<>();
+        Lock lock = new ReentrantLock();
 
-        Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
-        Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
-
-        DefaultMQPushConsumer pushConsumer;
-        try{
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setMessageModel(MessageModel.CLUSTERING);
             pushConsumer.setMaxReconsumeTimes(2);
-            pushConsumer.setMessageListener(new MessageListenerConcurrently(){
+            pushConsumer.setConsumeTimeout(60000);
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt msg : msgs) {
-                        if(msg.getReconsumeTimes() == 2){
-                            retryMsgs.putIfAbsent(msg.getMsgId(), msg);
-                            log.info("consume success: {}",msg);
-                        }else{
-                            // Simulate consuming operations
-                            log.info("{}","Simulate consuming operations fail");
-                            int i = 1/0;
-                            log.info("{}","Simulate consuming operations fail end");
-                            firstMsgs.putIfAbsent(msg.getMsgId(), msg);
-                            log.info(String.format("recv msg(fail) %s ", msg));
+                        if (msg.getReconsumeTimes() == 0) {
+                            msgsReConsumeTime.putIfAbsent(msg.getMsgId(), Instant.now());
+                            msgsReachedTwoReconsumeTimes.putIfAbsent(msg.getMsgId(), false);
+                            log.info(String.format("recv msg(first) %s ", msg));
+                        } else {
+                            Instant nowTime = Instant.now();
+                            if (msgsReConsumeTime.containsKey(msg.getMsgId())) {
+                                lock.lock();
+                                try {
+                                    Instant lastTime = msgsReConsumeTime.get(msg.getMsgId());
+                                    Duration duration = Duration.between(lastTime, nowTime);
+                                    if (msg.getReconsumeTimes() == 1) {
+                                        log.info("first retry time is: {}", duration.getSeconds());
+                                        Assertions.assertTrue(duration.getSeconds() < 20);
+                                    } else {
+                                        log.info("second retry time is: {}", duration.getSeconds());
+                                        Assertions.assertTrue(duration.getSeconds() < 60);
+                                        msgsReachedTwoReconsumeTimes.put(msg.getMsgId(), true);
+                                    }
+                                    msgsReConsumeTime.put(msg.getMsgId(), nowTime);
+                                } finally {
+                                    lock.unlock();
+                                }
+                            } else {
+                                msgsReConsumeTime.putIfAbsent(msg.getMsgId(), Instant.now());
+                            }
+
+                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
                         }
-                            
+                    }
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() != 2) {
+                            return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+                        }
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
-                
+
             });
             pushConsumer.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            Assertions.fail(e.getMessage());
         }
+
         Assertions.assertNotNull(producer, "Get Producer Failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
@@ -139,64 +163,410 @@ public class PushConsumerRetryTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(180, SECONDS).until(new Callable<Boolean>() {
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                return retryMsgs.size() == SEND_NUM && firstMsgs.size() == 0;
+                boolean flag = true;
+                for (Map.Entry<String, Boolean> entry : msgsReachedTwoReconsumeTimes.entrySet()) {
+                    if (!entry.getValue()) {
+                        flag = false;
+                        break;
+                    }
+                }
+                return msgsReachedTwoReconsumeTimes.size()==SEND_NUM && flag;
             }
         });
-        
+
         producer.shutdown();
         pushConsumer.shutdown();
     }
 
     @Test
-    @DisplayName("Simulate pushconsumer consumption return null, expect that the original message was not received, and capture all messages after message retry")
-    public void testNullConsumption(){
+    @Timeout(value = 60, unit = TimeUnit.SECONDS)
+    @DisplayName("Send order messages, set the maximum number of retries and set the received messages to SUSPEND_CURRENT_QUEUE_A_MOMENT. The expected retry time is about 1s")
+    public void testOrderMessageReconsumeTime() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        Map<String, Instant> msgsReConsumeTime = new ConcurrentHashMap<>();
+        Map<String, Boolean> msgsReachedTwoReconsumeTimes = new ConcurrentHashMap<>();
+        Lock lock = new ReentrantLock();
 
-        Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
-        Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
-
-        DefaultMQPushConsumer pushConsumer;
-        try{
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setMessageModel(MessageModel.CLUSTERING);
             pushConsumer.setMaxReconsumeTimes(2);
-            pushConsumer.setMessageListener(new MessageListenerConcurrently(){
+            pushConsumer.setConsumeTimeout(60000);
+            pushConsumer.setMessageListener(new MessageListenerOrderly() {
+                @Override
+                public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
+                ConsumeOrderlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() == 0) {
+                            msgsReConsumeTime.putIfAbsent(msg.getMsgId(), Instant.now());
+                            msgsReachedTwoReconsumeTimes.putIfAbsent(msg.getMsgId(), false);
+                            log.info(String.format("recv msg(first) %s ", msg));
+                        } else {
+                            Instant nowTime = Instant.now();
+                            if (msgsReConsumeTime.containsKey(msg.getMsgId())) {
+                                lock.lock();
+                                try {
+                                    Instant lastTime = msgsReConsumeTime.get(msg.getMsgId());
+                                    Duration duration = Duration.between(lastTime, nowTime);
+                                    if (msg.getReconsumeTimes() == 1) {
+                                        log.info("first retry time is: {}", duration.getSeconds());
+                                        Assertions.assertTrue(duration.getSeconds() < 2);
+                                    } else {
+                                        log.info("second retry time is: {}", duration.getSeconds());
+                                        Assertions.assertTrue(duration.getSeconds() < 2);
+                                        msgsReachedTwoReconsumeTimes.put(msg.getMsgId(), true);
+                                    }
+                                    msgsReConsumeTime.put(msg.getMsgId(), nowTime);
+                                } finally {
+                                    lock.unlock();
+                                }
+                            } else {
+                                msgsReConsumeTime.putIfAbsent(msg.getMsgId(), Instant.now());
+                            }
+
+                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
+                        }
+                    }
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() != 2) {
+                            return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                        }
+                    }
+                    return ConsumeOrderlyStatus.SUCCESS;
+                }
+
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
+        }
+
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        List<MessageQueue> mqs = producer.fetchPublishMessageQueues(topic);
+        List<MessageQueue> sendMqs = new ArrayList<>();
+        sendMqs.add(mqs.get(0));
+        producer.sendWithQueue(sendMqs, SEND_NUM, tag);
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                boolean flag = true;
+                for (Map.Entry<String, Boolean> entry : msgsReachedTwoReconsumeTimes.entrySet()) {
+                    if (!entry.getValue()) {
+                        flag = false;
+                        break;
+                    }
+                }
+                return msgsReachedTwoReconsumeTimes.size()==SEND_NUM && flag;
+            }
+        });
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 180, unit = TimeUnit.SECONDS)
+    @DisplayName("Send normal messages, set the maximum consumption to 2(The first retry is 10 seconds, the second retry is 30 seconds, the third retry is 1 minute, and the setting is 2 minutes. Then check whether the third retry occurs), and set the message reception to RECONUME_LATER, expecting that the third retry will not occur")
+    public void testNormalMessageRetryTimesSetting() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, Integer> msgsReConsumeTimes = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt msg : msgs) {
-                        if(msg.getReconsumeTimes() == 2){
-                            retryMsgs.putIfAbsent(msg.getMsgId(), msg);
-                            log.info("consume success: {}",msg);
-                        }else{
-                            // Simulate consuming operations
-                            log.info("{}","Simulate consuming operations return null");
-                            firstMsgs.putIfAbsent(msg.getMsgId(), msg);
-                            log.info(String.format("recv msg(null) %s ", msg));
-                            return null;
+                        if (msg.getReconsumeTimes() == 3) {
+                            Assertions.fail("retry times is not equal to maxReconsumeTimes");
+                        } else {
+                            if (msgsReConsumeTimes.containsKey(msg.getMsgId())) {
+                                msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
+                                if (msg.getReconsumeTimes() == 2) {
+                                    log.info("retry times is equal to maxReconsumeTimes: {}", msg.getMsgId());
+                                }
+                            } else {
+                                msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
+                            }
+                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
                         }
-                            
                     }
-                    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                    return ConsumeConcurrentlyStatus.RECONSUME_LATER;
                 }
+
             });
             pushConsumer.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            Assertions.fail(e.getMessage());
+        }
+
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        for (int i = 0; i < SEND_NUM; i++) {
+            Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
+            producer.send(message);
+        }
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        TestUtils.waitForMinutes(2);
+
+        Assertions.assertEquals(SEND_NUM, msgsReConsumeTimes.size(),
+                "retry message size is not equal to send message size");
+        for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
+            Assertions.assertEquals(2, entry.getValue(), "retry times is not equal to maxReconsumeTimes");
+        }
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 60, unit = TimeUnit.SECONDS)
+    @DisplayName("Send order messages, set the maximum consumption to 2(The retry time of each message is 1s. Then check whether the third retry occurs), and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the third retry will not occur")
+    public void testOrderMessageRetryTimesSetting() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, Integer> msgsReConsumeTimes = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMessageListener(new MessageListenerOrderly() {
+                @Override
+                public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeOrderlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() == 3) {
+                            Assertions.fail("retry times is not equal to maxReconsumeTimes");
+                        } else {
+                            if (msgsReConsumeTimes.containsKey(msg.getMsgId())) {
+                                msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
+                                if (msg.getReconsumeTimes() == 2) {
+                                    log.info("retry times is equal to maxReconsumeTimes: {}", msg.getMsgId());
+                                }
+                            } else {
+                                msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
+                            }
+                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
+                        }
+                    }
+                    return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                }
+
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
+        }
+
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        List<MessageQueue> mqs = producer.fetchPublishMessageQueues(topic);
+        List<MessageQueue> sendMqs = new ArrayList<>();
+        sendMqs.add(mqs.get(0));
+        producer.sendWithQueue(sendMqs, SEND_NUM, tag);
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        TestUtils.waitForSeconds(30);
+
+        Assertions.assertEquals(SEND_NUM, msgsReConsumeTimes.size(),
+                "retry message size is not equal to send message size");
+        for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
+            Assertions.assertEquals(2, entry.getValue(), "retry times is not equal to maxReconsumeTimes");
+        }
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 180, unit = TimeUnit.SECONDS)
+    @DisplayName("Send order messages, set the maximum consumption to 30, and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the received messages's reconsume time will be equal to 30 in 2 minutes")
+    public void testOrderMessageRetryTimesWith30() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, Integer> msgsReConsumeTimes = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(30);
+            pushConsumer.setMessageListener(new MessageListenerOrderly() {
+                @Override
+                public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeOrderlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        log.info(String.format("recv msgid(reconsume later) %s, reconsume time is %s ", msg.getMsgId(), msg.getReconsumeTimes()));
+                        msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
+                    }
+                    return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                }
+
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
+        }
+
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        List<MessageQueue> mqs = producer.fetchPublishMessageQueues(topic);
+        List<MessageQueue> sendMqs = new ArrayList<>();
+        sendMqs.add(mqs.get(0));
+        producer.sendWithQueue(sendMqs, 2, tag);
+        Assertions.assertEquals(2, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        TestUtils.waitForMinutes(2);
+
+        Assertions.assertEquals(2, msgsReConsumeTimes.size(),
+                "retry message size is not equal to send message size");
+        for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
+            Assertions.assertTrue(30==entry.getValue(), "retry times is not equal to maxReconsumeTimes(30)");
+        }
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 60, unit = TimeUnit.SECONDS)
+    @DisplayName("To send order messages, set SUSPEND_CURRENT_QUEUE_A_MOMENT for the first message. The next sequential message will not be consumed until the first message is in the dead letter queue. All messages except the first message are expected to be received")
+    public void testOrderMessageRetryTimesWithMaxReconsumeimes() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, Integer> msgsReConsumeTimes = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMessageListener(new MessageListenerOrderly() {
+                @Override
+                public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeOrderlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        String body = String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(msg.getBody())));
+                        if("0".equals(body)){
+                            log.info(String.format("recv msgid(first message) %s, reconsume time is %s ", msg.getMsgId(), msg.getReconsumeTimes()));
+                            return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
+                        }else{
+                            msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
+                            log.info("recv msgid: {}", msg.getMsgId());
+                        }
+                    }
+                    return ConsumeOrderlyStatus.SUCCESS;
+                }
+
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
+        }
+
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        List<MessageQueue> mqs = producer.fetchPublishMessageQueues(topic);
+        List<MessageQueue> sendMqs = new ArrayList<>();
+        sendMqs.add(mqs.get(0));
+        producer.sendWithQueue(sendMqs, SEND_NUM, tag);
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        TestUtils.waitForSeconds(30);
+
+        Assertions.assertEquals(SEND_NUM-1, msgsReConsumeTimes.size(),
+                "retry message size is not equal to send message size");
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 180, unit = TimeUnit.SECONDS)
+    @DisplayName("Simulate pushconsumer consumption fail, expect that the original message was not received, and capture all messages after message retry")
+    public void testExceptionConsumption() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
+        Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
+                @Override
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeConcurrentlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() == 2) {
+                            retryMsgs.putIfAbsent(msg.getMsgId(), msg);
+                            log.info("consume success: {}", msg);
+                        } else {
+                            // Simulate consuming operations
+                            log.info("{}", "Simulate consuming operations fail");
+                            int i = 1 / 0;
+                            log.info("{}", "Simulate consuming operations fail end");
+                            firstMsgs.putIfAbsent(msg.getMsgId(), msg);
+                            log.info(String.format("recv msg(fail) %s ", msg));
+                        }
+
+                    }
+                    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                }
+
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
         }
         Assertions.assertNotNull(producer, "Get Producer Failed");
         for (int i = 0; i < SEND_NUM; i++) {
@@ -205,36 +575,94 @@ public class PushConsumerRetryTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(180, SECONDS).until(new Callable<Boolean>() {
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return retryMsgs.size() == SEND_NUM && firstMsgs.size() == 0;
+            }
+        });
+
+        producer.shutdown();
+        pushConsumer.shutdown();
+    }
+
+    @Test
+    @Timeout(value = 180, unit = TimeUnit.SECONDS)
+    @DisplayName("Simulate pushconsumer consumption return null, expect that the original message was not received, and capture all messages after message retry")
+    public void testNullConsumption() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
+        Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
+
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setMessageModel(MessageModel.CLUSTERING);
+            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
+                @Override
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeConcurrentlyContext context) {
+                    for (MessageExt msg : msgs) {
+                        if (msg.getReconsumeTimes() == 2) {
+                            retryMsgs.putIfAbsent(msg.getMsgId(), msg);
+                            log.info("consume success: {}", msg);
+                        } else {
+                            // Simulate consuming operations
+                            log.info("{}", "Simulate consuming operations return null");
+                            firstMsgs.putIfAbsent(msg.getMsgId(), msg);
+                            log.info(String.format("recv msg(null) %s ", msg));
+                            return null;
+                        }
+
+                    }
+                    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                }
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            Assertions.fail(e.getMessage());
+        }
+        Assertions.assertNotNull(producer, "Get Producer Failed");
+        for (int i = 0; i < SEND_NUM; i++) {
+            Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
+            producer.send(message);
+        }
+        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return retryMsgs.size() == SEND_NUM && firstMsgs.size() == SEND_NUM;
             }
         });
-        
+
         producer.shutdown();
         pushConsumer.shutdown();
     }
 
     @Disabled
     @Test
+    @Timeout(value = 360, unit = TimeUnit.SECONDS)
     @DisplayName("Simulate pushconsumer consumption timeout, expect message retry")
-    public void testTimeoutConsumption(){
+    public void testTimeoutConsumption() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
         Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
 
-        DefaultMQPushConsumer pushConsumer;
-        try{
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
@@ -242,22 +670,22 @@ public class PushConsumerRetryTest extends BaseOperate {
             pushConsumer.setMessageModel(MessageModel.CLUSTERING);
             pushConsumer.setMaxReconsumeTimes(3);
             pushConsumer.setConsumeTimeout(60000);
-            pushConsumer.setMessageListener(new MessageListenerConcurrently(){
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     try {
                         for (MessageExt msg : msgs) {
-                            if(msg.getReconsumeTimes() == 0){
+                            if (msg.getReconsumeTimes() == 0) {
                                 // Simulate time-consuming operations
-                                log.info("{}","Simulate time-consuming operations");
+                                log.info("{}", "Simulate time-consuming operations");
                                 Thread.sleep(65000); // Assume that message processing takes 20 seconds
-                                log.info("{}","Simulate time-consuming operations end");
+                                log.info("{}", "Simulate time-consuming operations end");
                                 firstMsgs.putIfAbsent(msg.getMsgId(), msg);
                                 log.info(String.format("recv msg(timeout) %s ", msg));
-                            }else{
+                            } else {
                                 retryMsgs.putIfAbsent(msg.getMsgId(), msg);
-                                log.info("consume success: {}",msg);
+                                log.info("consume success: {}", msg);
                             }
                         }
                     } catch (InterruptedException e) {
@@ -265,11 +693,11 @@ public class PushConsumerRetryTest extends BaseOperate {
                         return ConsumeConcurrentlyStatus.RECONSUME_LATER;
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-                } 
+                }
             });
             pushConsumer.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            Assertions.fail(e.getMessage());
         }
         Assertions.assertNotNull(producer, "Get Producer Failed");
         for (int i = 0; i < SEND_NUM; i++) {
@@ -280,12 +708,13 @@ public class PushConsumerRetryTest extends BaseOperate {
 
         TestUtils.waitForMinutes(5);
         Assertions.assertTrue(retryMsgs.size() == SEND_NUM, "retry message size is not equal to send message size");
-        
+
         producer.shutdown();
         pushConsumer.shutdown();
     }
 
     @Test
+    @Timeout(value = 300, unit = TimeUnit.SECONDS)
     @DisplayName("The normal message is sent, and after the PushConsumer retry, the retry message is expected to be consumed")
     public void testNormalTopicPushConsumerRetry() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
@@ -295,40 +724,36 @@ public class PushConsumerRetryTest extends BaseOperate {
         Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
         Map<String, MessageExt> retryMsgs = new ConcurrentHashMap<>();
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        DefaultMQPushConsumer pushConsumer;
-        try{
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
-            pushConsumer.setMessageListener(new MessageListenerConcurrently(){
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (int i = 0; i < msgs.size(); i++) {
                         MessageExt messageExt = msgs.get(i);
-                        // String bodyContent = String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())));
+                        // String bodyContent =
+                        // String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())));
                         if (messageExt.getReconsumeTimes() == 0) {
                             log.info(String.format("first normal msg %s ", messageExt));
                             firstMsgs.putIfAbsent(messageExt.getMsgId().toString(), messageExt);
                             return ConsumeConcurrentlyStatus.RECONSUME_LATER;
                         } else if (messageExt.getReconsumeTimes() > 0) {
                             log.info(String.format("retry  normal msg %s ", messageExt));
-                            retryMsgs.putIfAbsent(messageExt.getMsgId().toString(),messageExt);
+                            retryMsgs.putIfAbsent(messageExt.getMsgId().toString(), messageExt);
                         }
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
-                
+
             });
             pushConsumer.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            Assertions.fail(e.getMessage());
         }
         Assertions.assertNotNull(producer, "Get Producer Failed");
         for (int i = 0; i < SEND_NUM; i++) {
@@ -336,7 +761,7 @@ public class PushConsumerRetryTest extends BaseOperate {
             producer.send(message);
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        //All messages are consumed.
+        // All messages are consumed.
         await().atMost(240, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -344,30 +769,27 @@ public class PushConsumerRetryTest extends BaseOperate {
             }
         });
         for (MessageExt messageExt : producer.getEnqueueMessages().getAllData()) {
-            Assertions.assertTrue(firstMsgs.containsKey(messageExt.getMsgId().toString()) || retryMsgs.containsKey(messageExt.getMsgId().toString()));
+            Assertions.assertTrue(firstMsgs.containsKey(messageExt.getMsgId().toString())
+                    || retryMsgs.containsKey(messageExt.getMsgId().toString()));
         }
         producer.shutdown();
         pushConsumer.shutdown();
     }
 
     @Test
+    @Timeout(value = 300, unit = TimeUnit.SECONDS)
     @DisplayName("The send order message, after the PushConsumer retry, is expected to consume the retry message, and the message consumption order and send order")
     public void testFiFoTopicPushConsumerRetry() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         Vector<MessageExt> recvMessages = new Vector<>();
 
-        DefaultMQPushConsumer pushConsumer;
-        try{
+        DefaultMQPushConsumer pushConsumer = null;
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
@@ -389,19 +811,19 @@ public class PushConsumerRetryTest extends BaseOperate {
                     }
                     return ConsumeOrderlyStatus.SUCCESS;
                 }
-                
+
             });
             pushConsumer.start();
         } catch (MQClientException e) {
-            throw new RuntimeException(e);
+            Assertions.fail(e.getMessage());
         }
         Assertions.assertNotNull(producer, "Get Producer Failed");
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
         List<MessageQueue> sendQueues = new ArrayList<>();
         sendQueues.add(messageQueues.get(0));
-        producer.sendWithQueue(sendQueues,tag,SEND_NUM);
+        producer.sendWithQueue(sendQueues, tag, SEND_NUM);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        //All messages are consumed.
+        // All messages are consumed.
         await().atMost(240, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
@@ -409,8 +831,10 @@ public class PushConsumerRetryTest extends BaseOperate {
             }
         });
         for (int i = 0; i < SEND_NUM; i++) {
-            Assertions.assertEquals(i, Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(recvMessages.get(i).getBody())))), "recv message failed");
+            Assertions.assertEquals(i,
+                    Integer.parseInt(String
+                            .valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(recvMessages.get(i).getBody())))),
+                    "recv message failed");
         }
     }
 }
-

@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 @DisplayName("TAG filtering test: Use PushConsumer for consumption")
 @Tag(TESTSET.TAG)
-@Tag(TESTSET.SMOKE)
 public class TagFilterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(TagFilterTest.class);
     private final static int SEND_NUM = 10;
@@ -74,11 +73,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -101,11 +95,6 @@ public class TagFilterTest extends BaseOperate {
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
@@ -131,11 +120,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -158,11 +142,6 @@ public class TagFilterTest extends BaseOperate {
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
@@ -187,7 +166,7 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(sendTag), new RMQNormalListener());
 
         pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(sendTag));
+        pullConsumer.subscribeAndStartLitePull(topic, MessageSelector.byTag(sendTag));
         VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
         pullConsumer.shutdown();
 
@@ -213,11 +192,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(sendTag), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(sendTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -240,11 +214,6 @@ public class TagFilterTest extends BaseOperate {
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
@@ -280,11 +249,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag("*"), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag("*"));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         producer.send(topic, "*", SEND_NUM);
@@ -306,11 +270,6 @@ public class TagFilterTest extends BaseOperate {
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
@@ -353,11 +312,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         producer.send(topic, sendTagA, SEND_NUM);
@@ -381,11 +335,6 @@ public class TagFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(receiveTag), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(receiveTag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         producer.send(topic, sendTagA, SEND_NUM);
@@ -396,4 +345,3 @@ public class TagFilterTest extends BaseOperate {
         Assertions.assertEquals(0, pushConsumer.getListener().getDequeueAllMessages().getDataSize());
     }
 }
-

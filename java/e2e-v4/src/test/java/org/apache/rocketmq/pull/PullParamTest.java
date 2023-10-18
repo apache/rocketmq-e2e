@@ -50,7 +50,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Tag(TESTSET.PULL)
-@Tag(TESTSET.SMOKE)
 public class PullParamTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullParamTest.class);
     private String tag;
@@ -75,9 +74,9 @@ public class PullParamTest extends BaseOperate {
         String groupId = getGroupId(methodName);
 
         int sendNum = 300;
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -102,7 +101,8 @@ public class PullParamTest extends BaseOperate {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.getPullConsumer().fetchConsumeOffset(mq, false);
-                    if (offset < 0) return null;
+                    if (offset < 0)
+                        return null;
                     boolean shouldContinue = true;
                     while (shouldContinue) {
                         PullResult pullResult = consumer.getPullConsumer().pull(mq, tag, offset, 50);
@@ -112,15 +112,16 @@ public class PullParamTest extends BaseOperate {
                                 Assertions.assertTrue(messages.size() <= 32);
                                 for (MessageExt message : messages) {
                                     log.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
                                     if (recvMsgs.containsKey(message.getMsgId())) {
-                                        Assertions.fail("Consume an ack message: "+message.getMsgId());
+                                        Assertions.fail("Consume an ack message: " + message.getMsgId());
                                     } else {
                                         recvMsgs.put(message.getMsgId(), message);
                                     }
                                 }
                                 offset = pullResult.getNextBeginOffset();
-                                consumer.getPullConsumer().updateConsumeOffset(mq,offset);
+                                consumer.getPullConsumer().updateConsumeOffset(mq, offset);
                                 break;
                             case NO_MATCHED_MSG:
                                 shouldContinue = false; // 当没有匹配的消息时退出循环
@@ -158,7 +159,8 @@ public class PullParamTest extends BaseOperate {
             e.printStackTrace();
             Assertions.fail("receive response count not match");
         }
-        DataCollector dequeueMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
+        DataCollector dequeueMessages = DataCollectorManager.getInstance()
+                .fetchListDataCollector(RandomUtils.getStringByUUID());
         for (MessageExt messageExt : recvMsgs.values()) {
             dequeueMessages.addData(messageExt);
         }
@@ -174,9 +176,9 @@ public class PullParamTest extends BaseOperate {
         String groupId = getGroupId(methodName);
 
         int sendNum = 20;
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -195,7 +197,7 @@ public class PullParamTest extends BaseOperate {
 
         Map<String, MessageExt> recvMsgs = new ConcurrentHashMap<>();
         Set<String> unconsumedMsgIds = new HashSet<>();
-        boolean[] flag = {true};
+        boolean[] flag = { true };
         Set<MessageQueue> finalMessageQueues = receiveMessageQueues;
         CompletableFuture[] futures = new CompletableFuture[receiveMessageQueues.size()];
         int mqCount = 0;
@@ -203,7 +205,8 @@ public class PullParamTest extends BaseOperate {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.getPullConsumer().fetchConsumeOffset(mq, false);
-                    if (offset < 0) return null;
+                    if (offset < 0)
+                        return null;
                     long startTime = System.currentTimeMillis();
                     while (System.currentTimeMillis() < startTime + 40000) {
                         PullResult pullResult = consumer.getPullConsumer().pull(mq, tag, offset, 50);
@@ -213,16 +216,20 @@ public class PullParamTest extends BaseOperate {
                                 Assertions.assertTrue(messages.size() <= 32);
                                 for (MessageExt message : messages) {
                                     log.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
-                                    int msgId = Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody()))));
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
+                                    int msgId = Integer.parseInt(String.valueOf(
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody()))));
                                     if (msgId == 19 && flag[0]) {
                                         flag[0] = false;
                                         unconsumedMsgIds.add(message.getMsgId());
-                                        log.info("nack message:{} {}", StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),message);
+                                        log.info("nack message:{} {}",
+                                                StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                                message);
                                     } else {
-                                        if(msgId==19){
+                                        if (msgId == 19) {
                                             unconsumedMsgIds.add(message.getMsgId());
-                                        }else{
+                                        } else {
                                             consumer.getPullConsumer().updateConsumeOffset(mq, ++offset);
                                             if (recvMsgs.containsKey(message.getMsgId())) {
                                                 Assertions.fail("Consume an ack message");
@@ -232,7 +239,8 @@ public class PullParamTest extends BaseOperate {
                                         }
                                     }
                                 }
-                                if(messages.size()!=1 || Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messages.get(0).getBody()))))!=19) {
+                                if (messages.size() != 1 || Integer.parseInt(String.valueOf(StandardCharsets.UTF_8
+                                        .decode(ByteBuffer.wrap(messages.get(0).getBody())))) != 19) {
                                     return null;
                                 }
                                 break;
@@ -273,7 +281,8 @@ public class PullParamTest extends BaseOperate {
             Assertions.fail("receive response count not match");
         }
 
-        DataCollector dequeueMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
+        DataCollector dequeueMessages = DataCollectorManager.getInstance()
+                .fetchListDataCollector(RandomUtils.getStringByUUID());
         for (MessageExt messageExt : recvMsgs.values()) {
             dequeueMessages.addData(messageExt);
         }
@@ -283,4 +292,3 @@ public class PullParamTest extends BaseOperate {
     }
 
 }
-

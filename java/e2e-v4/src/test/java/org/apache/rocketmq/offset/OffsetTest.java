@@ -71,8 +71,7 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 @Tag(TESTSET.OFFSET)
-@Tag(TESTSET.SMOKE)
-public class OffsetTest extends BaseOperate{
+public class OffsetTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(OffsetTest.class);
     private String tag;
     private final static int SEND_NUM = 10;
@@ -84,21 +83,21 @@ public class OffsetTest extends BaseOperate{
 
     @Test
     @DisplayName("Send 10 messages, set other groupid's pushconsumer consumption from first, expect to accept all messages again")
-    public void testConsumeFromFisrtOffset(){
+    public void testConsumeFromFisrtOffset() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId1 = getGroupId(methodName);
         String groupId2 = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId1, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
+        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId1, rpcHook, 1);
+        pullConsumer.subscribeAndStartLitePull(topic, MessageSelector.byTag(tag));
         VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
         pullConsumer.shutdown();
 
         DefaultMQPushConsumer pushConsumer;
         ConcurrentLinkedDeque<MessageExt> deque = new ConcurrentLinkedDeque<>();
-        try{
+        try {
             pushConsumer = new DefaultMQPushConsumer(groupId1, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
@@ -106,7 +105,8 @@ public class OffsetTest extends BaseOperate{
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
-                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeConcurrentlyContext context) {
                     for (MessageExt message : msgs) {
                         log.info("receive message:{}", message);
                         deque.add(message);
@@ -136,7 +136,7 @@ public class OffsetTest extends BaseOperate{
         deque.clear();
 
         DefaultMQPushConsumer reConsumer;
-        try{
+        try {
             reConsumer = new DefaultMQPushConsumer(groupId2, rpcHook, new AllocateMessageQueueAveragely());
             reConsumer.setInstanceName(RandomUtils.getStringByUUID());
             reConsumer.setNamesrvAddr(namesrvAddr);
@@ -144,7 +144,8 @@ public class OffsetTest extends BaseOperate{
             reConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
             reConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
-                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeConcurrentlyContext context) {
                     for (MessageExt message : msgs) {
                         log.info("reconsumer received message:{}", message);
                         deque.add(message);
@@ -159,9 +160,55 @@ public class OffsetTest extends BaseOperate{
 
         TestUtils.waitForSeconds(30);
 
-       Assertions.assertEquals(SEND_NUM, deque.size(), "reconsumer receive message failed");
+        Assertions.assertEquals(SEND_NUM, deque.size(), "reconsumer receive message failed");
 
         reConsumer.shutdown();
+        producer.shutdown();
+
+    }
+
+    @Test
+    @DisplayName("Backlog 100 messages, start the consumer, and set the pull message from the LAST, expect to consume 100 messages")
+    public void testConsumeFromLastOffset() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
+        Assertions.assertNotNull(producer);
+
+        producer.send(topic, tag, 100);
+
+        Assertions.assertEquals(100, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        DefaultMQPushConsumer pushConsumer;
+        ConcurrentLinkedDeque<MessageExt> deque = new ConcurrentLinkedDeque<>();
+        try {
+            pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
+            pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
+            pushConsumer.setNamesrvAddr(namesrvAddr);
+            pushConsumer.subscribe(topic, tag);
+            pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+            pushConsumer.setMessageListener(new MessageListenerConcurrently() {
+                @Override
+                public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+                        ConsumeConcurrentlyContext context) {
+                    for (MessageExt message : msgs) {
+                        log.info("receive message:{}", message);
+                        deque.add(message);
+                    }
+                    return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+                }
+            });
+            pushConsumer.start();
+        } catch (MQClientException e) {
+            throw new RuntimeException(e);
+        }
+
+        TestUtils.waitForSeconds(30);
+        Assertions.assertEquals(100, deque.size(), "consumer receive message failed");
+
+        pushConsumer.shutdown();
         producer.shutdown();
 
     }
@@ -173,13 +220,13 @@ public class OffsetTest extends BaseOperate{
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
-        producer.send(topic,tag,SEND_NUM);
+        producer.send(topic, tag, SEND_NUM);
 
         TestUtils.waitForSeconds(1);
 
@@ -192,16 +239,18 @@ public class OffsetTest extends BaseOperate{
             Assertions.fail("Fail to fetchSubscribeMessageQueues");
         }
 
-        Collection<MessageExt> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
+        Collection<MessageExt> sendCollection = Collections
+                .synchronizedCollection(producer.getEnqueueMessages().getAllData());
         Set<MessageQueue> finalMessageQueues = receiveMessageQueues;
         CompletableFuture[] futures = new CompletableFuture[receiveMessageQueues.size()];
-        ConcurrentHashMap<String,AtomicInteger> messageMap = new ConcurrentHashMap<>();
+        ConcurrentHashMap<String, AtomicInteger> messageMap = new ConcurrentHashMap<>();
         int mqCount = 0;
         for (MessageQueue mq : finalMessageQueues) {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.getPullConsumer().fetchConsumeOffset(mq, false);
-                    if (offset < 0) return null;
+                    if (offset < 0)
+                        return null;
                     long startTime = System.currentTimeMillis();
                     while (System.currentTimeMillis() < startTime + 5000) {
                         PullResult pullResult = consumer.getPullConsumer().pull(mq, tag, offset, SEND_NUM);
@@ -210,12 +259,14 @@ public class OffsetTest extends BaseOperate{
                                 List<MessageExt> messages = pullResult.getMsgFoundList();
                                 for (MessageExt message : messages) {
                                     log.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
-                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
-                                    if(messageMap.containsKey(message.getMsgId())){
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
+                                    sendCollection
+                                            .removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                    if (messageMap.containsKey(message.getMsgId())) {
                                         messageMap.get(message.getMsgId()).incrementAndGet();
-                                    }else{
-                                        messageMap.put(message.getMsgId(),new AtomicInteger(1));
+                                    } else {
+                                        messageMap.put(message.getMsgId(), new AtomicInteger(1));
                                     }
                                 }
                                 break;
@@ -253,7 +304,7 @@ public class OffsetTest extends BaseOperate{
             Assertions.fail("receive response count not match");
         }
         log.info("A total of {} messages were received", messageMap.size());
-        for (Entry<String,AtomicInteger> entry : messageMap.entrySet()) {
+        for (Entry<String, AtomicInteger> entry : messageMap.entrySet()) {
             Assertions.assertTrue(entry.getValue().get() >= 1, "message receive count not match");
         }
     }

@@ -40,7 +40,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test message tag
  */
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class MessageTagTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageTagTest.class);
     private static String topic;
@@ -82,7 +81,7 @@ public class MessageTagTest extends BaseOperate {
     }
 
     @Disabled
-    @DisplayName("Message Tag equals 16KB, expect send success")// 无意义
+    @DisplayName("Message Tag equals 16KB, expect send success") // 无意义
     public void testMessageTagEquals16KB() {
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String tag = RandomStringUtils.randomAlphabetic(16 * 1024);
@@ -101,7 +100,8 @@ public class MessageTagTest extends BaseOperate {
 
         Assertions.assertNotNull(producer);
         assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, tag,RandomUtils.getStringByUUID(), RandomUtils.getStringByUUID().getBytes(StandardCharsets.UTF_8));
+            Message message = new Message(topic, tag, RandomUtils.getStringByUUID(),
+                    RandomUtils.getStringByUUID().getBytes(StandardCharsets.UTF_8));
             producer.getProducer().send(message);
         }, " message tag contains invisible character ,expect throw exception but it didn't");
     }
@@ -115,7 +115,8 @@ public class MessageTagTest extends BaseOperate {
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, tag,RandomUtils.getStringByUUID(), body.getBytes(StandardCharsets.UTF_8));
+            Message message = new Message(topic, tag, RandomUtils.getStringByUUID(),
+                    body.getBytes(StandardCharsets.UTF_8));
             producer.getProducer().send(message);
         }, " message tag contains | , expect throw exception but it didn't");
 
@@ -131,22 +132,20 @@ public class MessageTagTest extends BaseOperate {
         String body = RandomStringUtils.randomAlphabetic(64);
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer.subscribeAndStart(topic,tag, new RMQNormalListener());
+        pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,tag);
+        pullConsumer.subscribeAndStartLitePull(topic, tag);
         VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
         pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer);
 
-        Message message = new Message(topic, tag,RandomUtils.getStringByUUID(), body.getBytes(StandardCharsets.UTF_8));
+        Message message = new Message(topic, tag, RandomUtils.getStringByUUID(), body.getBytes(StandardCharsets.UTF_8));
         producer.send(message);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages());
     }
 }
-
-

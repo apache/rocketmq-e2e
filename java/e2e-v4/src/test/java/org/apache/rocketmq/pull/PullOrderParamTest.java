@@ -47,7 +47,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Tag(TESTSET.PULL)
-@Tag(TESTSET.SMOKE)
 public class PullOrderParamTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullOrderParamTest.class);
     private String tag;
@@ -72,16 +71,16 @@ public class PullOrderParamTest extends BaseOperate {
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
         List<MessageQueue> messageGroup = new ArrayList<>();
         messageGroup.add(messageQueues.get(0));
-        producer.sendWithQueue(messageGroup,tag,SEND_NUM);
+        producer.sendWithQueue(messageGroup, tag, SEND_NUM);
 
         TestUtils.waitForSeconds(1);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
@@ -93,7 +92,8 @@ public class PullOrderParamTest extends BaseOperate {
             Assertions.fail("Fail to fetchSubscribeMessageQueues");
         }
 
-        Collection<MessageExt> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
+        Collection<MessageExt> sendCollection = Collections
+                .synchronizedCollection(producer.getEnqueueMessages().getAllData());
         Set<MessageQueue> finalMessageQueues = receiveMessageQueues;
         CompletableFuture[] futures = new CompletableFuture[receiveMessageQueues.size()];
         List<MessageExt> receivedMessage = new ArrayList<>();
@@ -102,7 +102,8 @@ public class PullOrderParamTest extends BaseOperate {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.getPullConsumer().fetchConsumeOffset(mq, false);
-                    if (offset < 0) return null;
+                    if (offset < 0)
+                        return null;
                     long startTime = System.currentTimeMillis();
                     while (System.currentTimeMillis() < startTime + 30000) {
                         PullResult pullResult = consumer.getPullConsumer().pull(mq, tag, offset, 1);
@@ -111,8 +112,10 @@ public class PullOrderParamTest extends BaseOperate {
                                 List<MessageExt> messages = pullResult.getMsgFoundList();
                                 for (MessageExt message : messages) {
                                     log.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
-                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
+                                    sendCollection
+                                            .removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
                                     receivedMessage.add(message);
                                 }
                                 break;
@@ -152,9 +155,9 @@ public class PullOrderParamTest extends BaseOperate {
         log.info("A total of {} messages were received", receivedMessage.size());
         for (MessageExt ext : receivedMessage) {
             if (!StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody())).toString().equals("0")) {
-                Assertions.fail(String.format("Consumption out of order, expected :Body=%s Actual :Body=%s", 0, StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody()))));
+                Assertions.fail(String.format("Consumption out of order, expected :Body=%s Actual :Body=%s", 0,
+                        StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody()))));
             }
         }
     }
 }
-

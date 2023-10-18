@@ -50,7 +50,48 @@ public class ConsumerFactory {
         return new RMQNormalConsumer(consumer);
     }
 
-    public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook,AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+    public static RMQNormalConsumer getRMQBroadCastConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook) {
+        DefaultMQPushConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely());
+        } else {
+            consumer = new DefaultMQPushConsumer(consumerGroup);
+        }
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setMessageModel(MessageModel.BROADCASTING);
+        consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQClusterConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook) {
+        DefaultMQPushConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, new AllocateMessageQueueAveragely());
+        } else {
+            consumer = new DefaultMQPushConsumer(consumerGroup);
+        }
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setMessageModel(MessageModel.CLUSTERING);
+        consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQClusterConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook,
+            AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
+        DefaultMQPushConsumer consumer;
+        if (aclEnable) {
+            consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, allocateMessageQueueStrategy);
+        } else {
+            consumer = new DefaultMQPushConsumer(consumerGroup);
+        }
+        consumer.setInstanceName(RandomUtils.getStringByUUID());
+        consumer.setMessageModel(MessageModel.CLUSTERING);
+        consumer.setNamesrvAddr(nsAddr);
+        return new RMQNormalConsumer(consumer);
+    }
+
+    public static RMQNormalConsumer getRMQNormalConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook,
+            AllocateMessageQueueStrategy allocateMessageQueueStrategy) {
         DefaultMQPushConsumer consumer;
         if (aclEnable) {
             consumer = new DefaultMQPushConsumer(consumerGroup, rpcHook, allocateMessageQueueStrategy);
@@ -62,7 +103,7 @@ public class ConsumerFactory {
         return new RMQNormalConsumer(consumer);
     }
 
-    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook){
+    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook) {
         DefaultLitePullConsumer consumer;
         if (aclEnable) {
             consumer = new DefaultLitePullConsumer(consumerGroup, rpcHook);
@@ -75,7 +116,8 @@ public class ConsumerFactory {
         return new RMQNormalConsumer(consumer);
     }
 
-    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook, int batchSize){
+    public static RMQNormalConsumer getRMQLitePullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook,
+            int batchSize) {
         DefaultLitePullConsumer consumer;
         if (aclEnable) {
             consumer = new DefaultLitePullConsumer(consumerGroup, rpcHook);
@@ -89,7 +131,7 @@ public class ConsumerFactory {
         return new RMQNormalConsumer(consumer);
     }
 
-    public static RMQNormalConsumer getRMQPullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook){
+    public static RMQNormalConsumer getRMQPullConsumer(String nsAddr, String consumerGroup, RPCHook rpcHook) {
         DefaultMQPullConsumer consumer;
         if (aclEnable) {
             consumer = new DefaultMQPullConsumer(consumerGroup, rpcHook);

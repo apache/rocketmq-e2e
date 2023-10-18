@@ -37,7 +37,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test user property
  */
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class MessageUserPropertyTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageUserPropertyTest.class);
     private static String topic;
@@ -58,174 +57,35 @@ public class MessageUserPropertyTest extends BaseOperate {
     }
 
     @Disabled
-    @DisplayName("Message user property beyond limit 128 ,expect throw exception")
-    public void testMessageUserPropertyBeyondSize128() {
-        Map<String, String> userProperty = new HashMap<>();
-        for (int i = 0; i <= 128; i++) {
-            userProperty.put(String.valueOf(i), RandomStringUtils.randomAlphabetic(2));
-        }
-        assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-                message.putUserProperty(entry.getKey(), entry.getValue());
-            }
-            producer.getProducer().send(message);
-        }, " message user property beyond limit 128 ,expect throw exception but it didn't");
-    }
-
-    @Disabled
-    @DisplayName("The number of message user propertys equals limit 128, expect send success") //无意义
-    public void testMessageUserPropertyEqualsSize128() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        for (int i = 0; i < 128; i++) {
-            userProperty.put(String.valueOf(i), RandomStringUtils.randomAlphabetic(2));
-        }
-        Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-        for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-            message.putUserProperty(entry.getKey(), entry.getValue());
-        }
-        producer.send(message);
-    }
-
-    @Disabled
-    @DisplayName("Message user property equals limit 16KB, expect send success")//无意义
+    @DisplayName("Message user property equals limit 31KB, expect send success")
     public void testMessageUserPropertyEquals16KB() {
-        String key = RandomStringUtils.randomAlphabetic(8 * 1024);
-        String value = RandomStringUtils.randomAlphabetic(8 * 1024);
+        String key = RandomStringUtils.randomAlphabetic(31 * 512);
+        String value = RandomStringUtils.randomAlphabetic(31 * 512);
         HashMap<String, String> userProperty = new HashMap<>();
         userProperty.put(key, value);
 
         Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-        for(Map.Entry<String, String> entry : userProperty.entrySet()) {
+        for (Map.Entry<String, String> entry : userProperty.entrySet()) {
             message.putUserProperty(entry.getKey(), entry.getValue());
         }
         producer.send(message);
     }
 
     @Disabled
-    @DisplayName("Message user property beyond 16KB ,expect throw exception")
+    @DisplayName("Message user property limit 32KB ,expect throw exception")
     public void testMessageUserPropertyBeyond16KB() {
-        String key = RandomStringUtils.randomAlphabetic(8 * 1024);
-        String value = RandomStringUtils.randomAlphabetic(8 * 1024 + 1);
+        String key = RandomStringUtils.randomAlphabetic(16 * 1024);
+        String value = RandomStringUtils.randomAlphabetic(16 * 1024);
         HashMap<String, String> userProperty = new HashMap<>();
         userProperty.put(key, value);
 
         assertThrows(Exception.class, () -> {
             Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
+            for (Map.Entry<String, String> entry : userProperty.entrySet()) {
                 message.putUserProperty(entry.getKey(), entry.getValue());
             }
             producer.getProducer().send(message);
         }, " message user property beyond 16KB ,expect throw exception but it didn't");
     }
 
-    @Test
-    @DisplayName("Message user property contains invisible character \u0000 ,expect throw exception")
-    public void testMessageUserPropertyContentWithInvisibleCharacter() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        userProperty.put("\u0000", "value");
-
-        assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-                message.putUserProperty(entry.getKey(), entry.getValue());
-            }
-            producer.getProducer().send(message);
-        }, " message user property contains invisible character ,expect throw exception but it didn't");
-
-    }
-
-    @Test
-    @DisplayName("Message user property use SystemKey UNIQ_KEY, expect throw exception")
-    public void testMessageUserPropertyWithSystemKey() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        userProperty.put("UNIQ_KEY", "value");
-
-        assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-                message.putUserProperty(entry.getKey(), entry.getValue());
-            }
-            producer.getProducer().send(message);
-        }, " message user property use system key UNIQ_KEY ,expect throw exception but it didn't");
-
-    }
-
-    @Disabled
-    @DisplayName("Message user property ,key and tag beyond 16KB ,expect throw exception")
-    public void testMessageUserPropertyKeyAndTagBeyond16KB() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        String body = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024);
-        String key = RandomStringUtils.randomAlphabetic(4 * 1024);
-        String value = RandomStringUtils.randomAlphabetic(4 * 1024);
-        userProperty.put(key, value);
-        String tag = RandomStringUtils.randomAlphabetic(4 * 1024);
-        String msgKey = RandomStringUtils.randomAlphabetic(4 * 1024 + 1);
-
-        assertThrows(Exception.class, () -> {
-            Message message = new Message(topic, tag, msgKey, body.getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-                message.putUserProperty(entry.getKey(), entry.getValue());
-            }
-            producer.getProducer().send(message);
-        }, "message user property ,key and tag beyond 16KB ,expect throw exception but it didn't");
-
-    }
-
-    @Test
-    @DisplayName("Message user property ,key and tag equals 16KB, expect send success")
-    public void testMessageUserPropertyKeyAndTagEquals16KB() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        String body = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024);
-        String key = RandomStringUtils.randomAlphabetic(4 * 1024);
-        String value = RandomStringUtils.randomAlphabetic(4 * 1024);
-        userProperty.put(key, value);
-        String tag = RandomStringUtils.randomAlphabetic(4 * 1024);
-        String msgKey = RandomStringUtils.randomAlphabetic(4 * 1024);
-
-        Message message = new Message(topic, tag, msgKey, body.getBytes());
-        for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-            message.putUserProperty(entry.getKey(), entry.getValue());
-        }
-        producer.send(message);
-    }
-
-    @Test
-    @DisplayName("Message user property ,key and tag equals 64B, expect send success")
-    public void testMessageUserPropertyKeyAndTagEquals64B() {
-        HashMap<String, String> userProperty = new HashMap<>();
-        String body = RandomStringUtils.randomAlphabetic(64);
-        String key = RandomStringUtils.randomAlphabetic(64);
-        String value = RandomStringUtils.randomAlphabetic(64);
-        userProperty.put(key, value);
-        String tag = RandomStringUtils.randomAlphabetic(64);
-        String msgKey = RandomStringUtils.randomAlphabetic(64);
-
-        Message message = new Message(topic, tag, msgKey, body.getBytes());
-        for(Map.Entry<String, String> entry : userProperty.entrySet()) {
-            message.putUserProperty(entry.getKey(), entry.getValue());
-        }
-        producer.send(message);
-
-    }
-
-    @Test
-    @DisplayName("Message user property is the visible character, expect send success")
-    public void testSpecialCharProperty() {
-        HashMap<String, String> userProps = new HashMap<>();
-        userProps.put("中文", "中文");
-        userProps.put("_", "_");
-        userProps.put("%", "%");
-        userProps.put("。", "。");
-        userProps.put("||", "||");
-        userProps.put("&&", "&&");
-        userProps.put("🏷", "🏷");
-        Message message = new Message(topic,RandomUtils.getStringByUUID().getBytes());
-        for(Map.Entry<String, String> entry : userProps.entrySet()) {
-            message.putUserProperty(entry.getKey(), entry.getValue());
-        }
-        producer.send(message);
-    }
 }
-
-

@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.client.consumer;
 
-
 import org.apache.rocketmq.client.consumer.rebalance.AllocateMessageQueueAveragely;
 import org.apache.rocketmq.client.exception.MQClientException;
 import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
@@ -35,7 +34,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * PushConsumer client initialization use case
  */
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class PushConsumerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(PushConsumerInitTest.class);
     private static String topic;
@@ -66,9 +64,10 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("PushConsumer all parameters are set properly, expect start success")
     public void testNormalSetting() {
         try {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr(namesrvAddr);
-            pushConsumer.subscribe(topic,"*");
+            pushConsumer.subscribe(topic, "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -84,9 +83,10 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("Error setting the 'EndPoint' of the consumer client,expect start failed")
     public void testErrorNameserver() {
         assertThrows(Exception.class, () -> {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr("https://www.aliyun.com");
-            pushConsumer.subscribe(topic,"*");
+            pushConsumer.subscribe(topic, "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -99,9 +99,10 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("Set the consumer client's topic error, expecting a message receiving failure to throw an Exception")
     public void testErrorTopic() {
         assertThrows(Exception.class, () -> {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr(namesrvAddr);
-            pushConsumer.subscribe("topicNotExist","*");
+            pushConsumer.subscribe("topicNotExist", "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -116,7 +117,7 @@ public class PushConsumerInitTest extends BaseOperate {
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(rpcHook);
             pushConsumer.setNamesrvAddr(namesrvAddr);
-            pushConsumer.subscribe(topic,"*");
+            pushConsumer.subscribe(topic, "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -129,7 +130,8 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("The 'Subscription' is not set, expect PushConsumer IllegalArgumentException exception to start")
     public void testNoSubscription() {
         assertThrows(Exception.class, () -> {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
@@ -143,11 +145,12 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("Set an empty Subscription, expecting PushConsumer IllegalArgumentException to be raised")
     public void testEmptySubscription() {
         assertThrows(Exception.class, () -> {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             String var1 = null;
             String var2 = null;
-            pushConsumer.subscribe(var1,var2);
+            pushConsumer.subscribe(var1, var2);
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -161,7 +164,7 @@ public class PushConsumerInitTest extends BaseOperate {
     public void testNoClientConfiguration() {
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId);
-            pushConsumer.subscribe(topic,"*");
+            pushConsumer.subscribe(topic, "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.setMessageListener(new RMQNormalListener());
@@ -174,9 +177,10 @@ public class PushConsumerInitTest extends BaseOperate {
     @DisplayName("The 'MessageListener' is not set. PushConsumer MQClient exception is expected")
     public void testNoListener() {
         assertThrows(MQClientException.class, () -> {
-            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId,rpcHook,new AllocateMessageQueueAveragely());
+            DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
+                    new AllocateMessageQueueAveragely());
             pushConsumer.setNamesrvAddr(namesrvAddr);
-            pushConsumer.subscribe(topic,"*");
+            pushConsumer.subscribe(topic, "*");
             pushConsumer.setConsumeThreadMax(20);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
             pushConsumer.start();

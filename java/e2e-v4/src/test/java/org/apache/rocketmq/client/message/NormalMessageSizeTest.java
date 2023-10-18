@@ -46,7 +46,6 @@ import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.NORMAL)
-@Tag(TESTSET.SMOKE)
 @DisplayName("Test cases that send messages")
 public class NormalMessageSizeTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(NormalMessageSizeTest.class);
@@ -87,7 +86,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         String messageBody = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024 + 1);
         String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
-            Message message = new Message(normalTopic,tag,messageBody.getBytes());
+            Message message = new Message(normalTopic, tag, messageBody.getBytes());
             producer.send(message);
         });
     }
@@ -105,7 +104,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         }
         String messageBody = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024);
         String tag = NameUtils.getRandomTagName();
-        Message message = new Message(normalTopic,tag,messageBody.getBytes());
+        Message message = new Message(normalTopic, tag, messageBody.getBytes());
         try {
             producer.send(message);
         } catch (Exception e) {
@@ -128,7 +127,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         String messageBody = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024 + 1);
         String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
-            Message message = new Message(delayTopic, tag,messageBody.getBytes());
+            Message message = new Message(delayTopic, tag, messageBody.getBytes());
             message.setDelayTimeLevel(3);
             producer.send(message);
         });
@@ -147,7 +146,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         }
         String messageBody = RandomStringUtils.randomAlphabetic(4 * 1024 * 1024);
         String tag = NameUtils.getRandomTagName();
-        Message message = new Message(delayTopic, tag,messageBody.getBytes());
+        Message message = new Message(delayTopic, tag, messageBody.getBytes());
         message.setDelayTimeLevel(3);
         try {
             producer.send(message);
@@ -168,15 +167,17 @@ public class NormalMessageSizeTest extends BaseOperate {
         TransactionMQProducer producer = new TransactionMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
-        TransactionListenerImpl transactionListener = new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE);
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
+        TransactionListenerImpl transactionListener = new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE,
+                LocalTransactionState.COMMIT_MESSAGE);
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
         try {
             if (executorService != null) {
                 producer.setExecutorService(executorService);
@@ -201,15 +202,17 @@ public class NormalMessageSizeTest extends BaseOperate {
         TransactionMQProducer producer = new TransactionMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
-        TransactionListenerImpl transactionListener = new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE);
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
+        TransactionListenerImpl transactionListener = new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE,
+                LocalTransactionState.COMMIT_MESSAGE);
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
         try {
             if (executorService != null) {
                 producer.setExecutorService(executorService);
@@ -252,7 +255,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         List<MessageQueue> finalMessageQueues = messageQueues;
         assertThrows(Exception.class, () -> {
             Message message = new Message(fifoTopic, tag, messageBody.getBytes());
-            if(finalMessageQueues.size()>0){
+            if (finalMessageQueues.size() > 0) {
                 producer.send(message, finalMessageQueues.get(0));
             }
             producer.send(message);
@@ -281,7 +284,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         Message message = new Message(fifoTopic, tag, messageBody.getBytes());
         List<MessageQueue> finalMessageQueues = messageQueues;
         try {
-            if(finalMessageQueues.size()>0){
+            if (finalMessageQueues.size() > 0) {
                 producer.send(message, finalMessageQueues.get(0));
             }
         } catch (MQBrokerException e) {
@@ -313,7 +316,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         userProperty.put(key, value);
         try {
             Message message = new Message(normalTopic, messageBody.getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
+            for (Map.Entry<String, String> entry : userProperty.entrySet()) {
                 message.putUserProperty(entry.getKey(), entry.getValue());
             }
             producer.send(message);
@@ -353,10 +356,10 @@ public class NormalMessageSizeTest extends BaseOperate {
         List<MessageQueue> finalMessageQueues = messageQueues;
         try {
             Message message = new Message(fifoTopic, messageBody.getBytes());
-            for(Map.Entry<String, String> entry : userProperty.entrySet()) {
+            for (Map.Entry<String, String> entry : userProperty.entrySet()) {
                 message.putUserProperty(entry.getKey(), entry.getValue());
             }
-            if(finalMessageQueues.size()>0){
+            if (finalMessageQueues.size() > 0) {
                 producer.send(message, finalMessageQueues.get(0));
             }
         } catch (MQBrokerException e) {

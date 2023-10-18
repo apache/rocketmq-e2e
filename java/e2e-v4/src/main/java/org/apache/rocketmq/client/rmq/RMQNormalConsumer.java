@@ -47,8 +47,8 @@ public class RMQNormalConsumer extends AbstractMQConsumer {
     public RMQNormalConsumer(DefaultLitePullConsumer consumer) {
         this.litePullConsumer = consumer;
     }
-    
-    public RMQNormalConsumer(DefaultMQPullConsumer consumer){
+
+    public RMQNormalConsumer(DefaultMQPullConsumer consumer) {
         this.pullConsumer = consumer;
     }
 
@@ -99,7 +99,7 @@ public class RMQNormalConsumer extends AbstractMQConsumer {
         }
         logger.info("DefaultMQLitePullConsumer Assign Mode started");
     }
-    
+
     public void startDefaultPull() {
         Assertions.assertNotNull(pullConsumer);
         try {
@@ -144,7 +144,8 @@ public class RMQNormalConsumer extends AbstractMQConsumer {
         } catch (MQClientException e) {
             logger.info("Start DefaultMQPushConsumer failed, {}", e.getMessage());
         }
-        logger.info("DefaultMQPushConsumer started - topic: {}, messageSelector: {}", topic, messageSelector.getExpression());
+        logger.info("DefaultMQPushConsumer started - topic: {}, messageSelector: {}", topic,
+                messageSelector.getExpression());
         TestUtils.waitForSeconds(5);
     }
 
@@ -154,7 +155,7 @@ public class RMQNormalConsumer extends AbstractMQConsumer {
             pushConsumer.shutdown();
             logger.info("DefaultMQPushConsumer shutdown !!!");
         }
-        if(litePullConsumer != null) {
+        if (litePullConsumer != null) {
             litePullConsumer.shutdown();
             logger.info("DefaultLitePullConsumer shutdown !!!");
         }

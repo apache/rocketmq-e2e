@@ -37,7 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 @Tag(TESTSET.PULL)
-@Tag(TESTSET.SMOKE)
 public class PullOrderTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullOrderTest.class);
     private String tag;
@@ -59,20 +58,19 @@ public class PullOrderTest extends BaseOperate {
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
         List<MessageQueue> messageGroup = new ArrayList<>();
         messageGroup.add(messageQueues.get(0));
-        producer.sendWithQueue(messageGroup,tag,SEND_NUM);
+        producer.sendWithQueue(messageGroup, tag, SEND_NUM);
         TestUtils.waitForSeconds(1);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.waitFIFOReceiveThenAck(producer, consumer.getPullConsumer(), topic,tag,5);
+        VerifyUtils.waitFIFOReceiveThenAck(producer, consumer.getPullConsumer(), topic, tag, 5);
     }
 
 }
-

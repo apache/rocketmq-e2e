@@ -31,7 +31,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class PullConsumerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(PullConsumerInitTest.class);
     private static String topic;
@@ -61,10 +60,10 @@ public class PullConsumerInitTest extends BaseOperate {
     @DisplayName("PullConsumer all parameters are set properly, expect start success")
     public void testNormalSetting() {
         try {
-            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId,rpcHook);
+            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
             pullConsumer.subscribe(topic, "*");
-            pullConsumer.setConsumerPullTimeoutMillis(10*1000);
+            pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
             pullConsumer.shutdown();
         } catch (Exception e) {
@@ -78,7 +77,7 @@ public class PullConsumerInitTest extends BaseOperate {
         assertThrows(Exception.class, () -> {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId);
             pullConsumer.subscribe(topic, "*");
-            pullConsumer.setConsumerPullTimeoutMillis(10*1000);
+            pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
@@ -90,7 +89,7 @@ public class PullConsumerInitTest extends BaseOperate {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
             pullConsumer.subscribe(topic, "*");
-            pullConsumer.setConsumerPullTimeoutMillis(10*1000);
+            pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
@@ -99,9 +98,9 @@ public class PullConsumerInitTest extends BaseOperate {
     @DisplayName("Without setting 'Subscription' of the consumer client, expect start failed")
     public void testNoSubscription() {
         assertThrows(Exception.class, () -> {
-            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId,rpcHook);
+            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
-            pullConsumer.setConsumerPullTimeoutMillis(10*1000);
+            pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
@@ -110,7 +109,7 @@ public class PullConsumerInitTest extends BaseOperate {
     @DisplayName("Error setting 'SubscriptionExpressions' empty of the consumer client, except start failed")
     public void testEmptySubscription() {
         assertThrows(Exception.class, () -> {
-            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId,rpcHook);
+            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
             String var1 = null;
             String var2 = null;
@@ -123,37 +122,38 @@ public class PullConsumerInitTest extends BaseOperate {
     @DisplayName("Error setting 'ConsumerPullTimeoutMillis=0' of the consumer client, except start failed")
     public void testConsumerPullTimeoutMillisIs0s() {
         DefaultLitePullConsumer pullConsumer = null;
-        try{
-            pullConsumer = new DefaultLitePullConsumer(groupId,rpcHook);
+        try {
+            pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
-            pullConsumer.subscribe(topic,"*");
-            pullConsumer.setConsumerPullTimeoutMillis(0*1000);
+            pullConsumer.subscribe(topic, "*");
+            pullConsumer.setConsumerPullTimeoutMillis(0 * 1000);
             pullConsumer.start();
             pullConsumer.poll();
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Assertions.fail("PullConsumer start failed");
         }
     }
-
 
     @Test
     @DisplayName("Setting 'Wait Duration = 10s',Expect the empty pull message request to return between 10s and 20s")
     public void testAwaitDuration() {
         DefaultLitePullConsumer pullConsumer = null;
         try {
-            pullConsumer = new DefaultLitePullConsumer(groupId,rpcHook);
+            pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
-            pullConsumer.subscribe(topic,"*");
-            pullConsumer.setConsumerPullTimeoutMillis(10*1000);
+            pullConsumer.subscribe(topic, "*");
+            pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
             long startTime = System.currentTimeMillis();
             log.info("startTime: {}", startTime);
-            pullConsumer.poll(10*1000);
+            pullConsumer.poll(10 * 1000);
             long endTime = System.currentTimeMillis();
             log.info("endTime: {}", endTime);
             pullConsumer.shutdown();
-            Assertions.assertTrue((endTime - startTime) > 10000 && (endTime - startTime) < 20000, String.format("invoke method 'receive()' exception, startTime:%s, endTime:%s, intervalTime:%s", startTime, endTime, endTime - startTime));
+            Assertions.assertTrue((endTime - startTime) > 10000 && (endTime - startTime) < 20000,
+                    String.format("invoke method 'receive()' exception, startTime:%s, endTime:%s, intervalTime:%s",
+                            startTime, endTime, endTime - startTime));
         } catch (Exception e) {
             Assertions.fail("PullConsumer start exception");
         }

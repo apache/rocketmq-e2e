@@ -35,7 +35,6 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test message properties
  */
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class MessageAbnormalTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageAbnormalTest.class);
     private static DefaultMQProducer producer;
@@ -48,7 +47,7 @@ public class MessageAbnormalTest extends BaseOperate {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         topic = getTopic(methodName);
         try {
-            producer = new DefaultMQProducer("MessageAbnormalTest",rpcHook);
+            producer = new DefaultMQProducer("MessageAbnormalTest", rpcHook);
             producer.setNamesrvAddr(namesrvAddr);
             producer.start();
         } catch (MQClientException e) {
@@ -70,7 +69,7 @@ public class MessageAbnormalTest extends BaseOperate {
 
     }
 
-    //TODO
+    // TODO
     @Disabled
     @DisplayName("producer invoke send(messageBody=\"\"), expect throw exception")
     public void sendMsgBodyIsEmpty() {

@@ -46,7 +46,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(TESTSET.BATCHPRODUCER)
-@Tag(TESTSET.SMOKE)
 public class BatchProducerTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(BatchProducerTest.class);
     private String tag;
@@ -59,18 +58,14 @@ public class BatchProducerTest extends BaseOperate {
 
     @Test
     @DisplayName("Send 10 messages in batch, expect pushconsumer to accept them all")
-    public void testBatchProducer(){
+    public void testBatchProducer() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,
+                new AllocateMessageQueueAveragely());
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         Assertions.assertNotNull(producer);
@@ -79,7 +74,7 @@ public class BatchProducerTest extends BaseOperate {
             Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
             messages.add(message);
         }
-        
+
         try {
             producer.getProducer().send(messages);
         } catch (Exception e) {
@@ -96,18 +91,14 @@ public class BatchProducerTest extends BaseOperate {
 
     @Test
     @DisplayName("Send 10 messages to a queue in batch , expect pushconsumer to accept them all")
-    public void testBatchProducer_queue(){
+    public void testBatchProducer_queue() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,
+                new AllocateMessageQueueAveragely());
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
         Assertions.assertNotNull(producer);
@@ -116,10 +107,10 @@ public class BatchProducerTest extends BaseOperate {
             Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
             messages.add(message);
         }
-        
+
         List<MessageQueue> msgQueues = producer.fetchPublishMessageQueues(topic);
         try {
-            producer.getProducer().send(messages,msgQueues.get(0));
+            producer.getProducer().send(messages, msgQueues.get(0));
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
         }

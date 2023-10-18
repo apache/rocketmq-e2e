@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.client.consumer;
 
-
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.frame.BaseOperate;
@@ -30,7 +29,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class ConsumerGroupTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(ConsumerGroupTest.class);
     private static String topic;
@@ -56,14 +54,14 @@ public class ConsumerGroupTest extends BaseOperate {
     public void testSystemInnerConsumerGroup() {
         String groupId = "DEFAULT_CONSUMER";
         assertThrows(Exception.class, () -> {
-            consumer = new DefaultLitePullConsumer(groupId,rpcHook);
+            consumer = new DefaultLitePullConsumer(groupId, rpcHook);
             consumer.setNamesrvAddr(namesrvAddr);
             consumer.subscribe(topic, "*");
             consumer.setPullBatchSize(20);
             consumer.start();
             while (true) {
                 List<MessageExt> messageExts = consumer.poll();
-                log.info("MessageExt: {}",messageExts);
+                log.info("MessageExt: {}", messageExts);
             }
         }, "Expected Start [SimpleConsumer] Exception to throw, but it didn't");
     }

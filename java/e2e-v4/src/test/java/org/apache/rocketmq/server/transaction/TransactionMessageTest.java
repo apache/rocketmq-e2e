@@ -81,16 +81,19 @@ public class TransactionMessageTest extends BaseOperate {
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
 
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE), rpcHook);
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
+                new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.COMMIT_MESSAGE),
+                rpcHook);
         producer.sendTrans(topic, tag, SEND_NUM);
 
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
@@ -108,23 +111,23 @@ public class TransactionMessageTest extends BaseOperate {
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(tag), new RMQNormalListener());
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
 
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
-
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.ROLLBACK_MESSAGE), rpcHook);
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
+                new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE,
+                        LocalTransactionState.ROLLBACK_MESSAGE),
+                rpcHook);
         producer.sendTrans(topic, tag, SEND_NUM);
-        //Wait for the callback, expecting not to commit the already rolled back message
+        // Wait for the callback, expecting not to commit the already rolled back
+        // message
         TestUtils.waitForSeconds(60);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         Assertions.assertEquals(0, pushConsumer.getListener().getDequeueMessages().getDataSize());
@@ -143,24 +146,22 @@ public class TransactionMessageTest extends BaseOperate {
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(tag), new RMQNormalListener());
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
 
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
-
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.UNKNOW), rpcHook);
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
+                new TransactionListenerImpl(LocalTransactionState.COMMIT_MESSAGE, LocalTransactionState.UNKNOW),
+                rpcHook);
         producer.sendTrans(topic, tag, SEND_NUM);
 
-        //Wait for the callback to execute commit
+        // Wait for the callback to execute commit
         TestUtils.waitForSeconds(60);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages());
@@ -178,23 +179,21 @@ public class TransactionMessageTest extends BaseOperate {
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(tag), new RMQNormalListener());
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
 
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
-
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListenerImpl(LocalTransactionState.ROLLBACK_MESSAGE, LocalTransactionState.UNKNOW), rpcHook);
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
+                new TransactionListenerImpl(LocalTransactionState.ROLLBACK_MESSAGE, LocalTransactionState.UNKNOW),
+                rpcHook);
         producer.sendTrans(topic, tag, SEND_NUM);
-        //Wait for the rollback and execute rollback
+        // Wait for the rollback and execute rollback
         TestUtils.waitForSeconds(60);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         Assertions.assertEquals(0, pushConsumer.getListener().getDequeueMessages().getDataSize());
@@ -213,42 +212,41 @@ public class TransactionMessageTest extends BaseOperate {
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.byTag(tag), new RMQNormalListener());
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         AtomicInteger commitMsgNum = new AtomicInteger(0);
         AtomicInteger rollbackMsgNum = new AtomicInteger(0);
 
-        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS, new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
-            @Override
-            public Thread newThread(Runnable r) {
-                Thread thread = new Thread(r);
-                thread.setName("client-transaction-msg-check-thread");
-                return thread;
-            }
-        });
-        
-        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService, new TransactionListener() {
+        ExecutorService executorService = new ThreadPoolExecutor(2, 5, 100, TimeUnit.SECONDS,
+                new ArrayBlockingQueue<Runnable>(2000), new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        Thread thread = new Thread(r);
+                        thread.setName("client-transaction-msg-check-thread");
+                        return thread;
+                    }
+                });
 
-            @Override
-            public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-                return LocalTransactionState.UNKNOW;
-            }
+        RMQTransactionProducer producer = ProducerFactory.getTransProducer(namesrvAddr, executorService,
+                new TransactionListener() {
 
-            @Override
-            public LocalTransactionState checkLocalTransaction(MessageExt msg) {
-                if (Integer.parseInt(String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(msg.getBody())))) % 2 == 0) {
-                    commitMsgNum.getAndIncrement();
-                    return LocalTransactionState.COMMIT_MESSAGE;
-                } else {
-                    rollbackMsgNum.getAndIncrement();
-                    return LocalTransactionState.ROLLBACK_MESSAGE;
-                }
-            }
-            
-        }, rpcHook);
+                    @Override
+                    public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+                        return LocalTransactionState.UNKNOW;
+                    }
+
+                    @Override
+                    public LocalTransactionState checkLocalTransaction(MessageExt msg) {
+                        if (Integer
+                                .parseInt(String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(msg.getBody()))))
+                                % 2 == 0) {
+                            commitMsgNum.getAndIncrement();
+                            return LocalTransactionState.COMMIT_MESSAGE;
+                        } else {
+                            rollbackMsgNum.getAndIncrement();
+                            return LocalTransactionState.ROLLBACK_MESSAGE;
+                        }
+                    }
+
+                }, rpcHook);
         producer.sendTrans(topic, tag, SEND_NUM);
         Assertions.assertNotNull(producer);
 
@@ -258,7 +256,7 @@ public class TransactionMessageTest extends BaseOperate {
                 return rollbackMsgNum.get() == commitMsgNum.get() && commitMsgNum.get() == SEND_NUM / 2;
             }
         });
-        //Wait for the rollback and execute commit/rollback
+        // Wait for the rollback and execute commit/rollback
         TestUtils.waitForSeconds(60);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         Assertions.assertEquals(5, pushConsumer.getListener().getDequeueMessages().getDataSize());

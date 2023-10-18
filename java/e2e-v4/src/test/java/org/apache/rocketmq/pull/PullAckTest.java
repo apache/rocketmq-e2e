@@ -35,7 +35,6 @@ import org.slf4j.LoggerFactory;
 
 @Tag(TESTSET.NORMAL)
 @Tag(TESTSET.PULL)
-@Tag(TESTSET.SMOKE)
 public class PullAckTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullAckTest.class);
     private String tag;
@@ -68,7 +67,7 @@ public class PullAckTest extends BaseOperate {
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
+        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook, 1);
         pullConsumer.startLitePullAssignMode();
         VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
 
@@ -81,7 +80,7 @@ public class PullAckTest extends BaseOperate {
         }
         TestUtils.waitForSeconds(1);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.waitLitePullReceiveThenAck(producer, pullConsumer.getLitePullConsumer(),topic,tag);
+        VerifyUtils.waitLitePullReceiveThenAck(producer, pullConsumer.getLitePullConsumer(), topic, tag);
     }
 
     @Test
@@ -93,9 +92,9 @@ public class PullAckTest extends BaseOperate {
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
-        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr,groupId, rpcHook);
+        RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(),topic,tag,32);
+        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
@@ -104,8 +103,7 @@ public class PullAckTest extends BaseOperate {
         }
         TestUtils.waitForSeconds(1);
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        VerifyUtils.waitPullReceiveThenAck(producer, consumer.getPullConsumer(), topic,tag,32);
+        VerifyUtils.waitPullReceiveThenAck(producer, consumer.getPullConsumer(), topic, tag, 32);
     }
 
 }
-

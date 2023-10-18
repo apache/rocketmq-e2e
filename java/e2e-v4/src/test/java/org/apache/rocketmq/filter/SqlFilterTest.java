@@ -36,7 +36,6 @@ import org.slf4j.LoggerFactory;
 import java.util.HashMap;
 
 @Tag(TESTSET.SQL)
-@Tag(TESTSET.SMOKE)
 public class SqlFilterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(SqlFilterTest.class);
     private final static int SEND_NUM = 10;
@@ -76,11 +75,6 @@ public class SqlFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.bySql(subExpression), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.bySql(subExpression));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -107,11 +101,6 @@ public class SqlFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.bySql(subExpression), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.bySql(subExpression));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -123,7 +112,8 @@ public class SqlFilterTest extends BaseOperate {
             Message message = MessageFactory.buildMessageWithProperty(topic, userProps2);
             producer.send(message);
         }
-        VerifyUtils.verifyNormalMessageWithUserProperties(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages(), userProps1, 10);
+        VerifyUtils.verifyNormalMessageWithUserProperties(producer.getEnqueueMessages(),
+                pushConsumer.getListener().getDequeueMessages(), userProps1, 10);
     }
 
     @Test
@@ -140,11 +130,6 @@ public class SqlFilterTest extends BaseOperate {
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.bySql(subExpression), new RMQNormalListener());
-
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.bySql(subExpression));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
 
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
@@ -172,11 +157,6 @@ public class SqlFilterTest extends BaseOperate {
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, MessageSelector.bySql(subExpression), new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.bySql(subExpression));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -189,4 +169,3 @@ public class SqlFilterTest extends BaseOperate {
     }
 
 }
-

@@ -31,9 +31,7 @@ import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-
 @Tag(TESTSET.CLIENT)
-@Tag(TESTSET.SMOKE)
 public class ProducerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(ProducerInitTest.class);
     private static String topic;
@@ -65,7 +63,6 @@ public class ProducerInitTest extends BaseOperate {
             Assertions.fail("Send message failed, expected success, message:" + e.getMessage());
         }
     }
-
 
     @Disabled
     @DisplayName("The NAMESRV_ADDR setting of the Producer failed, expect ONSClientException to throw")
@@ -109,7 +106,7 @@ public class ProducerInitTest extends BaseOperate {
     @DisplayName("The Producer does not set the Properties, expect an exception occurs when the client start")
     public void testUnsetProperties() {
         assertThrows(Exception.class, () -> {
-            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(),(RPCHook) null);
+            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), (RPCHook) null);
             producer.setNamesrvAddr(namesrvAddr);
             producer.setInstanceName(UUID.randomUUID().toString());
             producer.start();
@@ -117,24 +114,26 @@ public class ProducerInitTest extends BaseOperate {
         }, "Expected ClientException to throw, but it didn't");
     }
 
-    @Disabled
+    @Test
     @DisplayName("The Producer sets the maximum retry times to 0, expect the client start success")
     public void testSet0MaxAttempts() {
-        assertThrows(Exception.class, () -> {
-            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(),rpcHook);
+        try {
+            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
             producer.setNamesrvAddr(namesrvAddr);
             producer.setInstanceName(UUID.randomUUID().toString());
             producer.setRetryTimesWhenSendFailed(0);
             producer.start();
             producer.shutdown();
-        }, "Expected ClientException to throw, but it didn't");
+        } catch (Exception e) {
+            Assertions.fail("Expected the client to start successfully, but it didn't");
+        }
     }
 
     @Disabled
     @DisplayName("The Producer sets the maximum retry times to -1, expect the client start failed")
     public void testSetLess0MaxAttempts() {
         assertThrows(Exception.class, () -> {
-            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(),rpcHook);
+            DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
             producer.setNamesrvAddr(namesrvAddr);
             producer.setInstanceName(UUID.randomUUID().toString());
             producer.setRetryTimesWhenSendFailed(-1);

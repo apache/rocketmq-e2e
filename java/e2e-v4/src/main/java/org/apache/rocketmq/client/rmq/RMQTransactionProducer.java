@@ -38,9 +38,10 @@ public class RMQTransactionProducer extends AbstractMQProducer {
         this.producer = producer;
     }
     //
-    //public RMQTransactionProducer(String nsAddr, String topic, TransactionListener transactionListener) {
-    //    this(nsAddr, topic, false, transactionListener);
-    //}
+    // public RMQTransactionProducer(String nsAddr, String topic,
+    // TransactionListener transactionListener) {
+    // this(nsAddr, topic, false, transactionListener);
+    // }
 
     @Override
     public void shutdown() {
@@ -50,7 +51,8 @@ public class RMQTransactionProducer extends AbstractMQProducer {
     public void send(String topic, String tag, int messageNum) {
         logger.info("Producer start to send messages");
         for (int i = 0; i < messageNum; i++) {
-            //Message message = MessageFactory.buildOneMessageWithTagAndBody(topic, tag, String.valueOf(i));
+            // Message message = MessageFactory.buildOneMessageWithTagAndBody(topic, tag,
+            // String.valueOf(i));
             Message message = MessageFactory.buildOneMessageWithTag(topic, tag);
             SendResult sendResult = null;
             MessageExt messageExt = null;
@@ -72,11 +74,12 @@ public class RMQTransactionProducer extends AbstractMQProducer {
         }
         logger.info("Producer send messages finished");
     }
-    
+
     public void sendTrans(String topic, String tag, int messageNum) {
         logger.info("Producer start to send transaction messages");
         for (int i = 0; i < messageNum; i++) {
-            //Message message = MessageFactory.buildOneMessageWithTagAndBody(topic, tag, String.valueOf(i));
+            // Message message = MessageFactory.buildOneMessageWithTagAndBody(topic, tag,
+            // String.valueOf(i));
             Message message = MessageFactory.buildNormalMessage(topic, tag, String.valueOf(i));
             SendResult sendResult = null;
             MessageExt messageExt = null;
