@@ -47,7 +47,7 @@ public class ResourceInit {
     protected static String endPoint = null;
     protected static String namesrvAddr = null;
     protected static Boolean aclEnable = null;
-    protected static String ALL_IP;
+    protected static String allIp;
     protected static String cluster;
     protected static List<String> nameserverIpList = new ArrayList<>();
     protected static List<String> brokerIpList = new ArrayList<>();
@@ -102,9 +102,9 @@ public class ResourceInit {
     }
 
     private static void initConnectionInfo() {
-        ALL_IP = System.getenv("ALL_IP");
-        if (ALL_IP != null) {
-            String[] allPodInfos = ALL_IP.split(",");
+        allIp = System.getenv("ALL_IP");
+        if (allIp != null) {
+            String[] allPodInfos = allIp.split(",");
             for (String podInfo : allPodInfos) {
                 if (podInfo.contains("nameserver")) {
                     nameserverIpList.add(podInfo.substring(podInfo.indexOf(":") + 1));
