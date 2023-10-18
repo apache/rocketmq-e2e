@@ -124,13 +124,13 @@ public class PullParamTest extends BaseOperate {
                                 consumer.getPullConsumer().updateConsumeOffset(mq, offset);
                                 break;
                             case NO_MATCHED_MSG:
-                                shouldContinue = false; // 当没有匹配的消息时退出循环
+                                shouldContinue = false;
                                 break;
                             case NO_NEW_MSG:
-                                shouldContinue = false; // 当没有新的消息时退出循环
+                                shouldContinue = false;
                                 break;
                             case OFFSET_ILLEGAL:
-                                shouldContinue = false; // 当偏移量非法时退出循环
+                                shouldContinue = false;
                                 break;
                             default:
                                 break;

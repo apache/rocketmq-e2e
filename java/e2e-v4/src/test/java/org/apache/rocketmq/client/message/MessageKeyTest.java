@@ -83,7 +83,7 @@ public class MessageKeyTest extends BaseOperate {
     }
 
     @Disabled
-    @DisplayName("Message Key equals 16KB, expect send success") // 无意义
+    @DisplayName("Message Key equals 16KB, expect send success")
     public void testMessageKeyEquals16KB() {
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String body = RandomStringUtils.randomAlphabetic(64);

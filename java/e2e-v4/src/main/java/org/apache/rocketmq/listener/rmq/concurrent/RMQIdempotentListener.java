@@ -38,21 +38,22 @@ public class RMQIdempotentListener extends AbstractListener implements MessageLi
 
     public RMQIdempotentListener() {
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public RMQIdempotentListener(String listenerName) {
         this.listenerName = listenerName;
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public RMQIdempotentListener(ConsumeConcurrentlyStatus consumeStatus) {
         this.consumeStatus = consumeStatus;
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
-    public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext consumeConcurrentlyContext) {
+    public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+            ConsumeConcurrentlyContext consumeConcurrentlyContext) {
         for (MessageExt message : msgs) {
             boolean isConsumed = messageIdStore.isMessageConsumed(message.getMsgId());
             if (isConsumed) {
@@ -62,8 +63,10 @@ public class RMQIdempotentListener extends AbstractListener implements MessageLi
                 message.putUserProperty("startDeliverTime", String.valueOf(System.currentTimeMillis()));
                 this.dequeueAllMessages.addData(message);
                 this.dequeueMessages.addData(message);
-                logger.info("{} - MessageId:{}, ReconsumeTimes:{}, Body:{}, tag:{}, recvIndex:{}, action:{}", listenerName, message.getMsgId(),
-                    message.getReconsumeTimes(), new String(message.getBody()), message.getTags(), msgIndex.getAndIncrement() + 1, consumeStatus);
+                logger.info("{} - MessageId:{}, ReconsumeTimes:{}, Body:{}, tag:{}, recvIndex:{}, action:{}",
+                        listenerName, message.getMsgId(),
+                        message.getReconsumeTimes(), new String(message.getBody()), message.getTags(),
+                        msgIndex.getAndIncrement() + 1, consumeStatus);
                 messageIdStore.markMessageAsConsumed(message.getMsgId());
             }
         }

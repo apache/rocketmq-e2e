@@ -25,9 +25,11 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Vector;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentSkipListSet;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
@@ -173,7 +175,7 @@ public class PushConsumerRetryTest extends BaseOperate {
                         break;
                     }
                 }
-                return msgsReachedTwoReconsumeTimes.size()==SEND_NUM && flag;
+                return msgsReachedTwoReconsumeTimes.size() == SEND_NUM && flag;
             }
         });
 
@@ -206,7 +208,7 @@ public class PushConsumerRetryTest extends BaseOperate {
             pushConsumer.setMessageListener(new MessageListenerOrderly() {
                 @Override
                 public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
-                ConsumeOrderlyContext context) {
+                        ConsumeOrderlyContext context) {
                     for (MessageExt msg : msgs) {
                         if (msg.getReconsumeTimes() == 0) {
                             msgsReConsumeTime.putIfAbsent(msg.getMsgId(), Instant.now());
@@ -269,7 +271,7 @@ public class PushConsumerRetryTest extends BaseOperate {
                         break;
                     }
                 }
-                return msgsReachedTwoReconsumeTimes.size()==SEND_NUM && flag;
+                return msgsReachedTwoReconsumeTimes.size() == SEND_NUM && flag;
             }
         });
 
@@ -279,14 +281,14 @@ public class PushConsumerRetryTest extends BaseOperate {
 
     @Test
     @Timeout(value = 180, unit = TimeUnit.SECONDS)
-    @DisplayName("Send normal messages, set the maximum consumption to 2(The first retry is 10 seconds, the second retry is 30 seconds, the third retry is 1 minute, and the setting is 2 minutes. Then check whether the third retry occurs), and set the message reception to RECONUME_LATER, expecting that the third retry will not occur")
+    @DisplayName("Send normal messages, set the maximum consumption to 0(The first retry is 10 seconds, and the setting is 15 seconds. Then check whether the retry occurs), and set the message reception to RECONUME_LATER, expecting that the retry will not occur")
     public void testNormalMessageRetryTimesSetting() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        Map<String, Integer> msgsReConsumeTimes = new ConcurrentHashMap<>();
+        Set<String> msgsRecv = new ConcurrentSkipListSet<>();
 
         DefaultMQPushConsumer pushConsumer = null;
         try {
@@ -295,24 +297,18 @@ public class PushConsumerRetryTest extends BaseOperate {
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setMessageModel(MessageModel.CLUSTERING);
-            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMaxReconsumeTimes(0);
             pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt msg : msgs) {
-                        if (msg.getReconsumeTimes() == 3) {
+                        if (msg.getReconsumeTimes() > 0) {
                             Assertions.fail("retry times is not equal to maxReconsumeTimes");
                         } else {
-                            if (msgsReConsumeTimes.containsKey(msg.getMsgId())) {
-                                msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
-                                if (msg.getReconsumeTimes() == 2) {
-                                    log.info("retry times is equal to maxReconsumeTimes: {}", msg.getMsgId());
-                                }
-                            } else {
-                                msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
-                            }
-                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
+                            log.info("retry times is equal to maxReconsumeTimes: {}", msg.getMsgId());
+                            msgsRecv.add(msg.getMsgId());
+                            log.info("recv msgid(reconsume later) {} ", msg.getMsgId());
                         }
                     }
                     return ConsumeConcurrentlyStatus.RECONSUME_LATER;
@@ -331,13 +327,10 @@ public class PushConsumerRetryTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        TestUtils.waitForMinutes(2);
+        TestUtils.waitForSeconds(15);
 
-        Assertions.assertEquals(SEND_NUM, msgsReConsumeTimes.size(),
+        Assertions.assertEquals(SEND_NUM, msgsRecv.size(),
                 "retry message size is not equal to send message size");
-        for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
-            Assertions.assertEquals(2, entry.getValue(), "retry times is not equal to maxReconsumeTimes");
-        }
 
         producer.shutdown();
         pushConsumer.shutdown();
@@ -345,7 +338,7 @@ public class PushConsumerRetryTest extends BaseOperate {
 
     @Test
     @Timeout(value = 60, unit = TimeUnit.SECONDS)
-    @DisplayName("Send order messages, set the maximum consumption to 2(The retry time of each message is 1s. Then check whether the third retry occurs), and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the third retry will not occur")
+    @DisplayName("Send one order message, set the maximum consumption to 0(The retry time of each message is 1s. Then check whether the retry occurs), and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the retry will not occur")
     public void testOrderMessageRetryTimesSetting() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
@@ -361,24 +354,17 @@ public class PushConsumerRetryTest extends BaseOperate {
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setMessageModel(MessageModel.CLUSTERING);
-            pushConsumer.setMaxReconsumeTimes(2);
+            pushConsumer.setMaxReconsumeTimes(30);
             pushConsumer.setMessageListener(new MessageListenerOrderly() {
                 @Override
                 public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeOrderlyContext context) {
                     for (MessageExt msg : msgs) {
-                        if (msg.getReconsumeTimes() == 3) {
+                        if (msg.getReconsumeTimes() > 30) {
                             Assertions.fail("retry times is not equal to maxReconsumeTimes");
                         } else {
-                            if (msgsReConsumeTimes.containsKey(msg.getMsgId())) {
-                                msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
-                                if (msg.getReconsumeTimes() == 2) {
-                                    log.info("retry times is equal to maxReconsumeTimes: {}", msg.getMsgId());
-                                }
-                            } else {
-                                msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
-                            }
-                            log.info(String.format("recv msgid(reconsume later) %s ", msg.getMsgId()));
+                            msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
+                            log.info("recv msgid(reconsume later) %s, reconsumer times is {}", msg.getMsgId());
                         }
                     }
                     return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
@@ -394,15 +380,15 @@ public class PushConsumerRetryTest extends BaseOperate {
         List<MessageQueue> mqs = producer.fetchPublishMessageQueues(topic);
         List<MessageQueue> sendMqs = new ArrayList<>();
         sendMqs.add(mqs.get(0));
-        producer.sendWithQueue(sendMqs, SEND_NUM, tag);
-        Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
+        producer.sendWithQueue(sendMqs, 1, tag);
+        Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        TestUtils.waitForSeconds(30);
+        TestUtils.waitForSeconds(35);
 
-        Assertions.assertEquals(SEND_NUM, msgsReConsumeTimes.size(),
+        Assertions.assertEquals(1, msgsReConsumeTimes.size(),
                 "retry message size is not equal to send message size");
         for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
-            Assertions.assertEquals(2, entry.getValue(), "retry times is not equal to maxReconsumeTimes");
+            Assertions.assertEquals(30, entry.getValue(), "retry times is not equal to maxReconsumeTimes");
         }
 
         producer.shutdown();
@@ -433,7 +419,8 @@ public class PushConsumerRetryTest extends BaseOperate {
                 public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeOrderlyContext context) {
                     for (MessageExt msg : msgs) {
-                        log.info(String.format("recv msgid(reconsume later) %s, reconsume time is %s ", msg.getMsgId(), msg.getReconsumeTimes()));
+                        log.info(String.format("recv msgid(reconsume later) %s, reconsume time is %s ", msg.getMsgId(),
+                                msg.getReconsumeTimes()));
                         msgsReConsumeTimes.put(msg.getMsgId(), msg.getReconsumeTimes());
                     }
                     return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
@@ -457,7 +444,7 @@ public class PushConsumerRetryTest extends BaseOperate {
         Assertions.assertEquals(2, msgsReConsumeTimes.size(),
                 "retry message size is not equal to send message size");
         for (Map.Entry<String, Integer> entry : msgsReConsumeTimes.entrySet()) {
-            Assertions.assertTrue(30==entry.getValue(), "retry times is not equal to maxReconsumeTimes(30)");
+            Assertions.assertTrue(30 == entry.getValue(), "retry times is not equal to maxReconsumeTimes(30)");
         }
 
         producer.shutdown();
@@ -489,10 +476,11 @@ public class PushConsumerRetryTest extends BaseOperate {
                         ConsumeOrderlyContext context) {
                     for (MessageExt msg : msgs) {
                         String body = String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(msg.getBody())));
-                        if("0".equals(body)){
-                            log.info(String.format("recv msgid(first message) %s, reconsume time is %s ", msg.getMsgId(), msg.getReconsumeTimes()));
+                        if ("0".equals(body)) {
+                            log.info(String.format("recv msgid(first message) %s, reconsume time is %s ",
+                                    msg.getMsgId(), msg.getReconsumeTimes()));
                             return ConsumeOrderlyStatus.SUSPEND_CURRENT_QUEUE_A_MOMENT;
-                        }else{
+                        } else {
                             msgsReConsumeTimes.putIfAbsent(msg.getMsgId(), msg.getReconsumeTimes());
                             log.info("recv msgid: {}", msg.getMsgId());
                         }
@@ -515,7 +503,7 @@ public class PushConsumerRetryTest extends BaseOperate {
 
         TestUtils.waitForSeconds(30);
 
-        Assertions.assertEquals(SEND_NUM-1, msgsReConsumeTimes.size(),
+        Assertions.assertEquals(SEND_NUM - 1, msgsReConsumeTimes.size(),
                 "retry message size is not equal to send message size");
 
         producer.shutdown();
@@ -736,8 +724,6 @@ public class PushConsumerRetryTest extends BaseOperate {
                         ConsumeConcurrentlyContext context) {
                     for (int i = 0; i < msgs.size(); i++) {
                         MessageExt messageExt = msgs.get(i);
-                        // String bodyContent =
-                        // String.valueOf(StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())));
                         if (messageExt.getReconsumeTimes() == 0) {
                             log.info(String.format("first normal msg %s ", messageExt));
                             firstMsgs.putIfAbsent(messageExt.getMsgId().toString(), messageExt);

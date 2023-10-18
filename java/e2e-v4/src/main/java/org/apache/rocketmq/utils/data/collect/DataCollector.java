@@ -20,73 +20,73 @@ package org.apache.rocketmq.utils.data.collect;
 import java.util.Collection;
 public interface DataCollector<T> {
     /**
-     * 计数归零
+     * reset datas' size to zero
      */
     void resetData();
 
     /**
-     * 取得所有的收集数据，包含重复的数据
+     * Get all collected data, including duplicate data
      *
      * @return
      */
     Collection<T> getAllData();
 
     /**
-     * 取得收集的非重复数据
+     * Get collected non-duplicate data
      *
      * @return
      */
     Collection<T> getAllDataWithoutDuplicate();
 
     /**
-     * 增加数据
+     * Add data
      */
     void addData(T data);
 
     /**
-     * 取得非重复数据的总个数
+     * Gets the total number of non-duplicate data
      *
      * @return
      */
     long getDataSizeWithoutDuplicate();
 
     /**
-     * 取得所有数据的总个数，包括重复数据
+     * Gets the total number of all data, including duplicates
      *
      * @return
      */
     long getDataSize();
 
     /**
-     * 验证一条数据是否存在重复
+     * Verify that a piece of data is duplicated
      *
      * @return
      */
     boolean isRepeatedData(T data);
 
     /**
-     * 取得一条数据重复出现的次数
+     * Gets the number of times a piece of data is repeated
      *
      * @return
      */
     int getRepeatedTimeForData(T data);
 
     /**
-     * 移除一条数据
+     * Remove a piece of data
      *
      * @return
      */
     void removeData(T data);
 
     /**
-     * 锁定计数器，使其不再增加，但是可以删除
+     * Lock the counter so that it no longer increases, but can be deleted
      *
      * @return
      */
     void lockIncrement();
 
     /**
-     * 接触计数器锁定，使其可以增加和删除
+     * The contact counter locks so that it can be added and removed
      *
      * @return
      */

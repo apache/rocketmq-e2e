@@ -25,12 +25,12 @@ import java.util.Set;
 public class FilterUtils {
     private static final Logger log = LoggerFactory.getLogger(AssertUtils.class);
 
-    // 自定义用于pullconsumer过滤tag使用
+    // Custom used to filter tag for pullconsumer
     public static boolean inTags(String msgTag, String tags) {
         if (null == tags || tags.equals("*") || tags.length() == 0) {
             return true;
         } else {
-            // 分割
+            // partition
             String[] tag_splits = tags.split("\\|\\|");
             Set<Integer> tagSet = new HashSet<>();
             if (tag_splits.length > 0) {

@@ -37,18 +37,18 @@ public class RMQNormalListener extends AbstractListener implements MessageListen
 
     public RMQNormalListener() {
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public RMQNormalListener(String listenerName) {
         this.listenerName = listenerName;
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public RMQNormalListener(ConsumeConcurrentlyStatus consumeStatus) {
         this.consumeStatus = consumeStatus;
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext consumeConcurrentlyContext) {

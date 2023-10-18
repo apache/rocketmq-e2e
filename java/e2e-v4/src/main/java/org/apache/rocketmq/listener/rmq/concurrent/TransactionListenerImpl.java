@@ -42,14 +42,14 @@ public class TransactionListenerImpl extends AbstractListener implements Transac
 
     public TransactionListenerImpl() {
         this.checkerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", checkerName);
+        logger.info("Start listening:{}", checkerName);
     }
 
     public TransactionListenerImpl(LocalTransactionState checker, LocalTransactionState executor) {
         this.checkerName = RandomUtils.getStringByUUID();
         this.checker = checker;
         this.executor = executor;
-        logger.info("启动监听:{}", checkerName);
+        logger.info("Start listening:{}", checkerName);
     }
 
     @Override

@@ -49,15 +49,16 @@ public class VerifyUtils {
     private static int defaultSimpleThreadNums = 4;
 
     /**
-     * 检验顺序消息
-     * 校验点：1. 每个shardingkey中的消息都是顺序的
+     * Check order message
+     * Check point: 1. The messages in each shardingkey are sequential
      *
      * @param receivedMessage
      * @return
      */
     public static boolean checkOrderMessage(ConcurrentHashMap<String, LinkedList<MessageExt>> receivedMessage) {
         for (Map.Entry<String, LinkedList<MessageExt>> stringLinkedListEntry : receivedMessage.entrySet()) {
-            StringBuilder sb = new StringBuilder(String.format("shardingKey %s,message order: ", stringLinkedListEntry.getKey()));
+            StringBuilder sb = new StringBuilder(
+                    String.format("shardingKey %s,message order: ", stringLinkedListEntry.getKey()));
             int preNode = -1;
             LinkedList<MessageExt> messages = stringLinkedListEntry.getValue();
             String tag = messages.getFirst().getTags();
@@ -78,127 +79,150 @@ public class VerifyUtils {
     }
 
     /**
-     * 普通消息检查器
+     * Check normal message
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
      */
-    public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+    public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
     }
 
     /**
-     * 普通消息检查器
+     * Check normal message
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
      */
-    public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, int timeout) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, timeout * 1000L, 1);
+    public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, int timeout) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                timeout * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
     }
 
     public static void verifyNormalMessage(DataCollector<MessageExt> enqueueMessages,
-                                           DataCollector<MessageExt> dequeueMessages, Set<String> unconsumedMsgIds, int timeout) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, timeout * 1000L, 1);
+            DataCollector<MessageExt> dequeueMessages, Set<String> unconsumedMsgIds, int timeout) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                timeout * 1000L, 1);
         Set<MessageExt> unConsumedMessagesCopy = new HashSet<>(unConsumedMessages);
         System.out.println(unConsumedMessagesCopy.size());
         Set<String> finalUnconsumedMsgIds = unconsumedMsgIds;
-        unConsumedMessagesCopy = unConsumedMessagesCopy.stream().filter(msgExt-> !finalUnconsumedMsgIds.contains(msgExt.getMsgId())).collect(Collectors.toSet());
+        unConsumedMessagesCopy = unConsumedMessagesCopy.stream()
+                .filter(msgExt -> !finalUnconsumedMsgIds.contains(msgExt.getMsgId())).collect(Collectors.toSet());
         System.out.println(unConsumedMessagesCopy.size());
         StringBuilder sb = new StringBuilder();
         boolean allInUnConsumedMessages = true;
-        for(String unconsumedMsgId:unconsumedMsgIds){
+        for (String unconsumedMsgId : unconsumedMsgIds) {
             boolean check = false;
-            for(MessageExt unConsumedMessage : unConsumedMessages){
-                if (unConsumedMessage.getMsgId().equals(unconsumedMsgId)){
+            for (MessageExt unConsumedMessage : unConsumedMessages) {
+                if (unConsumedMessage.getMsgId().equals(unconsumedMsgId)) {
                     check = true;
                 }
             }
-            if (!check){
+            if (!check) {
                 allInUnConsumedMessages = false;
                 break;
             }
         }
         if (!allInUnConsumedMessages) {
             unconsumedMsgIds = unconsumedMsgIds.stream().filter(msgId -> {
-                for(MessageExt unConsumedMessage:unConsumedMessages){
-                    if (unConsumedMessage.getMsgId().equals(msgId)){
+                for (MessageExt unConsumedMessage : unConsumedMessages) {
+                    if (unConsumedMessage.getMsgId().equals(msgId)) {
                         return false;
                     }
                 }
                 return true;
             }).collect(Collectors.toSet());
             logger.info(unconsumedMsgIds.size() + "messages are consumed:" + unconsumedMsgIds.size());
-            sb.append("The following ").append(unconsumedMsgIds.size()).append(" messages are consumed:").append(unconsumedMsgIds);
+            sb.append("The following ").append(unconsumedMsgIds.size()).append(" messages are consumed:")
+                    .append(unconsumedMsgIds);
             Assertions.fail(sb.toString());
         }
         if (unConsumedMessagesCopy.size() > 0) {
             logger.info(unConsumedMessagesCopy.size() + "messages are not consumed:" + unConsumedMessagesCopy);
             MessageExt messageExt = dequeueMessages.getFirstElement();
-            sb.append(messageExt.getTopic()).append(" The following").append(unConsumedMessagesCopy.size()).append("messages are not consumed:").append(unConsumedMessagesCopy);
+            sb.append(messageExt.getTopic()).append(" The following").append(unConsumedMessagesCopy.size())
+                    .append("messages are not consumed:").append(unConsumedMessagesCopy);
             Assertions.fail(sb.toString());
         }
 
     }
 
     /**
-     * 普通消息检查器，订阅消息是否与发送消息内容一致
+     * Check normal message whether the subscribed message is consistent with the
+     * sent message content
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
-     * @param messageBody     消息体
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
+     * @param messageBody     message body
      */
-    public static void verifyNormalMessageWithBody(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, String messageBody) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+    public static void verifyNormalMessageWithBody(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, String messageBody) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
         Collection<MessageExt> receivedMessages = dequeueMessages.getAllData();
         List<Message> messages = new ArrayList<>(receivedMessages);
         for (Message message : messages) {
-            Assertions.assertEquals(messageBody, new String(message.getBody()), "订阅到的messageBody与期望不符");
+            Assertions.assertEquals(messageBody, new String(message.getBody()),
+                    "The messageBody subscribed didn't match expectations");
         }
     }
 
     /**
-     * 顺序消息检查器
+     * Check order message
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
      */
-    public static void verifyOrderMessage(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages) {
-        //检查是否消费完成
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+    public static void verifyOrderMessage(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages) {
+        // Check whether consumption is completed
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
-        //检查是否消费顺序性             logger.warn(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
-        Assertions.assertTrue(checkOrder(dequeueMessages), "消息非顺序");
+        // Check whether the consumption is sequential logger.warn(String.format("The
+        // following %s messages are not consumed: %s", unConsumedMessages.size(),
+        // unConsumedMessages));
+        Assertions.assertTrue(checkOrder(dequeueMessages), "Messages are not in order");
     }
 
     /**
-     * 延迟、定时消息检查器
+     * Check delay message
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
-     * @param delayLevel      预计需要的消费时间
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
+     * @param delayLevel      delay level
      */
-    public static void verifyDelayMessage(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, int delayLevel) {
-        //检查是否消费完成
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, (TIMEOUT + DelayConf.DELAY_LEVEL[delayLevel - 1]) * 1000L, 1);
+    public static void verifyDelayMessage(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, int delayLevel) {
+        // Check whether the consumption is complete
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                (TIMEOUT + DelayConf.DELAY_LEVEL[delayLevel - 1]) * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
-        //检查是否消费延迟性
+        // Check for consumption delay
         HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, 5);
         StringBuilder sb = new StringBuilder();
-        sb.append("以下消息不符合延迟要求 \n");
+        sb.append("The following messages do not meet the delay requirements \n");
         for (String msg : delayUnExcept.keySet()) {
             sb.append(msg).append(" , interval:").append(delayUnExcept.get(msg)).append("\n");
         }
@@ -206,36 +230,42 @@ public class VerifyUtils {
     }
 
     /**
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
-     * @param delayTime       延迟时间
-     * @param count           不被消费的数量
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
+     * @param delayTime       delay level
+     * @param count           the amount of messages that are not consumed
      */
-    public static void verifyDelayMessageWithUnConsumeCount(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, int delayTime, int count) {
-        //检查是否消费完成
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, (TIMEOUT + delayTime) * 1000L, 1);
+    public static void verifyDelayMessageWithUnConsumeCount(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, int delayTime, int count) {
+        // Check whether consumption is completed
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                (TIMEOUT + delayTime) * 1000L, 1);
         if (unConsumedMessages.size() > count) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
-        //检查是否消费延迟性
+        // Check whether consumption is delayed
         HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, TIMEOUT + 5);
         StringBuilder sb = new StringBuilder();
-        sb.append("以下消息不符合延迟要求 \n");
-        //时间戳格式化
+        sb.append("The following messages do not meet the delay requirements.\n");
+        // 时间戳格式化
         SimpleDateFormat date = new SimpleDateFormat("ss");
         for (String msg : delayUnExcept.keySet()) {
-            sb.append(msg).append(" , interval:").append("相差" + date.format(new Date(Long.parseLong(String.valueOf(delayUnExcept.get(msg))))) + "秒").append("\n");
+            sb.append(msg).append(" , interval:").append(
+                    date.format(new Date(Long.parseLong(String.valueOf(delayUnExcept.get(msg))))) + "second difference")
+                    .append("\n");
         }
         Assertions.assertEquals(0, delayUnExcept.size(), sb.toString());
     }
 
     /**
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
-     * @param delayTime       延迟时间
-     * @param reconsumeTime   重试次数
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
+     * @param delayTime       delay time
+     * @param reconsumeTime   reconsume times
      */
-    public static void verifyDelayMessageWithReconsumeTimes(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, int delayTime, int reconsumeTime) {
+    public static void verifyDelayMessageWithReconsumeTimes(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, int delayTime, int reconsumeTime) {
         int flexibleTime = TIMEOUT;
         if (reconsumeTime == 1) {
             flexibleTime = flexibleTime + 10;
@@ -246,22 +276,25 @@ public class VerifyUtils {
         } else if (reconsumeTime == 4) {
             flexibleTime = flexibleTime + 10 + 30 + 60 + 120;
         }
-        //检查是否消费完成
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, (flexibleTime + delayTime) * 1000L, 1);
+        // Check whether consumption is completed
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                (flexibleTime + delayTime) * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
-        //检查是否消费延迟性
+        // Check whether consumption is delayed
         HashMap<String, Long> delayUnExcept = checkDelay(dequeueMessages, 5 + flexibleTime - 30);
         StringBuilder sb = new StringBuilder();
-        sb.append("以下消息不符合延迟要求 \n");
+        sb.append("The following messages do not meet the delay requirements \n");
         for (String msg : delayUnExcept.keySet()) {
             sb.append(msg).append(" , interval:").append(delayUnExcept.get(msg)).append("\n");
         }
         Assertions.assertEquals(0, delayUnExcept.size(), sb.toString());
     }
 
-    public static void verifyNormalMessageWithReconsumeTimes(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, int reconsumeTime) {
+    public static void verifyNormalMessageWithReconsumeTimes(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, int reconsumeTime) {
         int flexibleTime = TIMEOUT;
         if (reconsumeTime == 1) {
             flexibleTime = flexibleTime + 10;
@@ -272,47 +305,59 @@ public class VerifyUtils {
         } else if (reconsumeTime == 4) {
             flexibleTime = flexibleTime + 10 + 30 + 60 + 120;
         }
-        //检查是否消费完成
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, flexibleTime * 1000L, 1);
+        // Check whether consumption is completed
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                flexibleTime * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
     }
 
     /**
      * 校验消息重试消费
      *
-     * @param enqueueMessages    发送的消息列表
-     * @param dequeueAllMessages 消费的消息列表
-     * @param consumedTimes      重复消费的次数
+     * @param enqueueMessages    collection of enqueued messages sent
+     * @param dequeueAllMessages collection of dequeued messages consumed
+     * @param consumedTimes      times of repeated consumption
      */
-    public static void verifyRetryConsume(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueAllMessages, int consumedTimes) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueAllMessages, TIMEOUT * 1000L, consumedTimes);
+    public static void verifyRetryConsume(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueAllMessages, int consumedTimes) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueAllMessages,
+                TIMEOUT * 1000L, consumedTimes);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
     }
 
     /**
-     * 事务消息检查器
+     * Check transaction message
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
      */
-    public static void checkTransactionMessage(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+    public static void checkTransactionMessage(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, 1);
         if (unConsumedMessages.size() > 0) {
-            Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            Assertions.fail(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         }
     }
 
-    public static void verifyConsumeFailed(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, Integer reconsumeTimes) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, reconsumeTimes + 1);
+    public static void verifyConsumeFailed(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, Integer reconsumeTimes) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, reconsumeTimes + 1);
         if (unConsumedMessages.size() > 0) {
-            //Assertions.fail(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
-            logger.warn(String.format("以下%s条消息未被消费: %s", unConsumedMessages.size(), unConsumedMessages));
+            // Assertions.fail(String.format("The following %s messages are not consumed:
+            // %s", unConsumedMessages.size(), unConsumedMessages));
+            logger.warn(String.format("The following %s messages are not consumed: %s", unConsumedMessages.size(),
+                    unConsumedMessages));
         } else {
-            Assertions.fail("消息全部被消费");
+            Assertions.fail("All messages are consumed");
         }
     }
 
@@ -337,25 +382,26 @@ public class VerifyUtils {
                 }
             }
         }
-        Assertions.assertTrue(result, "批量消费校验失败");
+        Assertions.assertTrue(result, "Batch consumption verification failed");
     }
 
     /**
-     * 校验负载均衡
+     * Check load balancing
      *
-     * @param msgSize  消费到的消息条数
-     * @param recvSize 每个客户端消费到的消息条数
+     * @param msgSize  number of messages consumed
+     * @param recvSize the number of messages consumed by each client
      */
     public static void verifyBalance(int msgSize, long... recvSize) {
         Assertions.assertTrue(verifyBalance(msgSize, 0.1f, recvSize), "客户端负载不均衡 " + Arrays.toString(recvSize));
-        //return verifyBalance(msgSize, 0.1f, recvSize);
+        // return verifyBalance(msgSize, 0.1f, recvSize);
     }
 
     private static boolean verifyBalance(int msgSize, float error, long... recvSize) {
         boolean balance = true;
-        int evenSize = msgSize / recvSize.length; //平均值
+        int evenSize = msgSize / recvSize.length; // average value
         for (long size : recvSize) {
-            //如果消费到的消息比平均值大于误差则不算均衡
+            // If the message consumed is greater than the average error, it is not
+            // considered balanced.
             if (Math.abs(size - evenSize) > error * evenSize) {
                 balance = false;
                 logger.error("msgSize:{}, recvSize:{}, not balance!", msgSize, recvSize);
@@ -370,10 +416,12 @@ public class VerifyUtils {
         Collection<MessageExt> receivedMessages = dequeueMessages.getAllData();
         for (MessageExt receivedMessage : receivedMessages) {
             long startDeliverTime = Long.parseLong(receivedMessage.getUserProperty("startDeliverTime"));
-            //判断当前时间跟分发时间，如果相差在5s内，则满足要求
+            // Determine the current time and distribution time. If the difference is within
+            // 5 seconds, the requirement is met.
             long bornTimestamp = receivedMessage.getBornTimestamp();
-            //if ()
-            if (Math.abs(startDeliverTime - bornTimestamp) / 1000 > DelayConf.DELAY_LEVEL[receivedMessage.getDelayTimeLevel() - 1] + offset) {
+
+            if (Math.abs(startDeliverTime - bornTimestamp)
+                    / 1000 > DelayConf.DELAY_LEVEL[receivedMessage.getDelayTimeLevel() - 1] + offset) {
                 map.put(receivedMessage.getMsgId(), (startDeliverTime - bornTimestamp) / 1000);
             }
         }
@@ -381,10 +429,10 @@ public class VerifyUtils {
     }
 
     /**
-     * 检查消息的顺序性
+     * Check the order of messages
      *
-     * @param dequeueMessages 收到的消息集合
-     * @return 是否分区顺序
+     * @param dequeueMessages collection of received messages
+     * @return partition order or not
      */
     private static boolean checkOrder(DataCollector<MessageExt> dequeueMessages) {
         Collection<MessageExt> receivedMessages = dequeueMessages.getAllData();
@@ -405,22 +453,24 @@ public class VerifyUtils {
     }
 
     /**
-     * 检查发送的消息是否都被消费
+     * Check whether all sent messages have been consumed
      *
-     * @param enqueueMessages 发送入队消息集合
-     * @param dequeueMessages 消费出队消息集合
-     * @param timeoutMills    检查超时时间
+     * @param enqueueMessages collection of enqueued messages sent
+     * @param dequeueMessages collection of dequeued messages consumed
+     * @param timeoutMills    check timeout
      * @param consumedTimes
-     * @return 未被消费的消息集合
+     * @return collection of unconsumed messages
      */
-    private static Collection<MessageExt> waitForMessageConsume(DataCollector<MessageExt> enqueueMessages, DataCollector<MessageExt> dequeueMessages, Long timeoutMills, Integer consumedTimes) {
+    private static Collection<MessageExt> waitForMessageConsume(DataCollector<MessageExt> enqueueMessages,
+            DataCollector<MessageExt> dequeueMessages, Long timeoutMills, Integer consumedTimes) {
         logger.info("Set timeout: {}ms", timeoutMills);
         Collection<MessageExt> sendMessages = enqueueMessages.getAllData();
 
         long currentTime = System.currentTimeMillis();
 
         while (!sendMessages.isEmpty()) {
-            //logger.info("param1:{}, param2:{}", enqueueMessages.getDataSize(), dequeueMessages.getDataSize());
+            // logger.info("param1:{}, param2:{}", enqueueMessages.getDataSize(),
+            // dequeueMessages.getDataSize());
             List<MessageExt> receivedMessagesCopy = new ArrayList<>(dequeueMessages.getAllData());
             Iterator<MessageExt> iter = sendMessages.iterator();
             while (iter.hasNext()) {
@@ -428,8 +478,10 @@ public class VerifyUtils {
                 long msgCount = receivedMessagesCopy
                         .stream()
                         .filter(msg -> {
-                            if (msg.getUserProperty("UNIQ_KEY") != null && !msg.getUserProperty("UNIQ_KEY").equals(msg.getMsgId())) {
-                                return msg.getUserProperty("UNIQ_KEY").equals(message.getMsgId()) || msg.getMsgId().equals(message.getMsgId());
+                            if (msg.getUserProperty("UNIQ_KEY") != null
+                                    && !msg.getUserProperty("UNIQ_KEY").equals(msg.getMsgId())) {
+                                return msg.getUserProperty("UNIQ_KEY").equals(message.getMsgId())
+                                        || msg.getMsgId().equals(message.getMsgId());
                             }
                             return msg.getMsgId().equals(message.getMsgId());
                         })
@@ -437,15 +489,19 @@ public class VerifyUtils {
                 if (msgCount > 0 && getRepeatedTimes(receivedMessagesCopy, message) == consumedTimes) {
                     iter.remove();
                 } else if (getRepeatedTimes(receivedMessagesCopy, message) > consumedTimes) {
-                    Assertions.fail(String.format("消费到的重试消息多于预期（包含一条原始消息），Except:%s, Actual:%s, MsgId:%s", consumedTimes, getRepeatedTimes(receivedMessagesCopy, message), message.getMsgId()));
-                    //logger.error("消费到的重试消息多于预期，Except:{}, Actual:{}", consumedTimes, getRepeatedTimes(receivedMessagesCopy, message));
+                    Assertions.fail(String.format(
+                            "More retry messages than expected were consumed (including one original message)，Except:%s, Actual:%s, MsgId:%s",
+                            consumedTimes, getRepeatedTimes(receivedMessagesCopy, message), message.getMsgId()));
+                    // logger.error("More retry messages than expected were consumed，Except:{},
+                    // Actual:{}", consumedTimes, getRepeatedTimes(receivedMessagesCopy, message));
                 }
             }
             if (sendMessages.isEmpty()) {
                 break;
             }
             if (System.currentTimeMillis() - currentTime >= timeoutMills) {
-                logger.error("Timeout but not received all send messages, not received msg: {}\n received msg:{}\n", sendMessages, receivedMessagesCopy);
+                logger.error("Timeout but not received all send messages, not received msg: {}\n received msg:{}\n",
+                        sendMessages, receivedMessagesCopy);
                 break;
             }
             TestUtils.waitForMoment(500L);
@@ -456,7 +512,9 @@ public class VerifyUtils {
     private static synchronized int getRepeatedTimes(Collection<MessageExt> recvMsgs, MessageExt msg) {
         int count = 0;
         for (MessageExt recvMsg : recvMsgs) {
-            if (recvMsg.getUserProperty("UNIQ_KEY") != null && !recvMsg.getUserProperty("UNIQ_KEY").equals(recvMsg.getMsgId()) && !recvMsg.getMsgId().equals(msg.getMsgId())) {
+            if (recvMsg.getUserProperty("UNIQ_KEY") != null
+                    && !recvMsg.getUserProperty("UNIQ_KEY").equals(recvMsg.getMsgId())
+                    && !recvMsg.getMsgId().equals(msg.getMsgId())) {
                 if (recvMsg.getUserProperty("UNIQ_KEY").equals(msg.getMsgId())) {
                     count++;
                 }
@@ -468,16 +526,16 @@ public class VerifyUtils {
     }
 
     /**
-     * 校验一段时间内没有消费
+     * Verify that there is no consumption within a certain period of time
      *
      * @param receivedMessages
-     * @param timeout          时间
+     * @param timeout          time
      */
     public static void waitForConsumeFailed(DataCollector<MessageExt> receivedMessages, int timeout) {
         long currentTime = System.currentTimeMillis();
         while (currentTime + timeout * 1000L > System.currentTimeMillis()) {
             if (receivedMessages.getDataSize() > 0) {
-                Assertions.fail("消费到消息");
+                Assertions.fail("Consume the message");
                 break;
             }
             TestUtils.waitForSeconds(5);
@@ -489,10 +547,11 @@ public class VerifyUtils {
     }
 
     public static void tryReceiveOnce(DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
-        tryReceiveOnce(consumer,topic,tag,maxNums,false,false);
+        tryReceiveOnce(consumer, topic, tag, maxNums, false, false);
     }
 
-    public static void tryReceiveOnce(DefaultMQPullConsumer consumer,String topic, String tag,int maxNums, Boolean useExistTopic, Boolean useExistGid) {
+    public static void tryReceiveOnce(DefaultMQPullConsumer consumer, String topic, String tag, int maxNums,
+            Boolean useExistTopic, Boolean useExistGid) {
         Set<MessageQueue> messageQueues = null;
         try {
             messageQueues = consumer.fetchSubscribeMessageQueues(topic);
@@ -511,7 +570,8 @@ public class VerifyUtils {
                     CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                         try {
                             long offset = consumer.fetchConsumeOffset(mq, false);
-                            if (offset< 0 ) return null;
+                            if (offset < 0)
+                                return null;
                             boolean shouldContinue = true;
                             while (shouldContinue) {
                                 PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
@@ -520,20 +580,22 @@ public class VerifyUtils {
                                         List<MessageExt> messages = pullResult.getMsgFoundList();
                                         for (MessageExt message : messages) {
                                             receivedIndex.getAndIncrement();
-                                            logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                                    StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
+                                            logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}",
+                                                    message.getMsgId(),
+                                                    StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                                    message.getProperties(), message.getReconsumeTimes());
                                         }
                                         offset = pullResult.getNextBeginOffset();
                                         consumer.updateConsumeOffset(mq, offset);
                                         break;
                                     case NO_MATCHED_MSG:
-                                        shouldContinue = false; // 当没有匹配的消息时退出循环
+                                        shouldContinue = false; // Exit the loop when there is no matching message
                                         break;
                                     case NO_NEW_MSG:
-                                        shouldContinue = false; // 当没有新的消息时退出循环
+                                        shouldContinue = false; // Exit the loop when there are no new messages
                                         break;
                                     case OFFSET_ILLEGAL:
-                                        shouldContinue = false; // 当偏移量非法时退出循环
+                                        shouldContinue = false; // Exit loop when offset is illegal
                                         break;
                                     default:
                                         break;
@@ -579,8 +641,10 @@ public class VerifyUtils {
                             if (extList.size() > 0) {
                                 for (MessageExt ext : extList) {
                                     receivedIndex.getAndIncrement();
-                                    logger.info("MessageId:{}, Body:{}, Property:{}, Index:{}, Retry:{}", ext.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody())), ext.getProperties(), finalI, ext.getReconsumeTimes());
+                                    logger.info("MessageId:{}, Body:{}, Property:{}, Index:{}, Retry:{}",
+                                            ext.getMsgId(),
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody())),
+                                            ext.getProperties(), finalI, ext.getReconsumeTimes());
                                 }
                             }
                         });
@@ -606,7 +670,6 @@ public class VerifyUtils {
         return count;
     }
 
-
     /**
      * Verifying Cluster Consumption
      *
@@ -615,7 +678,7 @@ public class VerifyUtils {
      */
     @SafeVarargs
     public static void verifyClusterConsume(DataCollector<MessageExt> enqueueMessages,
-                                            DataCollector<MessageExt>... dequeueAllMessages) {
+            DataCollector<MessageExt>... dequeueAllMessages) {
         long currentTime = System.currentTimeMillis();
         List<MessageExt> sendMessagesCopy = new ArrayList<>(enqueueMessages.getAllData());
 
@@ -641,13 +704,15 @@ public class VerifyUtils {
                 break;
             }
             if (System.currentTimeMillis() - currentTime >= 60000L) {
-                logger.error("Timeout but not received all send messages, not received msg: {}\n received msg:{}\n", sendMessagesCopy, receivedMessagesCopy);
+                logger.error("Timeout but not received all send messages, not received msg: {}\n received msg:{}\n",
+                        sendMessagesCopy, receivedMessagesCopy);
                 break;
             }
             TestUtils.waitForMoment(500L);
         }
 
-        Assertions.assertEquals(0, sendMessagesCopy.size(), String.format("The following %s messages are not consumed: %s", sendMessagesCopy.size(), sendMessagesCopy));
+        Assertions.assertEquals(0, sendMessagesCopy.size(), String
+                .format("The following %s messages are not consumed: %s", sendMessagesCopy.size(), sendMessagesCopy));
 
     }
 
@@ -659,15 +724,18 @@ public class VerifyUtils {
      * @param props           The desired attribute condition is not met
      */
     public static void verifyNormalMessageWithUserProperties(DataCollector<MessageExt> enqueueMessages,
-                                                             DataCollector<MessageExt> dequeueMessages, HashMap<String, String> props, int expectedUnrecvMsgNum) {
-        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages, TIMEOUT * 1000L, 1);
+            DataCollector<MessageExt> dequeueMessages, HashMap<String, String> props, int expectedUnrecvMsgNum) {
+        Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
+                TIMEOUT * 1000L, 1);
         Collection<MessageExt> recvMsgs = dequeueMessages.getAllData();
         for (MessageExt unConsumedMessage : recvMsgs) {
             for (Map.Entry<String, String> entry : props.entrySet()) {
                 Map<String, String> msgProperties = unConsumedMessage.getProperties();
                 for (Map.Entry<String, String> property : msgProperties.entrySet()) {
                     if (property.getKey().equals(entry.getKey()) && property.getValue().equals(entry.getValue())) {
-                        Assertions.fail("sql attribute filtering is not in effect, consuming messages to other attributes," + unConsumedMessage.getProperties().toString());
+                        Assertions.fail(
+                                "sql attribute filtering is not in effect, consuming messages to other attributes,"
+                                        + unConsumedMessage.getProperties().toString());
                     }
                 }
             }
@@ -677,9 +745,10 @@ public class VerifyUtils {
         }
     }
 
-    public static void waitLitePullReceiveThenAck(RMQNormalProducer producer, DefaultLitePullConsumer consumer,String topic,String tag) {
+    public static void waitLitePullReceiveThenAck(RMQNormalProducer producer, DefaultLitePullConsumer consumer,
+            String topic, String tag) {
         Assertions.assertFalse(consumer.isAutoCommit());
-        ArrayList<MessageQueue>  assignList = null;
+        ArrayList<MessageQueue> assignList = null;
         try {
             assignList = new ArrayList<>(consumer.fetchMessageQueues(topic));
         } catch (MQClientException e) {
@@ -699,23 +768,28 @@ public class VerifyUtils {
                         String tags = messageExt.getTags();
                         FilterUtils.inTags(tags, tag);
                         logger.info("MessageId:{}, Body:{}, tag:{}, Property:{}, Index:{}", messageExt.getMsgId(),
-                                StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())), messageExt.getTags(), messageExt.getProperties(), receivedIndex.get());
-                        sendCollection.removeIf(sendMessageExt -> sendMessageExt.getMsgId().equals(messageExt.getMsgId()));
+                                StandardCharsets.UTF_8.decode(ByteBuffer.wrap(messageExt.getBody())),
+                                messageExt.getTags(), messageExt.getProperties(), receivedIndex.get());
+                        sendCollection
+                                .removeIf(sendMessageExt -> sendMessageExt.getMsgId().equals(messageExt.getMsgId()));
                     }
                 }
                 consumer.commitSync();
-                logger.info("Pull message: {} bar, remaining unconsumed message: {} bar", extList.size(), sendCollection.size());
+                logger.info("Pull message: {} bar, remaining unconsumed message: {} bar", extList.size(),
+                        sendCollection.size());
                 if (sendCollection.size() == 0) {
                     break;
                 }
             }
-            Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+            Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s",
+                    sendCollection.size(), Arrays.toString(sendCollection.toArray())));
         } catch (Exception e) {
             Assertions.fail(e.getMessage());
         }
     }
 
-    public static void waitPullReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
+    public static void waitPullReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic,
+            String tag, int maxNums) {
         Set<MessageQueue> messageQueues = null;
         try {
             messageQueues = consumer.fetchSubscribeMessageQueues(topic);
@@ -723,8 +797,9 @@ public class VerifyUtils {
             Assertions.fail("Fail to fetchSubscribeMessageQueues");
         }
 
-//        long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
-        Collection<MessageExt> sendCollection = Collections.synchronizedCollection(producer.getEnqueueMessages().getAllData());
+        // long endTime = System.currentTimeMillis() + TIMEOUT * 1000;
+        Collection<MessageExt> sendCollection = Collections
+                .synchronizedCollection(producer.getEnqueueMessages().getAllData());
         Set<MessageQueue> finalMessageQueues = messageQueues;
         CompletableFuture[] futures = new CompletableFuture[messageQueues.size()];
         int mqCount = 0;
@@ -732,7 +807,8 @@ public class VerifyUtils {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.fetchConsumeOffset(mq, false);
-                    if (offset< 0 ) return null;
+                    if (offset < 0)
+                        return null;
                     boolean shouldContinue = true;
                     while (shouldContinue) {
                         PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
@@ -742,20 +818,22 @@ public class VerifyUtils {
                                 for (MessageExt message : messages) {
                                     receivedIndex.getAndIncrement();
                                     logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
-                                    offset = message.getQueueOffset()+1;
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
+                                    offset = message.getQueueOffset() + 1;
                                     consumer.updateConsumeOffset(mq, offset);
-                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                    sendCollection
+                                            .removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
                                 }
                                 break;
                             case NO_MATCHED_MSG:
-                                shouldContinue = false; // 当没有匹配的消息时退出循环
+                                shouldContinue = false; // Exit the loop when there is no matching
                                 break;
                             case NO_NEW_MSG:
-                                shouldContinue = false; // 当没有新的消息时退出循环
+                                shouldContinue = false; // Exit the loop when there are no new messages
                                 break;
                             case OFFSET_ILLEGAL:
-                                shouldContinue = false; // 当偏移量非法时退出循环
+                                shouldContinue = false; // Exit loop when offset is illegal
                                 break;
                             default:
                                 break;
@@ -786,7 +864,8 @@ public class VerifyUtils {
         }
     }
 
-    public static void waitFIFOReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic, String tag, int maxNums) {
+    public static void waitFIFOReceiveThenAck(RMQNormalProducer producer, DefaultMQPullConsumer consumer, String topic,
+            String tag, int maxNums) {
         Set<MessageQueue> messageQueues = null;
         try {
             messageQueues = consumer.fetchSubscribeMessageQueues(topic);
@@ -805,7 +884,8 @@ public class VerifyUtils {
             CompletableFuture<Void> future = CompletableFuture.supplyAsync(() -> {
                 try {
                     long offset = consumer.fetchConsumeOffset(mq, false);
-                    if (offset< 0 ) return null;
+                    if (offset < 0)
+                        return null;
                     boolean shouldContinue = true;
                     while (shouldContinue) {
                         PullResult pullResult = consumer.pull(mq, tag, offset, maxNums);
@@ -815,10 +895,12 @@ public class VerifyUtils {
                                 for (MessageExt message : messages) {
                                     receivedIndex.getAndIncrement();
                                     logger.info("MessageId:{}, Body:{}, Property:{}, Retry:{}", message.getMsgId(),
-                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())), message.getProperties(), message.getReconsumeTimes());
-                                    offset = message.getQueueOffset()+1;
+                                            StandardCharsets.UTF_8.decode(ByteBuffer.wrap(message.getBody())),
+                                            message.getProperties(), message.getReconsumeTimes());
+                                    offset = message.getQueueOffset() + 1;
                                     consumer.updateConsumeOffset(mq, offset);
-                                    sendCollection.removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
+                                    sendCollection
+                                            .removeIf(messageExt -> messageExt.getMsgId().equals(message.getMsgId()));
                                     String shardingKey = String.valueOf(mq.getQueueId());
                                     LinkedList<MessageExt> messagesList;
                                     if (map.containsKey(shardingKey)) {
@@ -835,13 +917,13 @@ public class VerifyUtils {
                                 }
                                 break;
                             case NO_MATCHED_MSG:
-                                shouldContinue = false; // 当没有匹配的消息时退出循环
+                                shouldContinue = false; // Exit the loop when there is no matching message
                                 break;
                             case NO_NEW_MSG:
-                                shouldContinue = false; // 当没有新的消息时退出循环
+                                shouldContinue = false; // Exit the loop when there are no new messages
                                 break;
                             case OFFSET_ILLEGAL:
-                                shouldContinue = false; // 当偏移量非法时退出循环
+                                shouldContinue = false; // Exit loop when offset is illegal
                                 break;
                             default:
                                 break;
@@ -870,6 +952,7 @@ public class VerifyUtils {
             e.printStackTrace();
             Assertions.fail("receive response count not match");
         }
-        Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s", sendCollection.size(), Arrays.toString(sendCollection.toArray())));
+        Assertions.assertTrue(sendCollection.size() == 0, String.format("Remaining [%s] unconsumed messages: %s",
+                sendCollection.size(), Arrays.toString(sendCollection.toArray())));
     }
 }

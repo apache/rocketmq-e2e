@@ -81,7 +81,7 @@ public class MessageTagTest extends BaseOperate {
     }
 
     @Disabled
-    @DisplayName("Message Tag equals 16KB, expect send success") // 无意义
+    @DisplayName("Message Tag equals 16KB, expect send success")
     public void testMessageTagEquals16KB() {
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String tag = RandomStringUtils.randomAlphabetic(16 * 1024);
