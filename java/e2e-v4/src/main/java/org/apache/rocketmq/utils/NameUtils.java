@@ -17,6 +17,7 @@
 
 package org.apache.rocketmq.utils;
 
+import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 
 import java.util.Map;
@@ -59,6 +60,31 @@ public class NameUtils {
             }
         }
 
+    }
+
+    public synchronized static String getRandomTagName() {
+        while (true) {
+            String tag = "tag-server-" + RandomStringUtils.randomAlphanumeric(20);
+            String used = alreadyUsed.putIfAbsent(tag, tag);
+            if (used == null) {
+                return tag;
+            }
+        }
+    }
+
+    public synchronized static String getRandomGroupName() {
+        while (true) {
+            String gid = "GID-server-" + RandomStringUtils.randomAlphanumeric(20);
+            String used = alreadyUsed.putIfAbsent(gid, gid);
+            if (used == null) {
+                return gid;
+            }
+        }
+    }
+
+    protected static String getMD5Sum(String className, String methodName) {
+        String completeName = String.format("%s-%s", className, methodName);
+        return methodName + "-" + DigestUtils.md5Hex(completeName).substring(0, 6);
     }
 
 }

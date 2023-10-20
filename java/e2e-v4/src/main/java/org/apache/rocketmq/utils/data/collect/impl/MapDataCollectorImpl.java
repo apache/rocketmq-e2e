@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.utils.data.collect.impl;
 
-
 import org.apache.rocketmq.utils.data.collect.DataCollector;
 
 import java.util.ArrayList;

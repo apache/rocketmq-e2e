@@ -40,15 +40,17 @@ public abstract class MQCollector {
      * 全部出队的消息体（去重）
      */
     protected DataCollector<String> dequeueUndupMessageBody = null;
-    //消息发送响应时间收集器
+    // 消息发送响应时间收集器
     protected DataCollector msgRTs = null;
 
     public MQCollector() {
         enqueueMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
-        enqueueFailedMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
+        enqueueFailedMessages = DataCollectorManager.getInstance()
+                .fetchListDataCollector(RandomUtils.getStringByUUID());
         dequeueMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
         dequeueAllMessages = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
-        dequeueUndupMessageBody = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
+        dequeueUndupMessageBody = DataCollectorManager.getInstance()
+                .fetchListDataCollector(RandomUtils.getStringByUUID());
 
         msgRTs = DataCollectorManager.getInstance().fetchListDataCollector(RandomUtils.getStringByUUID());
     }

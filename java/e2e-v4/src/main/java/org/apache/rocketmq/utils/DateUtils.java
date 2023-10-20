@@ -27,9 +27,9 @@ public class DateUtils {
 
 
     /**
-     * 获取当前时间的秒级偏移时间
-     * offset=10 10秒后  offset=-10 10秒前
-     * @param offset 偏移时间
+     * Gets the second-level offset time of the current time
+     * offset=10 (10 seconds later)  offset=-10 (10 seconds before)
+     * @param offset Offset time
      * @return
      */
     public static long getCurrentTimeOffsetBySecond(int offset) {
@@ -47,9 +47,9 @@ public class DateUtils {
     }
 
     /**
-     * 获取当前时间的分钟级偏移时间
+     * Gets the minute-level offset time of the current time
      *
-     * @param offset 偏移时间
+     * @param offset Offset time
      * @return
      */
     public static long getCurrentTimeOffsetByMin(int offset) {
@@ -66,9 +66,9 @@ public class DateUtils {
     }
 
     /**
-     * 获取当前时间的小时级偏移时间
+     * Gets the hour level offset time of the current time
      *
-     * @param offset 偏移时间
+     * @param offset Offset time
      * @return
      */
     public static long getCurrentTimeOffsetByHour(int offset) {
@@ -85,9 +85,9 @@ public class DateUtils {
     }
 
     /**
-     * 获取当前时间的天级偏移时间
+     * Gets the day offset time of the current time
      *
-     * @param offset 偏移时间
+     * @param offset Offset time
      * @return
      */
     public static long getCurrentTimeOffsetByDay(int offset) {
@@ -104,9 +104,9 @@ public class DateUtils {
     }
 
     /**
-     * 格式化时间戳
+     * Formatting timestamp
      *
-     * @param time 偏移时间
+     * @param time Offset time
      * @return
      */
     public static String format(long time) {

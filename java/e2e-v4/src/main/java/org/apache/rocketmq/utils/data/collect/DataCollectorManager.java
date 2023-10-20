@@ -17,7 +17,6 @@
 
 package org.apache.rocketmq.utils.data.collect;
 
-
 import org.apache.rocketmq.utils.data.collect.impl.ListDataCollectorImpl;
 import org.apache.rocketmq.utils.data.collect.impl.MapDataCollectorImpl;
 
