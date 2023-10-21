@@ -20,9 +20,9 @@
 #include "utils/data/collect/DataCollectorManager.h"
 #include "client/rmq/RMQNormalConsumer.h"
 #include "utils/NameUtils.h"
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/ini_parser.hpp>
-#include <spdlog/spdlog.h>
+#include "boost/property_tree/ptree.hpp"
+#include "boost/property_tree/ini_parser.hpp"
+#include "spdlog/spdlog.h"
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
@@ -35,12 +35,16 @@ std::atomic<int> RMQNormalConsumer::receivedIndex(0);
 
 std::vector<rocketmq::MQMessageExt> VerifyUtils::msgs;
 
-void initResource(std::shared_ptr<Resource> resource){
+void initResource(std::shared_ptr<Resource> resource)
+{
     boost::property_tree::ptree pt;
-    try {
+    try
+    {
         boost::property_tree::ini_parser::read_ini("config.ini", pt);
-    } catch (boost::property_tree::ini_parser::ini_parser_error& e) {
-        multi_logger->info("ini_parser_error: {}",e.what());
+    }
+    catch (boost::property_tree::ini_parser::ini_parser_error &e)
+    {
+        multi_logger->info("ini_parser_error: {}", e.what());
     }
     boost::property_tree::ini_parser::read_ini("config.ini", pt);
     resource->setNamesrv(pt.get<std::string>("rocketmq.namesrv"));

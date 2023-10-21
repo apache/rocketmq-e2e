@@ -17,7 +17,8 @@
 #pragma once
 #include <string>
 
-class Account {
+class Account
+{
 private:
     // aliyun AccessKey
     std::string accessKey;
@@ -39,6 +40,7 @@ private:
     std::string userId;
     // Account User Name
     std::string accountName;
+
 public:
     Account() {}
     Account(std::string endpoint) : endpoint(endpoint) {}
@@ -52,8 +54,8 @@ public:
           secretKey(secretKey),
           endpoint(endpoint) {}
 
-    Account(std::string accessKey, std::string secretKey, std::string endpoint, 
-            std::string instanceId, std::string consoleEndpoint, std::string regionId, 
+    Account(std::string accessKey, std::string secretKey, std::string endpoint,
+            std::string instanceId, std::string consoleEndpoint, std::string regionId,
             std::string userId)
         : accessKey(accessKey),
           secretKey(secretKey),
@@ -62,34 +64,34 @@ public:
           consoleEndpoint(consoleEndpoint),
           regionId(regionId),
           userId(userId) {}
-    
+
     std::string getAccessKey() const { return accessKey; }
-    void setAccessKey(const std::string& accessKey) { accessKey = accessKey; }
+    void setAccessKey(const std::string &accessKey) { accessKey = accessKey; }
 
     std::string getSecretKey() const { return secretKey; }
-    void setSecretKey(const std::string& secretKey) { secretKey = secretKey; }
+    void setSecretKey(const std::string &secretKey) { secretKey = secretKey; }
 
     std::string getInstanceUserName() const { return instanceUserName; }
-    void setInstanceUserName(const std::string& instanceUserName) { instanceUserName = instanceUserName; }
+    void setInstanceUserName(const std::string &instanceUserName) { instanceUserName = instanceUserName; }
 
     std::string getInstancePassword() const { return instancePassword; }
-    void setInstancePassword(const std::string& instancePassword) { instancePassword = instancePassword; }
+    void setInstancePassword(const std::string &instancePassword) { instancePassword = instancePassword; }
 
     std::string getEndpoint() const { return endpoint; }
-    void setEndpoint(const std::string& endpoint) { endpoint = endpoint; }
+    void setEndpoint(const std::string &endpoint) { endpoint = endpoint; }
 
     std::string getInstanceId() const { return instanceId; }
-    void setInstanceId(const std::string& instanceId) { instanceId = instanceId; }
+    void setInstanceId(const std::string &instanceId) { instanceId = instanceId; }
 
     std::string getConsoleEndpoint() const { return consoleEndpoint; }
-    void setConsoleEndpoint(const std::string& consoleEndpoint) { consoleEndpoint = consoleEndpoint; }
+    void setConsoleEndpoint(const std::string &consoleEndpoint) { consoleEndpoint = consoleEndpoint; }
 
     std::string getRegionId() const { return regionId; }
-    void setRegionId(const std::string& regionId) { regionId = regionId; }
+    void setRegionId(const std::string &regionId) { regionId = regionId; }
 
     std::string getUserId() const { return userId; }
-    void setUserId(const std::string& userId) { userId = userId; }
+    void setUserId(const std::string &userId) { userId = userId; }
 
     std::string getAccountName() const { return accountName; }
-    void setAccountName(const std::string& accountName) { accountName = accountName; }
+    void setAccountName(const std::string &accountName) { accountName = accountName; }
 };

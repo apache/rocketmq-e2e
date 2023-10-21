@@ -19,19 +19,21 @@
 #include "listener/rmq/RMQNormalListener.h"
 #include "listener/rmq/RMQOrderListener.h"
 #include "resource/Resource.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "spdlog/logger.h"
 #include <memory>
-#include <rocketmq/DefaultMQPullConsumer.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class ConsumerFactory{
+class ConsumerFactory
+{
 public:
-    ConsumerFactory()=delete;
+    ConsumerFactory() = delete;
 
-    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<MsgListener> msglistener){
+    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(const std::string &topic, const std::string &group, const std::string &subExpression, std::shared_ptr<MsgListener> msglistener)
+    {
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
@@ -43,7 +45,8 @@ public:
         return rmqPushConsumer;
     }
 
-    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<RMQNormalListener> listener){
+    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer(const std::string &topic, const std::string &group, const std::string &subExpression, std::shared_ptr<RMQNormalListener> listener)
+    {
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
@@ -55,7 +58,22 @@ public:
         return rmqPushConsumer;
     }
 
-    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<RMQNormalListener> listener){
+    static std::shared_ptr<rocketmq::DefaultMQPushConsumer> getBroadcastPushConsumer(const std::string &topic, const std::string &group, const std::string &subExpression, std::shared_ptr<RMQNormalListener> listener)
+    {
+        auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
+        rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
+        rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+        rmqPushConsumer->setMessageModel(rocketmq::MessageModel::BROADCASTING);
+        rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+        rmqPushConsumer->setConsumeThreadCount(4);
+        rmqPushConsumer->subscribe(topic, subExpression);
+        rmqPushConsumer->registerMessageListener(listener.get());
+        rmqPushConsumer->start();
+        return rmqPushConsumer;
+    }
+
+    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string &topic, const std::string &group, const std::string &subExpression, std::shared_ptr<RMQNormalListener> listener)
+    {
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
@@ -64,10 +82,11 @@ public:
         rmqPushConsumer->subscribe(topic, subExpression);
         rmqPushConsumer->registerMessageListener(listener.get());
         rmqPushConsumer->start();
-        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer,listener);
+        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer, listener);
     }
 
-    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string& topic, const std::string& group,const std::string& subExpression,std::shared_ptr<RMQOrderListener> listener){
+    static std::shared_ptr<RMQNormalConsumer> getRMQPushConsumer(const std::string &topic, const std::string &group, const std::string &subExpression, std::shared_ptr<RMQOrderListener> listener)
+    {
         auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
         rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
@@ -76,10 +95,11 @@ public:
         rmqPushConsumer->subscribe(topic, subExpression);
         rmqPushConsumer->registerMessageListener(listener.get());
         rmqPushConsumer->start();
-        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer,listener);
+        return std::make_shared<RMQNormalConsumer>(rmqPushConsumer, listener);
     }
 
-    static std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer(const std::string& topic,const std::string& group){
+    static std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer(const std::string &topic, const std::string &group)
+    {
         auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);
         rmqPullConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPullConsumer->setInstanceName(group);
@@ -89,9 +109,8 @@ public:
         return rmqPullConsumer;
     }
 
-
-
-    static std::shared_ptr<RMQNormalConsumer> getRMQPullConsumer(const std::string& topic, const std::string& group){
+    static std::shared_ptr<RMQNormalConsumer> getRMQPullConsumer(const std::string &topic, const std::string &group)
+    {
         auto rmqPullConsumer = std::make_shared<rocketmq::DefaultMQPullConsumer>(group);
         rmqPullConsumer->setNamesrvAddr(resource->getNamesrv());
         rmqPullConsumer->setInstanceName(group);

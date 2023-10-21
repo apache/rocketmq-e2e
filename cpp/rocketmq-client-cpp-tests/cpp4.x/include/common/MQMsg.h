@@ -16,40 +16,44 @@
  */
 #pragma once
 #include <atomic>
-#include <rocketmq/MQMessageExt.h>
+#include "rocketmq/MQMessageExt.h"
 
-class MQMsg : public rocketmq::MQMessageExt {
+class MQMsg : public rocketmq::MQMessageExt
+{
 public:
     MQMsg() : MQMessageExt() {}
 
     MQMsg(int queueId,
-        int64 bornTimestamp,
-        sockaddr bornHost,
-        int64 storeTimestamp,
-        sockaddr storeHost,
-        const std::string& msgId,
-        const std::string& property)
-            :MQMessageExt(queueId, bornTimestamp, bornHost, storeTimestamp, storeHost, msgId),property_(property) {}
+          int64 bornTimestamp,
+          sockaddr bornHost,
+          int64 storeTimestamp,
+          sockaddr storeHost,
+          const std::string &msgId,
+          const std::string &property)
+        : MQMessageExt(queueId, bornTimestamp, bornHost, storeTimestamp, storeHost, msgId), property_(property) {}
 
-    MQMsg(const MQMessageExt& msg, const std::string& property)
-        :MQMessageExt(msg),property_(property) {}
-    
-    MQMsg(const MQMessageExt& msg)
-        :MQMessageExt(msg) {}
+    MQMsg(const MQMessageExt &msg, const std::string &property)
+        : MQMessageExt(msg), property_(property) {}
 
-    MQMsg(const MQMsg& other):MQMessageExt(other),property_(other.property_) {}
+    MQMsg(const MQMessageExt &msg)
+        : MQMessageExt(msg) {}
+
+    MQMsg(const MQMsg &other) : MQMessageExt(other), property_(other.property_) {}
 
     virtual ~MQMsg() {}
 
-    const std::string& getProperty() const {
+    const std::string &getProperty() const
+    {
         return property_;
     }
 
-    void setProperty(const std::string& property) {
+    void setProperty(const std::string &property)
+    {
         property_ = property;
     }
 
-    bool operator<(const MQMsg& other) const {
+    bool operator<(const MQMsg &other) const
+    {
         return getMsgId() < other.getMsgId();
     }
 

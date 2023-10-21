@@ -21,17 +21,18 @@
 #include "common/MQMsg.h"
 #include "resource/Resource.h"
 #include "utils/RandomUtils.h"
+#include "spdlog/logger.h"
+#include "rocketmq/MQMessageListener.h"
 #include <memory>
-#include <spdlog/logger.h>
 #include <atomic>
 #include <iostream>
-#include <rocketmq/MQMessageListener.h>
 #include <thread>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class RMQNormalListener : public MQCollector<MQMsg>, public rocketmq::MessageListenerConcurrently {
+class RMQNormalListener : public MQCollector<MQMsg>, public rocketmq::MessageListenerConcurrently
+{
 private:
     rocketmq::ConsumeStatus consumeStatus = rocketmq::CONSUME_SUCCESS;
     std::atomic<int> msgIndex{0};
@@ -42,47 +43,57 @@ private:
     int workTime = 0;
 
 public:
-    ~RMQNormalListener() { }
+    ~RMQNormalListener() {}
 
-    RMQNormalListener() {
+    RMQNormalListener()
+    {
         this->listenerName = RandomUtils::getStringByUUID();
-        multi_logger->info("start listener: {}",listenerName);
+        multi_logger->info("start listener: {}", listenerName);
     }
 
-    RMQNormalListener(int reconsumeTimes, rocketmq::ConsumeStatus consumeStatus){
+    RMQNormalListener(int reconsumeTimes, rocketmq::ConsumeStatus consumeStatus)
+    {
         this->reconsumeTimes = reconsumeTimes;
         this->consumeStatus = consumeStatus;
         this->listenerName = RandomUtils::getStringByUUID();
-        multi_logger->info("start listener: {}",listenerName);
+        multi_logger->info("start listener: {}", listenerName);
     }
 
-    RMQNormalListener(int reconsumeTimes, int workTime){
+    RMQNormalListener(int reconsumeTimes, int workTime)
+    {
         this->reconsumeTimes = reconsumeTimes;
         this->workTime = workTime;
         this->listenerName = RandomUtils::getStringByUUID();
-        multi_logger->info("start listener: {}",listenerName);
+        multi_logger->info("start listener: {}", listenerName);
     }
 
-    RMQNormalListener(std::string listenerName) {
+    RMQNormalListener(std::string listenerName)
+    {
         this->listenerName = listenerName;
-        multi_logger->info("start listener: {}",listenerName);
+        multi_logger->info("start listener: {}", listenerName);
     }
 
-    RMQNormalListener(rocketmq::ConsumeStatus consumeStatus){
+    RMQNormalListener(rocketmq::ConsumeStatus consumeStatus)
+    {
         this->consumeStatus = consumeStatus;
         this->listenerName = RandomUtils::getStringByUUID();
-        multi_logger->info("start listener: {}",listenerName);
+        multi_logger->info("start listener: {}", listenerName);
     }
 
     // Overriding the consume method
-    virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt>& msgs) override {
+    virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt> &msgs) override
+    {
         rocketmq::ConsumeStatus result = consumeStatus;
 
-        for (const auto& msg : msgs) {
-            if (reconsumeTimes == 0 || reconsumeTimes == msg.getReconsumeTimes()-1) {
+        for (const auto &msg : msgs)
+        {
+            if (reconsumeTimes == 0 || reconsumeTimes == msg.getReconsumeTimes() - 1)
+            {
                 dequeueMessages->addData(MQMsg(msg));
                 result = consumeStatus;
-            }else{
+            }
+            else
+            {
                 // if (isEvenNumber) {
                 //     int body = atoi(message.getBody().c_str());
                 //     if (body % 2 != 0) {
@@ -93,18 +104,22 @@ public:
                 std::this_thread::sleep_for(std::chrono::milliseconds(workTime));
             }
             std::string consumeStatStr;
-            if(result == rocketmq::RECONSUME_LATER) {
+            if (result == rocketmq::RECONSUME_LATER)
+            {
                 consumeStatStr = "RECONSUME_LATER";
-            } else {
+            }
+            else
+            {
                 consumeStatStr = "CONSUME_SUCCESS";
             }
             std::string propertiesStr("{");
-            for (const auto& pair : msg.getProperties()) {
+            for (const auto &pair : msg.getProperties())
+            {
                 propertiesStr += pair.first + ":" + pair.second + ";";
             }
             propertiesStr += "}";
-            multi_logger->info("{} - MessageId:{}, body:{}, tag:{},  key:{}, recvIndex:{}, property:{}, action:{}",listenerName,msg.getMsgId(),msg.getBody(),msg.getTags(),msg.getKeys(),std::to_string(msgIndex.fetch_add(1, std::memory_order_relaxed)),propertiesStr,consumeStatStr);
-        }   
+            multi_logger->info("{} - MessageId:{}, body:{}, tag:{},  key:{}, recvIndex:{}, property:{}, action:{}", listenerName, msg.getMsgId(), msg.getBody(), msg.getTags(), msg.getKeys(), std::to_string(msgIndex.fetch_add(1, std::memory_order_relaxed)), propertiesStr, consumeStatStr);
+        }
 
         return result;
     }

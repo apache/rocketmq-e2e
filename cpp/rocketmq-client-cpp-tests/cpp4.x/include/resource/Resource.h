@@ -17,7 +17,8 @@
 #pragma once
 #include <string>
 
-class Resource{
+class Resource
+{
 private:
     std::string namesrv;
     std::string brokerAddr;
@@ -25,6 +26,7 @@ private:
     std::string accessKey;
     std::string secretKey;
     std::string accessChannel;
+
 public:
     Resource() {}
 
@@ -34,46 +36,59 @@ public:
           cluster(cluster),
           accessKey(accessKey),
           secretKey(secretKey),
-          accessChannel(accessChannel) {
-          }
-    
-    //set
-    void setNamesrv(std::string namesrv) {
+          accessChannel(accessChannel)
+    {
+    }
+
+    // set
+    void setNamesrv(std::string namesrv)
+    {
         this->namesrv = namesrv;
     }
-    void setBrokerAddr(std::string brokerAddr) {
+    void setBrokerAddr(std::string brokerAddr)
+    {
         this->brokerAddr = brokerAddr;
     }
-    void setCluster(std::string cluster) {
+    void setCluster(std::string cluster)
+    {
         this->cluster = cluster;
     }
-    void setAccessKey(std::string accessKey) {
+    void setAccessKey(std::string accessKey)
+    {
         this->accessKey = accessKey;
     }
-    void setSecretKey(std::string secretKey) {
+    void setSecretKey(std::string secretKey)
+    {
         this->secretKey = secretKey;
     }
-    void setAccessChannel(std::string accessChannel) {
+    void setAccessChannel(std::string accessChannel)
+    {
         this->accessChannel = accessChannel;
     }
 
-    //get
-    std::string getNamesrv() {
+    // get
+    std::string getNamesrv()
+    {
         return namesrv;
     }
-    std::string getBrokerAddr() {
+    std::string getBrokerAddr()
+    {
         return brokerAddr;
     }
-    std::string getCluster() {
+    std::string getCluster()
+    {
         return cluster;
     }
-    std::string getAccessKey() {
+    std::string getAccessKey()
+    {
         return accessKey;
     }
-    std::string getSecretKey() {
+    std::string getSecretKey()
+    {
         return secretKey;
     }
-    std::string getAccessChannel() {
+    std::string getAccessChannel()
+    {
         return accessChannel;
     }
 };

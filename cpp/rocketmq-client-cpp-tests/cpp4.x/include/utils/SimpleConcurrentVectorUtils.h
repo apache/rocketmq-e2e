@@ -23,42 +23,47 @@
 #include <vector>
 #include <atomic>
 
-template<typename Value>
-class SimpleConcurrentVector{
+template <typename Value>
+class SimpleConcurrentVector
+{
 private:
     std::vector<Value> v_;
     mutable std::shared_mutex mutex_;
 
 public:
-
-    size_t size() const {
+    size_t size() const
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         return v_.size();
     }
 
-    void push_back(const Value& value) {
+    void push_back(const Value &value)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         v_.push_back(value);
     }
 
-    void insert(const size_t& index,const Value& value) {
+    void insert(const size_t &index, const Value &value)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
-        v_.insert(v_.begin()+index,value);
+        v_.insert(v_.begin() + index, value);
     }
 
-    void erase(const size_t& index) {
+    void erase(const size_t &index)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
-        v_.erase(v_.begin()+index);
+        v_.erase(v_.begin() + index);
     }
 
-    std::vector<Value> getCopy() const {
+    std::vector<Value> getCopy() const
+    {
         std::shared_lock<std::shared_mutex> lock(mutex_);
         return v_;
     }
 
-    Value& operator[](const size_t& index) {
+    Value &operator[](const size_t &index)
+    {
         std::shared_lock<std::shared_mutex> lock(mutex_);
         return v_[index];
     }
-    
 };

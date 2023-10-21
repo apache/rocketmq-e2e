@@ -19,12 +19,10 @@
 #include <cstddef>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <rocketmq/SendResult.h>
-#include <spdlog/logger.h>
 #include <string>
-
+#include "gtest/gtest.h"
+#include "rocketmq/SendResult.h"
+#include "spdlog/logger.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -64,7 +62,7 @@ extern std::shared_ptr<Resource> resource;
 ////    std::this_thread::sleep_for(std::chrono::seconds(1));
 ////
 ////    ASSERT_EQ(SEND_NUM,transProducer->getEnqueueMessages()->getDataSize());
-////    //pull不支持异步确认接收
+////    //pull does not support asynchronous confirmation reception
 ////    pullConsumer->shutdown();
 ////    transProducer->shutdownTransaction();
 ////}

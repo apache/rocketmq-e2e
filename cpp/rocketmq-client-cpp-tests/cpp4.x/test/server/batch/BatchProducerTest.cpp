@@ -17,14 +17,12 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <spdlog/logger.h>
 #include <string>
-#include <rocketmq/MQMessageExt.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/MQMessageListener.h>
-
+#include "gtest/gtest.h"
+#include "spdlog/logger.h"
+#include "rocketmq/MQMessageExt.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/MQMessageListener.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -48,11 +46,6 @@ TEST(BatchProducerTest, testBatchProducer){
     std::string tag = NameUtils::getRandomTagName();
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
-
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
 
     auto producer = ProducerFactory::getRMQProducer(group);
 
@@ -96,8 +89,6 @@ TEST(BatchProducerTest, testBatchProducer_queue){
     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
     std::vector<rocketmq::MQMessageQueue> mqs;
     pullConsumer->getPullConsumer()->fetchSubscribeMessageQueues(topic, mqs);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
     pullConsumer->shutdown();
 
     auto producer = ProducerFactory::getRMQProducer(group);

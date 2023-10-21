@@ -17,20 +17,21 @@
 #include "client/rmq/RMQNormalProducer.h"
 #include "resource/Resource.h"
 #include "common/MQTransactionListener.h"
+#include "rocketmq/DefaultMQProducer.h"
+#include "rocketmq/TransactionMQProducer.h"
+#include "spdlog/logger.h"
 #include <memory>
-#include <rocketmq/DefaultMQProducer.h>
-#include <rocketmq/TransactionMQProducer.h>
-#include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class ProducerFactory {
+class ProducerFactory
+{
 public:
-    ProducerFactory()=delete;
+    ProducerFactory() = delete;
 
-
-    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(const std::string& group){
+    static std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(const std::string &group)
+    {
         auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
         producer->setNamesrvAddr(resource->getNamesrv());
         producer->setTcpTransportTryLockTimeout(1000);
@@ -39,7 +40,8 @@ public:
         return producer;
     }
 
-    static std::shared_ptr<RMQNormalProducer> getRMQProducer(const std::string& group){
+    static std::shared_ptr<RMQNormalProducer> getRMQProducer(const std::string &group)
+    {
         auto producer = std::make_shared<rocketmq::DefaultMQProducer>(group);
         producer->setNamesrvAddr(resource->getNamesrv());
         producer->setTcpTransportTryLockTimeout(1000);
@@ -48,8 +50,9 @@ public:
         return std::make_shared<RMQNormalProducer>(producer);
     }
 
-    static std::shared_ptr<RMQNormalProducer> getRMQTransProducer(const std::string& group,rocketmq::TransactionListener* listener){
-        //rocketmq::LocalTransactionState& state
+    static std::shared_ptr<RMQNormalProducer> getRMQTransProducer(const std::string &group, rocketmq::TransactionListener *listener)
+    {
+        // rocketmq::LocalTransactionState& state
         auto transProducer = std::make_shared<rocketmq::TransactionMQProducer>(group);
         transProducer->setNamesrvAddr(resource->getNamesrv());
         transProducer->setTransactionListener(listener);

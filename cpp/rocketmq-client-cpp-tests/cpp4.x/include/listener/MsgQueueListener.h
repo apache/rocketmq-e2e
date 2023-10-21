@@ -17,30 +17,34 @@
 #pragma once
 
 #include "resource/Resource.h"
+#include "rocketmq/MQueueListener.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
+#include "rocketmq/MQMessageQueue.h"
+#include "spdlog/logger.h"
 #include <atomic>
 #include <memory>
-#include <rocketmq/MQMessageQueue.h>
-#include <spdlog/logger.h>
 #include <vector>
-#include <rocketmq/MQueueListener.h>
-#include <rocketmq/DefaultMQPullConsumer.h>
+
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class MsgQueueListener : public rocketmq::MessageQueueListener {
+class MsgQueueListener : public rocketmq::MessageQueueListener
+{
 public:
     virtual ~MsgQueueListener() {}
 
-    virtual void messageQueueChanged(const std::string& topic,
-                                     const std::vector<rocketmq::MQMessageQueue>& mqAll,
-                                     const std::vector<rocketmq::MQMessageQueue>& mqDivided) override {
-        multi_logger->info("Message queue changed for topic: {}",topic);
+    virtual void messageQueueChanged(const std::string &topic,
+                                     const std::vector<rocketmq::MQMessageQueue> &mqAll,
+                                     const std::vector<rocketmq::MQMessageQueue> &mqDivided) override
+    {
+        multi_logger->info("Message queue changed for topic: {}", topic);
     }
 
-    virtual void messageQueueCreated(const std::string& topic,
-                                     const std::vector<rocketmq::MQMessageQueue>& mqAll,
-                                     const std::vector<rocketmq::MQMessageQueue>& mqDivided) override {
-        multi_logger->info("Message queue created for topic: {}",topic);
+    virtual void messageQueueCreated(const std::string &topic,
+                                     const std::vector<rocketmq::MQMessageQueue> &mqAll,
+                                     const std::vector<rocketmq::MQMessageQueue> &mqDivided) override
+    {
+        multi_logger->info("Message queue created for topic: {}", topic);
     }
 } MyMessageQueueListener;

@@ -5,7 +5,7 @@
 # (the "License"); you may not use this file except in compliance with
 # the License.  You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -22,4 +22,6 @@ set(SRC_FILES
 
 add_library(utils STATIC ${SRC_FILES})
 
-target_include_directories(utils PUBLIC ${CMAKE_SOURCE_DIR}/include)
+target_include_directories(utils PUBLIC ${CMAKE_SOURCE_DIR}/include ${RocketMQ_INCLUDE_DIRS})
+
+target_link_libraries(utils PUBLIC ${OPENSSL_CRYPTO_LIBRARY})

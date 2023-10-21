@@ -19,16 +19,17 @@
 #include <unordered_map>
 #include <random>
 #include <chrono>
-#include <openssl/md5.h>
 #include <mutex>
+#include "openssl/md5.h"
 
-class NameUtils {
+class NameUtils
+{
 private:
     static std::unordered_map<std::string, std::string> alreadyUsed;
     static std::mutex mtx;
 
     static std::string generateRandomAlphanumeric(int length);
-    static std::string generateMD5Sum(const std::string& input);
+    static std::string generateMD5Sum(const std::string &input);
 
 public:
     NameUtils() = delete;
@@ -36,10 +37,10 @@ public:
     static std::string getGroupName();
     static std::string getTagName();
     static std::string getRandomTopicName();
-    static std::string getTopicName(const std::string& messageType, const std::string& className, const std::string& methodName);
-    static std::string getRandomTopicName(const std::string& suffix);
+    static std::string getTopicName(const std::string &messageType, const std::string &className, const std::string &methodName);
+    static std::string getRandomTopicName(const std::string &suffix);
     static std::string getRandomGroupName();
-    static std::string getGroupName(const std::string& className, const std::string& methodName);
-    static std::string getRandomGroupName(const std::string& suffix);
+    static std::string getGroupName(const std::string &className, const std::string &methodName);
+    static std::string getRandomGroupName(const std::string &suffix);
     static std::string getRandomTagName();
 };

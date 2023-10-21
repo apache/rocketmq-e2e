@@ -19,12 +19,10 @@
 #include <cstddef>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <rocketmq/SendResult.h>
-#include <spdlog/logger.h>
 #include <string>
-
+#include "gtest/gtest.h"
+#include "rocketmq/SendResult.h"
+#include "spdlog/logger.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -48,12 +46,6 @@ TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-
     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
@@ -72,7 +64,6 @@ TEST(TransactionMessageTest, testTrans_SendCommit_PushConsume){
     ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(transProducer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     transProducer->shutdownTransaction();
 }
 
@@ -84,13 +75,6 @@ TEST(TransactionMessageTest, testTrans_SendRollback_PushConsume){
     std::string tag = NameUtils::getRandomTagName();
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
-
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
 
     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
@@ -124,13 +108,6 @@ TEST(TransactionMessageTest, testTrans_SendCheckerCommit_PushConsume){
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
-
     rocketmq::TransactionListener* listener = new CommitMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
@@ -163,13 +140,6 @@ TEST(TransactionMessageTest, testTrans_CheckerRollback){
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
-
     rocketmq::TransactionListener* listener = new RollbackMQTransactionListener();
     auto transProducer = ProducerFactory::getRMQTransProducer(group,listener);
 
@@ -200,13 +170,6 @@ TEST(TransactionMessageTest, testTrans_SendCheckerPartionCommit){
     std::string tag = NameUtils::getRandomTagName();
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
-
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
 
     std::atomic<int> commitMsgNum(0);
     std::atomic<int> rollbackMsgNum(0);

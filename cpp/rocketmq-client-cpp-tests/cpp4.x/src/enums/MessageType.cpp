@@ -21,5 +21,4 @@ std::map<MessageType, std::string> MessageTypeToString = {
     {MessageType::NORMAL, "NORMAL"},
     {MessageType::FIFO, "FIFO"},
     {MessageType::DELAY, "DELAY"},
-    {MessageType::TRANSACTION, "TRANSACTION"}
-};
+    {MessageType::TRANSACTION, "TRANSACTION"}};

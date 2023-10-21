@@ -21,27 +21,29 @@
 #include "utils/data/collect/DataCollectorManager.h"
 
 template <typename T>
-class MQCollector {
+class MQCollector
+{
 protected:
-    DataCollector<T>* enqueueMessages;
-    DataCollector<T>* enqueueFailedMessages;
-    DataCollector<T>* dequeueMessages;
-    DataCollector<T>* dequeueAllMessages;
-    DataCollector<T>* dequeueUndupMessageBody;
-    DataCollector<T>* msgRTs;
+    DataCollector<T> *enqueueMessages;
+    DataCollector<T> *enqueueFailedMessages;
+    DataCollector<T> *dequeueMessages;
+    DataCollector<T> *dequeueAllMessages;
+    DataCollector<T> *dequeueUndupMessageBody;
+    DataCollector<T> *msgRTs;
 
 public:
-    MQCollector() {
+    MQCollector()
+    {
         enqueueMessages = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
         enqueueFailedMessages = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
         dequeueMessages = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
         dequeueAllMessages = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
         dequeueUndupMessageBody = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
         msgRTs = &DataCollectorManager<T>::getInstance().fetchDataCollector(RandomUtils::getStringByUUID());
-
     }
 
-    void clearMsg() {
+    void clearMsg()
+    {
         enqueueMessages->resetData();
         enqueueFailedMessages->resetData();
         dequeueMessages->resetData();
@@ -50,7 +52,8 @@ public:
         msgRTs->resetData();
     }
 
-    void lockCollectors() {
+    void lockCollectors()
+    {
         enqueueMessages->lockIncrement();
         enqueueFailedMessages->lockIncrement();
         dequeueMessages->lockIncrement();
@@ -59,27 +62,30 @@ public:
         msgRTs->lockIncrement();
     }
 
-    DataCollector<T>* getEnqueueMessages() {
+    DataCollector<T> *getEnqueueMessages()
+    {
         return enqueueMessages;
     }
 
-    DataCollector<T>* getEnqueueFailedMessages() {
+    DataCollector<T> *getEnqueueFailedMessages()
+    {
         return enqueueFailedMessages;
     }
 
-    DataCollector<T>* getDequeueMessages() {
+    DataCollector<T> *getDequeueMessages()
+    {
         return dequeueMessages;
     }
 
-    DataCollector<T>* getDequeueAllMessages() {
+    DataCollector<T> *getDequeueAllMessages()
+    {
         return dequeueAllMessages;
     }
 
-    DataCollector<T>* getDequeueUndupMessageBody() {
+    DataCollector<T> *getDequeueUndupMessageBody()
+    {
         return dequeueUndupMessageBody;
     }
-
-
 };
 
 // class MQCollector {
@@ -139,6 +145,5 @@ public:
 //     DataCollector* getDequeueUndupMessageBody() {
 //         return dequeueUndupMessageBody;
 //     }
-
 
 // };

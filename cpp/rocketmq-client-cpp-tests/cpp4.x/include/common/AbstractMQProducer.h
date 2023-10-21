@@ -15,11 +15,12 @@
  * limitations under the License.
  */
 #pragma once
-#include <rocketmq/MQMessage.h>
 #include <string>
 #include "common/MQCollector.h"
+#include "rocketmq/MQMessage.h"
 
-class AbstractMQProducer: public MQCollector<std::string>{
+class AbstractMQProducer : public MQCollector<std::string>
+{
 protected:
     bool startSuccess = false;
     std::string producerGroupName;

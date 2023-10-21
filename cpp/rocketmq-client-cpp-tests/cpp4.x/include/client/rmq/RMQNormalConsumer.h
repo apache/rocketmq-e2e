@@ -21,6 +21,9 @@
 #include "common/MQCollector.h"
 #include "listener/rmq/RMQNormalListener.h"
 #include "listener/rmq/RMQOrderListener.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "spdlog/logger.h"
 #include <future>
 #include <mutex>
 #include <atomic>
@@ -31,14 +34,12 @@
 #include <string>
 #include <optional>
 #include <chrono>
-#include <rocketmq/DefaultMQPullConsumer.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class RMQNormalConsumer{
+class RMQNormalConsumer
+{
 private:
     std::shared_ptr<rocketmq::DefaultMQPushConsumer> pushConsumer;
     std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer;
@@ -52,65 +53,78 @@ private:
     static std::atomic<int> receivedIndex;
 
 public:
-    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQNormalListener> listener) 
+    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQNormalListener> listener)
         : pushConsumer(consumer), normalListener(listener) {}
 
-    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQOrderListener> listener) 
+    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer, std::shared_ptr<RMQOrderListener> listener)
         : pushConsumer(consumer), orderListener(listener) {}
 
-    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> consumer) 
+    RMQNormalConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> consumer)
         : pullConsumer(consumer) {}
 
-    // void receiveThenNack(const std::string& topic,int maxMessageNum, std::optional<std::chrono::duration<double>> receiveInvisibleDuration, std::optional<std::chrono::duration<double>> changeInvisibleDuration) { 
-        
+    // void receiveThenNack(const std::string& topic,int maxMessageNum, std::optional<std::chrono::duration<double>> receiveInvisibleDuration, std::optional<std::chrono::duration<double>> changeInvisibleDuration) {
+
     // }
 
-    void shutdown() {
-        if (pushConsumer) {
+    void shutdown()
+    {
+        if (pushConsumer)
+        {
             pushConsumer->shutdown();
         }
-        if (pullConsumer) {
+        if (pullConsumer)
+        {
             pullConsumer->shutdown();
         }
     }
 
-    std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer() {
+    std::shared_ptr<rocketmq::DefaultMQPushConsumer> getPushConsumer()
+    {
         return pushConsumer;
     }
 
-    void setPushConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> pushConsumer) {
+    void setPushConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> pushConsumer)
+    {
         this->pushConsumer = pushConsumer;
     }
 
-    std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer() {
+    std::shared_ptr<rocketmq::DefaultMQPullConsumer> getPullConsumer()
+    {
         return pullConsumer;
     }
 
-    void setSimpleConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer) {
+    void setSimpleConsumer(std::shared_ptr<rocketmq::DefaultMQPullConsumer> pullConsumer)
+    {
         this->pullConsumer = pullConsumer;
     }
 
-    std::shared_ptr<rocketmq::DefaultMQPushConsumer> getConsumer() {
+    std::shared_ptr<rocketmq::DefaultMQPushConsumer> getConsumer()
+    {
         return consumer;
     }
 
-    void setConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer) {
+    void setConsumer(std::shared_ptr<rocketmq::DefaultMQPushConsumer> consumer)
+    {
         this->consumer = consumer;
     }
 
-    std::shared_ptr<RMQNormalListener> getListener() {
+    std::shared_ptr<RMQNormalListener> getListener()
+    {
         return normalListener;
     }
 
-    std::shared_ptr<RMQOrderListener> getOrderListener() {
+    std::shared_ptr<RMQOrderListener> getOrderListener()
+    {
         return orderListener;
     }
 
-    void setListener(std::shared_ptr<RMQNormalListener> listener) {
+    void setListener(std::shared_ptr<RMQNormalListener> listener)
+    {
         this->normalListener = listener;
     }
 
-    void setOrderListener(std::shared_ptr<RMQOrderListener> listener) {
+    void setOrderListener(std::shared_ptr<RMQOrderListener> listener)
+    {
         this->orderListener = listener;
     }
 };

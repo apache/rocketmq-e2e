@@ -21,21 +21,22 @@
 #include <cstdlib>
 #include <cstdio>
 
-class MQAdminUtils {
+class MQAdminUtils
+{
 public:
   static std::string getRootPath();
 
-  static std::string executeShellCommand(const std::string& command);
+  static std::string executeShellCommand(const std::string &command);
 
-  static std::string createTopic(const std::string& topicName, const std::string& brokerAddr, const std::string& clusterName, const std::string& nameserver);
+  static std::string createTopic(const std::string &topicName, const std::string &brokerAddr, const std::string &clusterName, const std::string &nameserver);
 
-  static std::string createDelayTopic(const std::string& topicName, const std::string& brokerAddr, const std::string& clusterName, const std::string& nameserver);
+  static std::string createDelayTopic(const std::string &topicName, const std::string &brokerAddr, const std::string &clusterName, const std::string &nameserver);
 
-  static std::string createFIFOTopic(const std::string& topicName, const std::string& brokerAddr, const std::string& clusterName, const std::string& nameserver);
+  static std::string createFIFOTopic(const std::string &topicName, const std::string &brokerAddr, const std::string &clusterName, const std::string &nameserver);
 
-  static std::string createTransactionTopic(const std::string& topicName, const std::string& brokerAddr, const std::string& clusterName, const std::string& nameserver);
+  static std::string createTransactionTopic(const std::string &topicName, const std::string &brokerAddr, const std::string &clusterName, const std::string &nameserver);
 
-  static std::string createOrderlyConsumerGroup(const std::string& consumerGroup, const std::string& brokerAddr, const std::string& clusterName, const std::string& nameserver);
+  static std::string createOrderlyConsumerGroup(const std::string &consumerGroup, const std::string &brokerAddr, const std::string &clusterName, const std::string &nameserver);
 
-  static std::string clusterList(const std::string& nameserver);
+  static std::string clusterList(const std::string &nameserver);
 };

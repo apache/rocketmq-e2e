@@ -14,28 +14,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
 #include <string>
 #include <vector>
 #include <mutex>
 #include <thread>
-#include <rocketmq/DefaultMQPullConsumer.h>
-#include <rocketmq/MQMessage.h>
+#include "gtest/gtest.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
+#include "rocketmq/MQMessage.h"
 #include "resource/Resource.h"
 #include "frame/BaseOperate.h"
-
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//Test the normal launch of PullConsumer and expect success
-TEST(PullConsumerInitTest, testNormalPullConsumer){
+// Test the normal launch of PullConsumer and expect success
+TEST(PullConsumerInitTest, testNormalPullConsumer)
+{
     SCOPED_TRACE("Start [PullConsumer] failed, expected success.");
     std::string groupId = getGroupId("testNoClientConfiguration");
-    std::string topic = getTopic(MessageType::NORMAL, "testNoClientConfiguration",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    std::string topic = getTopic(MessageType::NORMAL, "testNoClientConfiguration", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     ASSERT_NO_THROW({
         rocketmq::DefaultMQPullConsumer consumer(groupId);
         consumer.setNamesrvAddr(resource->getNamesrv());
+        consumer.setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
         consumer.registerMessageQueueListener(topic, NULL);
         consumer.start();
         std::this_thread::sleep_for(std::chrono::seconds(5));

@@ -24,11 +24,11 @@
 #include <iostream>
 #include <cassert>
 #include <chrono>
-#include <spdlog/spdlog.h>
+#include "spdlog/spdlog.h"
 #include "utils/RandomUtils.h"
 #include "utils/MQAdminUtils.h"
 #include "enums/MessageType.h"
 
-std::string getTopic(MessageType messageType, const std::string& methodName,const std::string& brokerAddr,const std::string& namesrvAddr,const std::string& cluster);
+std::string getTopic(MessageType messageType, const std::string &methodName, const std::string &brokerAddr, const std::string &namesrvAddr, const std::string &cluster);
 
-std::string getGroupId(const std::string& methodName);
+std::string getGroupId(const std::string &methodName);

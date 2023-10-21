@@ -14,57 +14,66 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- #include "factory/MessageFactory.h"
+#include "factory/MessageFactory.h"
 #include <string>
 
-rocketmq::MQMessage MessageFactory::getRandomMessgae(const std::string& topic){
+rocketmq::MQMessage MessageFactory::getRandomMessgae(const std::string &topic)
+{
     std::string body = RandomUtils::getStringByUUID();
-    return getStringMessage(topic,body);
+    return getStringMessage(topic, body);
 }
 
-rocketmq::MQMessage MessageFactory::getStringMessage(const std::string& topic, std::string& body){
-    rocketmq::MQMessage msg(topic,body);
+rocketmq::MQMessage MessageFactory::getStringMessage(const std::string &topic, std::string &body)
+{
+    rocketmq::MQMessage msg(topic, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::getStringMessageByTag(const std::string& topic,const std::string& tags,const std::string& body){
-    rocketmq::MQMessage msg(topic,tags,body);
+rocketmq::MQMessage MessageFactory::getStringMessageByTag(const std::string &topic, const std::string &tags, const std::string &body)
+{
+    rocketmq::MQMessage msg(topic, tags, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::getRandomMessageByTag(const std::string& topic, std::string& tags){
+rocketmq::MQMessage MessageFactory::getRandomMessageByTag(const std::string &topic, std::string &tags)
+{
     std::string body = RandomUtils::getStringByUUID();
-    return getStringMessageByTag(topic,tags,body);
+    return getStringMessageByTag(topic, tags, body);
 }
 
-rocketmq::MQMessage MessageFactory::buildMessage(const std::string& topic){
+rocketmq::MQMessage MessageFactory::buildMessage(const std::string &topic)
+{
     std::string body = RandomUtils::getStringByUUID();
     std::string tag = NameUtils::getRandomTagName();
-    rocketmq::MQMessage msg(topic,tag,body);
+    rocketmq::MQMessage msg(topic, tag, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::buildMessage(const std::string& topic, const std::string& tags){
+rocketmq::MQMessage MessageFactory::buildMessage(const std::string &topic, const std::string &tags)
+{
     std::string body = RandomUtils::getStringByUUID();
     std::string keys = RandomUtils::getStringByUUID();
-    rocketmq::MQMessage msg(topic,tags,keys,body);
+    rocketmq::MQMessage msg(topic, tags, keys, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::buildMessage(const std::string& topic, const std::string& tags, const std::string& body){
+rocketmq::MQMessage MessageFactory::buildMessage(const std::string &topic, const std::string &tags, const std::string &body)
+{
     std::string keys = RandomUtils::getStringByUUID();
-    rocketmq::MQMessage msg(topic,tags,keys,body);
+    rocketmq::MQMessage msg(topic, tags, keys, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::buildMessageOnlyTag(const std::string& topic, const std::string& tags, const std::string& body){
-    rocketmq::MQMessage msg(topic,tags,body);
+rocketmq::MQMessage MessageFactory::buildMessageOnlyTag(const std::string &topic, const std::string &tags, const std::string &body)
+{
+    rocketmq::MQMessage msg(topic, tags, body);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::buildDelayMessage(const std::string& topic, const std::string& tags, const std::string& body,int delayTimeLevel){
+rocketmq::MQMessage MessageFactory::buildDelayMessage(const std::string &topic, const std::string &tags, const std::string &body, int delayTimeLevel)
+{
     std::string keys = RandomUtils::getStringByUUID();
-    rocketmq::MQMessage msg(topic,tags,keys,body);
+    rocketmq::MQMessage msg(topic, tags, keys, body);
     msg.setDelayTimeLevel(delayTimeLevel);
     return msg;
 }
@@ -73,23 +82,26 @@ rocketmq::MQMessage MessageFactory::buildDelayMessage(const std::string& topic, 
 
 // }
 
-rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string& topic, std::map<std::string,std::string>& properties){
+rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string &topic, std::map<std::string, std::string> &properties)
+{
     std::string body = RandomUtils::getStringByUUID();
-    rocketmq::MQMessage msg(topic,body);
+    rocketmq::MQMessage msg(topic, body);
     msg.setProperties(properties);
     return msg;
 }
 
-rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string& topic, const std::string& messageBody, std::map<std::string,std::string>& properties){
-    rocketmq::MQMessage msg(topic,messageBody);
+rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string &topic, const std::string &messageBody, std::map<std::string, std::string> &properties)
+{
+    rocketmq::MQMessage msg(topic, messageBody);
     msg.setProperties(properties);
     return msg;
 }
 
 // rocketmq::MQMessage MessageFactory::buildOrderMessageWithProperty(const std::string& topic, const std::string& messageBody, const std::string& messageGroup, std::map<std::string,std::string>& properties);
 
-rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string& topic, const std::string& tag, const std::string& body, std::map<std::string,std::string>& properties,const std::vector<std::string>& keys){
-    rocketmq::MQMessage msg(topic,tag,body);
+rocketmq::MQMessage MessageFactory::buildMessageWithProperty(const std::string &topic, const std::string &tag, const std::string &body, std::map<std::string, std::string> &properties, const std::vector<std::string> &keys)
+{
+    rocketmq::MQMessage msg(topic, tag, body);
     msg.setProperties(properties);
     msg.setKeys(keys);
     return msg;

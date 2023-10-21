@@ -17,14 +17,12 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <spdlog/logger.h>
 #include <string>
-#include <rocketmq/MQMessageExt.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/MQMessageListener.h>
-
+#include "gtest/gtest.h"
+#include "spdlog/logger.h"
+#include "rocketmq/MQMessageExt.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/MQMessageListener.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -40,10 +38,11 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//Send 10 messages, set other groupid's pushconsumer consumption from first, expect to accept all messages again
-TEST(OffsetTest, testConsumeFromFisrtOffset){
+// Send 10 messages, set other groupid's pushconsumer consumption from first, expect to accept all messages again
+TEST(OffsetTest, testConsumeFromFisrtOffset)
+{
     int SEND_NUM = 10;
-    std::string topic = getTopic(MessageType::NORMAL, "testConsumeFromFisrtOffset", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string topic = getTopic(MessageType::NORMAL, "testConsumeFromFisrtOffset", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     std::string group1 = getGroupId("testConsumeFromFisrtOffset1");
     std::string group2 = getGroupId("testConsumeFromFisrtOffset2");
     std::string tag = NameUtils::getRandomTagName();
@@ -60,29 +59,27 @@ TEST(OffsetTest, testConsumeFromFisrtOffset){
     rmqPushConsumer1->registerMessageListener(listener1.get());
     rmqPushConsumer1->start();
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group1);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
-
     auto producer = ProducerFactory::getRMQProducer(group1);
 
     ASSERT_NE(producer, nullptr);
 
-    for(int i=0;i<SEND_NUM;i++){
-        auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
+    for (int i = 0; i < SEND_NUM; i++)
+    {
+        auto message = MessageFactory::buildMessage(topic, tag, std::to_string(i));
         producer->send(message);
     }
 
-    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+240*1000L;
-    while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
-        if(listener1->getDequeueMessages()->getDataSize() == SEND_NUM){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 240 * 1000L;
+    while (endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+    {
+        if (listener1->getDequeueMessages()->getDataSize() == SEND_NUM)
+        {
             break;
         }
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
-    ASSERT_EQ(listener1->getDequeueMessages()->getDataSize(),SEND_NUM);
+    ASSERT_EQ(listener1->getDequeueMessages()->getDataSize(), SEND_NUM);
 
     rmqPushConsumer1->shutdown();
 
@@ -97,54 +94,101 @@ TEST(OffsetTest, testConsumeFromFisrtOffset){
     rmqPushConsumer2->registerMessageListener(listener2.get());
     rmqPushConsumer2->start();
 
-    long endTime2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+240*1000L;
-    while(endTime2 > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
-        if(listener2->getDequeueMessages()->getDataSize() == SEND_NUM){
+    long endTime2 = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 240 * 1000L;
+    while (endTime2 > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+    {
+        if (listener2->getDequeueMessages()->getDataSize() == SEND_NUM)
+        {
             break;
         }
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
-    ASSERT_EQ(listener2->getDequeueMessages()->getDataSize(),SEND_NUM);
-
+    ASSERT_EQ(listener2->getDequeueMessages()->getDataSize(), SEND_NUM);
 
     rmqPushConsumer2->shutdown();
     producer->shutdown();
 }
 
-//send 10 messages, PullConsumer normally receives messages, but does not update messages offset, expect the messages are receive again
-TEST(OffsetTest, test_pull_receive_nack){
-    int SEND_NUM = 10;
-    std::string topic = getTopic(MessageType::NORMAL, "test_pull_receive_nack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-    std::string group = getGroupId("test_pull_receive_nack");
+// Backlog 100 messages, start the consumer, and set the pull message from the LAST, expect to consume 100 messages
+TEST(OffsetTest, testConsumeFromLastOffset){
+    int SEND_NUM = 100;
+    std::string topic = getTopic(MessageType::NORMAL, "testConsumeFromLastOffset", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
+    std::string group = getGroupId("testConsumeFromLastOffset");
     std::string tag = NameUtils::getRandomTagName();
-
-    auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer));
 
     auto producer = ProducerFactory::getRMQProducer(group);
     ASSERT_NE(producer, nullptr);
 
-    for(int i=0;i<SEND_NUM;i++){
-        auto message = MessageFactory::buildMessage(topic,tag,tag+"-"+std::to_string(i));
+    for (int i = 0; i < SEND_NUM; i++)
+    {
+        auto message = MessageFactory::buildMessage(topic, tag, std::to_string(i));
+        producer->send(message);
+    }
+
+    std::shared_ptr<RMQNormalListener> listener = std::make_shared<RMQNormalListener>("Listener");
+
+    auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
+    rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
+    rmqPushConsumer->setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
+    rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
+    rmqPushConsumer->setConsumeThreadCount(4);
+    rmqPushConsumer->subscribe(topic, tag);
+    rmqPushConsumer->registerMessageListener(listener.get());
+    rmqPushConsumer->start();
+
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 240 * 1000L;
+    while (endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+    {
+        if (listener->getDequeueMessages()->getDataSize() == SEND_NUM)
+        {
+            break;
+        }
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+    }
+
+    ASSERT_EQ(listener->getDequeueMessages()->getDataSize(), SEND_NUM);
+
+    rmqPushConsumer->shutdown();
+    producer->shutdown();
+}
+
+// send 10 messages, PullConsumer normally receives messages, but does not update messages offset, expect the messages are receive again
+TEST(OffsetTest, test_pull_receive_nack)
+{
+    int SEND_NUM = 10;
+    std::string topic = getTopic(MessageType::NORMAL, "test_pull_receive_nack", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
+    std::string group = getGroupId("test_pull_receive_nack");
+    std::string tag = NameUtils::getRandomTagName();
+
+    auto pullConsumer = ConsumerFactory::getPullConsumer(topic, group);
+
+    auto producer = ProducerFactory::getRMQProducer(group);
+    ASSERT_NE(producer, nullptr);
+
+    for (int i = 0; i < SEND_NUM; i++)
+    {
+        auto message = MessageFactory::buildMessage(topic, tag, tag + "-" + std::to_string(i));
         producer->send(message);
     }
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
+    ASSERT_EQ(SEND_NUM, producer->getEnqueueMessages()->getDataSize());
 
     std::vector<rocketmq::MQMessageQueue> mqs;
     pullConsumer->fetchSubscribeMessageQueues(topic, mqs);
 
     std::vector<rocketmq::MQMessageExt> receivedMessage;
-    SimpleConcurrentHashMap<std::string,std::atomic<int>> map;
+    SimpleConcurrentHashMap<std::string, std::atomic<int>> map;
 
-    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()+30* 1000L;
-    while(endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count()){
+    long endTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count() + 30 * 1000L;
+    while (endTime > std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count())
+    {
         std::vector<std::function<void()>> runnables;
-        for (auto& mq : mqs) {
-            runnables.push_back([&](){
+        for (auto &mq : mqs)
+        {
+            runnables.push_back([&]()
+                                {
                 long long offset = pullConsumer->fetchConsumeOffset(mq, false);
                 if(offset<0) return;
                 rocketmq::PullResult pullResult = pullConsumer->pull(mq, tag, offset, SEND_NUM);
@@ -168,22 +212,24 @@ TEST(OffsetTest, test_pull_receive_nack){
                         break;
                     default:
                         break;
-                }
-            });
+                } });
         }
-        
+
         std::vector<std::future<void>> futures;
-        for (const auto& runnable : runnables) {
+        for (const auto &runnable : runnables)
+        {
             futures.push_back(std::async(std::launch::async, runnable));
         }
 
-        for (auto& future : futures) {
+        for (auto &future : futures)
+        {
             future.get();
         }
     }
 
-    for(auto& value : map.getAllValues()){
-        ASSERT_TRUE(value>1);
+    for (auto &value : map.getAllValues())
+    {
+        ASSERT_TRUE(value > 1);
     }
 
     pullConsumer->shutdown();

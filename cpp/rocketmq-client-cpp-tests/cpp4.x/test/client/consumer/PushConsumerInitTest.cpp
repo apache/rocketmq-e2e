@@ -14,15 +14,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
 #include <string>
 #include <vector>
 #include <mutex>
 #include <thread>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/DefaultMQProducer.h>
-#include <rocketmq/MQMessageListener.h>
-#include <rocketmq/MQMessage.h>
+#include "gtest/gtest.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/DefaultMQProducer.h"
+#include "rocketmq/MQMessageListener.h"
+#include "rocketmq/MQMessage.h"
 #include "resource/Resource.h"
 #include "frame/BaseOperate.h"
 #include "listener/MsgListener.h"
@@ -30,19 +30,21 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//PushConsumer all parameters are set properly, expect start success
-TEST(PushConsumerInitTest, testNormalSetting){
+// PushConsumer all parameters are set properly, expect start success
+TEST(PushConsumerInitTest, testNormalSetting)
+{
     SCOPED_TRACE("Start [PushConsumer] failed, expected success.");
     std::string groupId = getGroupId("testNormalSetting");
-    std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting",resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    std::string topic = getTopic(MessageType::NORMAL, "testNormalSetting", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     ASSERT_NO_THROW({
         rocketmq::DefaultMQPushConsumer consumer(groupId);
         consumer.setNamesrvAddr(resource->getNamesrv());
+        consumer.setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
         consumer.setConsumeThreadCount(20);
         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
         consumer.subscribe(topic, "*");
         MsgListener msglistener;
-        consumer.registerMessageListener(&msglistener); 
+        consumer.registerMessageListener(&msglistener);
         consumer.start();
         std::this_thread::sleep_for(std::chrono::seconds(5));
         consumer.shutdown();
@@ -61,7 +63,7 @@ TEST(PushConsumerInitTest, testNormalSetting){
 ////         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////         consumer.subscribe(topic, "*");
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();
@@ -80,25 +82,27 @@ TEST(PushConsumerInitTest, testNormalSetting){
 ////         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////         consumer.subscribe(topic, "*");
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();
 ////     },rocketmq::MQException);
 //// }
 
-//Correct setting the 'EndPoint' of the consumer client,expect start failed
-TEST(PushConsumerInitTest, testNormalNameserver){
+// Correct setting the 'EndPoint' of the consumer client,expect start failed
+TEST(PushConsumerInitTest, testNormalNameserver)
+{
     SCOPED_TRACE("Start [PushConsumer] [Producer], expected success.");
     std::string groupId = getGroupId("testNormalNameserver");
-    std::string topic = getTopic(MessageType::NORMAL, "testNormalNameserver", resource->getBrokerAddr(),resource->getNamesrv(),resource->getCluster());
+    std::string topic = getTopic(MessageType::NORMAL, "testNormalNameserver", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
 
     rocketmq::DefaultMQPushConsumer consumer(groupId);
     consumer.setNamesrvAddr(resource->getNamesrv());
+    consumer.setSessionCredentials(resource->getAccessKey(), resource->getSecretKey(), resource->getAccessChannel());
     consumer.subscribe(topic, "*");
     consumer.setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
     consumer.setConsumeThreadCount(4);
-    MsgListener *msglistener=new MsgListener();
+    MsgListener *msglistener = new MsgListener();
     consumer.registerMessageListener(msglistener);
     consumer.start();
 
@@ -111,8 +115,9 @@ TEST(PushConsumerInitTest, testNormalNameserver){
     producer.start();
 
     int msgcount = 10;
-    for (int i = 0; i < msgcount; ++i) {
-        rocketmq::MQMessage msg(topic,"*",RandomUtils::getStringByUUID());
+    for (int i = 0; i < msgcount; ++i)
+    {
+        rocketmq::MQMessage msg(topic, "*", RandomUtils::getStringByUUID());
         producer.send(msg);
     }
     std::this_thread::sleep_for(std::chrono::seconds(10));
@@ -133,7 +138,7 @@ TEST(PushConsumerInitTest, testNormalNameserver){
 ////        consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////        consumer.subscribe(topic, "*");
 ////        MsgListener msglistener;
-////        consumer.registerMessageListener(&msglistener); 
+////        consumer.registerMessageListener(&msglistener);
 ////        consumer.setAsyncPull(true);
 ////        consumer.start();
 ////        std::this_thread::sleep_for(std::chrono::seconds(5));
@@ -152,7 +157,7 @@ TEST(PushConsumerInitTest, testNormalNameserver){
 ////         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////         consumer.subscribe("testErrorTopic", "*");
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();
@@ -170,7 +175,7 @@ TEST(PushConsumerInitTest, testNormalNameserver){
 ////         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////         consumer.subscribe("testErrorTopic", "*");
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();
@@ -187,7 +192,7 @@ TEST(PushConsumerInitTest, testNormalNameserver){
 ////         consumer.setConsumeThreadCount(20);
 ////         consumer.setConsumeMessageBatchMaxSize(4 * 1024 * 1024);
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();
@@ -201,10 +206,10 @@ TEST(PushConsumerInitTest, testNormalNameserver){
 ////     ASSERT_THROW({
 ////         rocketmq::DefaultMQPushConsumer consumer(groupId);
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.subscribe(topic, "*");
 ////         MsgListener msglistener;
-////         consumer.registerMessageListener(&msglistener); 
+////         consumer.registerMessageListener(&msglistener);
 ////         consumer.start();
 ////         std::this_thread::sleep_for(std::chrono::seconds(5));
 ////         consumer.shutdown();

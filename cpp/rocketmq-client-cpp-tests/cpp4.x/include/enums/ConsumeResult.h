@@ -16,7 +16,8 @@
  */
 #pragma once
 
-enum class ConsumeResult {
+enum class ConsumeResult
+{
     SUCCESS,
     FAILURE
 };

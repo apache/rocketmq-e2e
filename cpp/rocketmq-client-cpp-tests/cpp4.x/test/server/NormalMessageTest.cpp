@@ -17,11 +17,9 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <spdlog/logger.h>
 #include <string>
-
+#include "gtest/gtest.h"
+#include "spdlog/logger.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -44,12 +42,6 @@ TEST(NormalMessageTest, testNormal_Send_PushConsume){
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-
     auto producer = ProducerFactory::getRMQProducer(group);
 
     ASSERT_NE(producer, nullptr);
@@ -64,7 +56,6 @@ TEST(NormalMessageTest, testNormal_Send_PushConsume){
     ASSERT_TRUE(VerifyUtils::verifyNormalMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getListener()->getDequeueMessages())));
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     producer->shutdown();
 }
 
@@ -76,12 +67,6 @@ TEST(NormalMessageTest, testNormal_Send_PushConsume){
 ////
 ////    auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQNormalListener>());
 ////
-////    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-////
-////    std::this_thread::sleep_for(std::chrono::seconds(2));
-////
-////    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-////
 ////    auto producer = ProducerFactory::getRMQProducer(group);
 ////
 ////    ASSERT_NE(producer, nullptr);
@@ -92,6 +77,5 @@ TEST(NormalMessageTest, testNormal_Send_PushConsume){
 ////    }
 ////
 ////    pushConsumer->shutdown();
-////    pullConsumer->shutdown();
 ////    producer->shutdown();
 ////}

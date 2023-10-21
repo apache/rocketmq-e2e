@@ -18,83 +18,103 @@
 #include "common/AbstractMQProducer.h"
 #include "resource/Resource.h"
 #include "common/MQMessageQueueSelector.h"
+#include "rocketmq/DefaultMQProducer.h"
+#include "rocketmq/TransactionMQProducer.h"
+#include "rocketmq/MQMessage.h"
+#include "spdlog/logger.h"
 #include <future>
 #include <iostream>
 #include <thread>
 #include <memory>
-#include <rocketmq/DefaultMQProducer.h>
-#include <rocketmq/TransactionMQProducer.h>
-#include <rocketmq/MQMessage.h>
-#include <spdlog/logger.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class RMQNormalProducer : public AbstractMQProducer {
+class RMQNormalProducer : public AbstractMQProducer
+{
 private:
     std::shared_ptr<rocketmq::DefaultMQProducer> producer;
     std::shared_ptr<rocketmq::TransactionMQProducer> transactionProducer;
+
 public:
-    RMQNormalProducer(std::shared_ptr<rocketmq::DefaultMQProducer> producer):producer(producer){}
+    RMQNormalProducer(std::shared_ptr<rocketmq::DefaultMQProducer> producer) : producer(producer) {}
 
-    RMQNormalProducer(std::shared_ptr<rocketmq::TransactionMQProducer> producer):transactionProducer(producer){}
+    RMQNormalProducer(std::shared_ptr<rocketmq::TransactionMQProducer> producer) : transactionProducer(producer) {}
 
-    std::shared_ptr<rocketmq::DefaultMQProducer> getProducer(){
+    std::shared_ptr<rocketmq::DefaultMQProducer> getProducer()
+    {
         return producer;
     }
 
-    std::shared_ptr<rocketmq::TransactionMQProducer> getTransProducer(){
+    std::shared_ptr<rocketmq::TransactionMQProducer> getTransProducer()
+    {
         return transactionProducer;
     }
 
-    void start() {
+    void start()
+    {
         producer->start();
     }
 
-    void startTransaction() {
+    void startTransaction()
+    {
         transactionProducer->start();
     }
 
-    rocketmq::SendResult sendTrans(rocketmq::MQMessage& msg, rocketmq::LocalTransactionState state){
+    rocketmq::SendResult sendTrans(rocketmq::MQMessage &msg, rocketmq::LocalTransactionState state)
+    {
         rocketmq::SendResult sendResult;
-        try{
-            //COMMIT_MESSAGE, ROLLBACK_MESSAGE, UNKNOWN
+        try
+        {
+            // COMMIT_MESSAGE, ROLLBACK_MESSAGE, UNKNOWN
             sendResult = transactionProducer->sendMessageInTransaction(msg, &state);
             getEnqueueMessages()->addData(sendResult.getMsgId());
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             multi_logger->error("TransProducer send message failed, {}", e.what());
         }
         return sendResult;
     }
 
-    rocketmq::SendResult send(rocketmq::MQMessage& msg) {
+    rocketmq::SendResult send(rocketmq::MQMessage &msg)
+    {
         rocketmq::SendResult sendResult;
-        try {
+        try
+        {
             sendResult = producer->send(msg);
             getEnqueueMessages()->addData(sendResult.getMsgId());
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             multi_logger->error("Producer send message failed, {}", e.what());
         }
         return sendResult;
     }
 
-    rocketmq::SendResult sendOrderMessage(rocketmq::MQMessage& msg,int orderId) {
+    rocketmq::SendResult sendOrderMessage(rocketmq::MQMessage &msg, int orderId)
+    {
         std::shared_ptr<MQMessageQueueSelector> selector = std::make_shared<MQMessageQueueSelector>();
         rocketmq::SendResult sendResult;
-        try {
-            sendResult = producer->send(msg,selector.get(),&orderId);
+        try
+        {
+            sendResult = producer->send(msg, selector.get(), &orderId);
             getEnqueueMessages()->addData(sendResult.getMsgId());
-        } catch (const std::exception& e) {
+        }
+        catch (const std::exception &e)
+        {
             multi_logger->error("Producer send message failed, {}", e.what());
         }
         return sendResult;
     }
 
-    void sendAsync(rocketmq::MQMessage& msg) {
+    void sendAsync(rocketmq::MQMessage &msg)
+    {
         producer->send(msg);
     }
 
-    rocketmq::SendResult send(const std::string& topic, const std::string& tags, const std::string& body) {
+    rocketmq::SendResult send(const std::string &topic, const std::string &tags, const std::string &body)
+    {
         rocketmq::MQMessage msg(topic, // topic
                                 tags,  // tags
                                 body); // body
@@ -103,25 +123,31 @@ public:
         return sendResult;
     }
 
-    void send(const std::string& topic, const std::string& tags, int messageNim) {
-        for(int i = 0; i < messageNim; i++){
-            rocketmq::MQMessage msg(topic,tags,RandomUtils::getStringByUUID());
-            
-            try{
+    void send(const std::string &topic, const std::string &tags, int messageNim)
+    {
+        for (int i = 0; i < messageNim; i++)
+        {
+            rocketmq::MQMessage msg(topic, tags, RandomUtils::getStringByUUID());
+
+            try
+            {
                 rocketmq::SendResult sendResult = producer->send(msg);
                 getEnqueueMessages()->addData(sendResult.getMsgId());
-            }catch(const std::exception& e){
+            }
+            catch (const std::exception &e)
+            {
                 multi_logger->error("Producer send message failed, {}", e.what());
             }
-
         }
     }
 
-    void shutdown() {
+    void shutdown()
+    {
         producer->shutdown();
     }
 
-    void shutdownTransaction() {
+    void shutdownTransaction()
+    {
         transactionProducer->shutdown();
     }
 };

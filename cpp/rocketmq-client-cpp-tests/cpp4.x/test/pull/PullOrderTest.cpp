@@ -19,12 +19,10 @@
 #include <cstddef>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <rocketmq/SendResult.h>
-#include <spdlog/logger.h>
 #include <string>
-
+#include "gtest/gtest.h"
+#include "rocketmq/SendResult.h"
+#include "spdlog/logger.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -38,33 +36,35 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//Send 20 sequential messages synchronously, and expect PullConsumer to receive and ack messages properly and maintain the sequence
-TEST(PullOrderTest, testFIFO_pull_receive_ack){
+// Send 20 sequential messages synchronously, and expect PullConsumer to receive and ack messages properly and maintain the sequence
+TEST(PullOrderTest, testFIFO_pull_receive_ack)
+{
     int SEND_NUM = 20;
-    std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+    std::string topic = getTopic(MessageType::FIFO, "testFIFO_pull_receive_ack", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     std::string group = getGroupId("testFIFO_pull_receive_ack");
     std::string tag = NameUtils::getRandomTagName();
 
-    auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
+    auto pullConsumer = ConsumerFactory::getPullConsumer(topic, group);
 
     std::this_thread::sleep_for(std::chrono::seconds(2));
 
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer));
+    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic, tag, pullConsumer));
 
     auto producer = ProducerFactory::getRMQProducer(group);
 
     ASSERT_NE(producer, nullptr);
 
-    for(int i=0;i<SEND_NUM;i++){
-        auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
-        producer->sendOrderMessage(message,0);
+    for (int i = 0; i < SEND_NUM; i++)
+    {
+        auto message = MessageFactory::buildMessage(topic, tag, std::to_string(i));
+        producer->sendOrderMessage(message, 0);
     }
 
     std::this_thread::sleep_for(std::chrono::seconds(1));
 
-    ASSERT_EQ(SEND_NUM,producer->getEnqueueMessages()->getDataSize());
-    //只能保证拉的队列里面的消息是有序的，不能保证整个队列的消息是有序的
-    ASSERT_TRUE(VerifyUtils::waitFIFOReceiveThenAck(producer,pullConsumer,topic,tag,5));
+    ASSERT_EQ(SEND_NUM, producer->getEnqueueMessages()->getDataSize());
+    // It can only guarantee that the messages in the pulled queue are in order, but it cannot guarantee that the messages in the entire queue are in order.
+    ASSERT_TRUE(VerifyUtils::waitFIFOReceiveThenAck(producer, pullConsumer, topic, tag, 5));
 
     pullConsumer->shutdown();
     producer->shutdown();

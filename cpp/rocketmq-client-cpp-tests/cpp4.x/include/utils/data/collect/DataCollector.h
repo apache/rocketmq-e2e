@@ -20,17 +20,18 @@
 #include <string>
 
 template <typename T>
-class DataCollector {
+class DataCollector
+{
 public:
     virtual void resetData() = 0;
     virtual std::vector<T> getAllData() = 0;
     virtual std::set<T> getAllDataWithoutDuplicate() = 0;
-    virtual void addData(const T& data) = 0;
+    virtual void addData(const T &data) = 0;
     virtual std::size_t getDataSizeWithoutDuplicate() = 0;
     virtual std::size_t getDataSize() = 0;
-    virtual bool isRepeatedData(const T& data) = 0;
-    virtual int getRepeatedTimeForData(const T& data) = 0;
-    virtual void removeData(const T& data) = 0;
+    virtual bool isRepeatedData(const T &data) = 0;
+    virtual int getRepeatedTimeForData(const T &data) = 0;
+    virtual void removeData(const T &data) = 0;
     virtual void lockIncrement() = 0;
     virtual void unlockIncrement() = 0;
 };

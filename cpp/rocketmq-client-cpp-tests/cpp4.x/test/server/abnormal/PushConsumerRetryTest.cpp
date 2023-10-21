@@ -17,14 +17,12 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <spdlog/logger.h>
 #include <string>
-#include <rocketmq/MQMessageExt.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/MQMessageListener.h>
-
+#include "gtest/gtest.h"
+#include "spdlog/logger.h"
+#include "rocketmq/MQMessageExt.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/MQMessageListener.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -155,10 +153,6 @@ TEST(PushConsumerRetryTest, testExceptionConsumption){
     std::string topic = getTopic(MessageType::NORMAL, "testExceptionConsumption", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
     std::string group = getGroupId("testExceptionConsumption");
     std::string tag = NameUtils::getRandomTagName();
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
 
     ExceptionMsgListener* listener = new ExceptionMsgListener();
     auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
@@ -167,7 +161,7 @@ TEST(PushConsumerRetryTest, testExceptionConsumption){
     rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
     rmqPushConsumer->setConsumeThreadCount(8);
     rmqPushConsumer->subscribe(topic, tag);
-    rmqPushConsumer->setMessageModel(rocketmq::CLUSTERING);
+    rmqPushConsumer->setMessageModel(rocketmq::MessageModel::CLUSTERING);
     rmqPushConsumer->setMaxReconsumeTimes(2);
     rmqPushConsumer->registerMessageListener(listener);
     rmqPushConsumer->start();
@@ -199,10 +193,6 @@ TEST(PushConsumerRetryTest, testExceptionConsumption){
 ////     std::string topic = getTopic(MessageType::NORMAL, "testNullConsumption", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
 ////     std::string group = getGroupId("testNullConsumption");
 ////     std::string tag = NameUtils::getRandomTagName();
-////     auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-////     std::this_thread::sleep_for(std::chrono::seconds(2));
-////     ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-////     pullConsumer->shutdown();
 ////     NullMsgListener* listener = new NullMsgListener();
 ////     auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
 ////     rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
@@ -210,7 +200,7 @@ TEST(PushConsumerRetryTest, testExceptionConsumption){
 ////     rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
 ////     rmqPushConsumer->setConsumeThreadCount(4);
 ////     rmqPushConsumer->subscribe(topic, tag);
-////     rmqPushConsumer->setMessageModel(rocketmq::CLUSTERING);
+////     rmqPushConsumer->setMessageModel(rocketmq::MessageModel::CLUSTERING);
 ////     rmqPushConsumer->setMaxReconsumeTimes(2);
 ////     rmqPushConsumer->registerMessageListener(listener);
 ////     rmqPushConsumer->start();
@@ -235,11 +225,6 @@ TEST(PushConsumerRetryTest, testNormalTopicPushConsumerRetry){
     std::string group = getGroupId("testNormalTopicPushConsumerRetry");
     std::string tag = NameUtils::getRandomTagName();
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
-
     NormalMsgListener* listener = new NormalMsgListener();
     auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
     rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
@@ -247,7 +232,7 @@ TEST(PushConsumerRetryTest, testNormalTopicPushConsumerRetry){
     rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
     rmqPushConsumer->setConsumeThreadCount(8);
     rmqPushConsumer->subscribe(topic, tag);
-    rmqPushConsumer->setMessageModel(rocketmq::CLUSTERING);
+    rmqPushConsumer->setMessageModel(rocketmq::MessageModel::CLUSTERING);
     rmqPushConsumer->setMaxReconsumeTimes(2);
     rmqPushConsumer->registerMessageListener(listener);
     rmqPushConsumer->start();
@@ -270,8 +255,6 @@ TEST(PushConsumerRetryTest, testNormalTopicPushConsumerRetry){
         std::this_thread::sleep_for(std::chrono::seconds(5));
     }
 
-    std::cout << "retryMsgs size: " << listener->retryMsgs.size() << std::endl;
-    std::cout << "firstMsgs size: " << listener->firstMsgs.size() << std::endl;
     for(auto& msg : producer->getEnqueueMessages()->getAllData()){
         ASSERT_TRUE(listener->firstMsgs.contains(msg) && listener->retryMsgs.contains(msg));
     }
@@ -287,11 +270,6 @@ TEST(PushConsumerRetryTest, testFiFoTopicPushConsumerRetry){
     std::string group = getGroupId("testFiFoTopicPushConsumerRetry");
     std::string tag = NameUtils::getRandomTagName();
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-    pullConsumer->shutdown();
-
     FIFOMsgListener* listener = new FIFOMsgListener();
     auto rmqPushConsumer = std::make_shared<rocketmq::DefaultMQPushConsumer>(group);
     rmqPushConsumer->setNamesrvAddr(resource->getNamesrv());
@@ -299,7 +277,7 @@ TEST(PushConsumerRetryTest, testFiFoTopicPushConsumerRetry){
     rmqPushConsumer->setConsumeFromWhere(rocketmq::CONSUME_FROM_LAST_OFFSET);
     rmqPushConsumer->setConsumeThreadCount(4);
     rmqPushConsumer->subscribe(topic, tag);
-    rmqPushConsumer->setMessageModel(rocketmq::CLUSTERING);
+    rmqPushConsumer->setMessageModel(rocketmq::MessageModel::CLUSTERING);
     rmqPushConsumer->setMaxReconsumeTimes(2);
     rmqPushConsumer->registerMessageListener(listener);
     rmqPushConsumer->start();

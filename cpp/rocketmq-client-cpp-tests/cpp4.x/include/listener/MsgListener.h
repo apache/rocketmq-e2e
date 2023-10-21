@@ -17,20 +17,22 @@
 #pragma once
 
 #include "resource/Resource.h"
+#include "spdlog/logger.h"
+#include "rocketmq/MQMessageExt.h"
+#include "rocketmq/MQMessageListener.h"
 #include <atomic>
 #include <memory>
-#include <spdlog/logger.h>
 #include <vector>
-#include <rocketmq/MQMessageExt.h>
-#include <rocketmq/MQMessageListener.h>
 
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-class MsgListener : public rocketmq::MessageListenerConcurrently {
+class MsgListener : public rocketmq::MessageListenerConcurrently
+{
 private:
     std::atomic<int> count;
     std::vector<rocketmq::MQMessageExt> messages;
+
 public:
     MsgListener() { count = 0; };
 
@@ -42,11 +44,13 @@ public:
 
     virtual ~MsgListener() {}
 
-    virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt>& msgs) override {
-        for (const auto& msg : msgs) {
-                multi_logger->info("Received message: {}",msg.toString());
-                messages.push_back(msg);
-                count++;
+    virtual rocketmq::ConsumeStatus consumeMessage(const std::vector<rocketmq::MQMessageExt> &msgs) override
+    {
+        for (const auto &msg : msgs)
+        {
+            multi_logger->info("Received message: {}", msg.toString());
+            messages.push_back(msg);
+            count++;
         }
         return rocketmq::CONSUME_SUCCESS;
     }

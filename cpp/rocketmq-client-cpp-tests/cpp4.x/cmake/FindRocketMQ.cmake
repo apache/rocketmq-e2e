@@ -12,12 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+set(ROCKETMQ_CPP_LIB_PATH $ENV{ROCKETMQ_CPP_LIB})
+set(ROCKETMQ_CPP_INC_PATH $ENV{ROCKETMQ_CPP_INC})
+
 find_path(ROCKETMQ_INCLUDE_DIR
   NAMES
     rocketmq/DefaultMQProducer.h
   PATHS
     /usr/local/include
     /usr/include
+    ${ROCKETMQ_CPP_INC_PATH}
 )
 
 find_library(ROCKETMQ_LIBRARY
@@ -26,6 +30,7 @@ find_library(ROCKETMQ_LIBRARY
   PATHS
     /usr/local/lib
     /usr/lib
+    ${ROCKETMQ_CPP_LIB_PATH}
 )
 
 include(FindPackageHandleStandardArgs)

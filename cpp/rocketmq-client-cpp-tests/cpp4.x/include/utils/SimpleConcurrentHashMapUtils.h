@@ -23,89 +23,103 @@
 #include <vector>
 #include <atomic>
 
-template<typename Key, typename Value>
-class SimpleConcurrentHashMap {
+template <typename Key, typename Value>
+class SimpleConcurrentHashMap
+{
 private:
     std::unordered_map<Key, Value> map_;
     mutable std::shared_mutex mutex_;
 
 public:
-
-    size_t size() const {
+    size_t size() const
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         return map_.size();
     }
 
-    void insert(const Key& key,const Value& value) {
-        std::lock_guard<std::shared_mutex> lock(mutex_);
-        map_[key]=value;
-    }
-
-    bool contains(const Key& key) const {
-        std::shared_lock<std::shared_mutex> lock(mutex_);
-        return (map_.find(key) != map_.end());
-    }
-
-    void update(const Key& key,const Value& value) {
+    void insert(const Key &key, const Value &value)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         map_[key] = value;
     }
 
-    std::vector<Value> getAllValues() const{
+    bool contains(const Key &key) const
+    {
+        std::shared_lock<std::shared_mutex> lock(mutex_);
+        return (map_.find(key) != map_.end());
+    }
+
+    void update(const Key &key, const Value &value)
+    {
+        std::lock_guard<std::shared_mutex> lock(mutex_);
+        map_[key] = value;
+    }
+
+    std::vector<Value> getAllValues() const
+    {
         std::shared_lock<std::shared_mutex> lock(mutex_);
         std::vector<Value> values;
         values.reserve(map_.size());
-        for (const auto& entry : map_) {
+        for (const auto &entry : map_)
+        {
             values.push_back(entry.second);
         }
         return values;
     }
 
-    Value& operator[](const Key& key){
+    Value &operator[](const Key &key)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         return map_[key];
     }
 };
 
-template<typename Key, typename Value>
-class SimpleConcurrentHashMap<Key, std::atomic<Value>> {
+template <typename Key, typename Value>
+class SimpleConcurrentHashMap<Key, std::atomic<Value>>
+{
 private:
     std::unordered_map<Key, Value> map_;
     mutable std::shared_mutex mutex_;
 
 public:
-
-    size_t size() const {
+    size_t size() const
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         return map_.size();
     }
 
-    void insert(const Key& key,const Value& value) {
-        std::lock_guard<std::shared_mutex> lock(mutex_);
-        map_[key]=value;
-    }
-
-    bool contains(const Key& key) const {
-        std::shared_lock<std::shared_mutex> lock(mutex_);
-        return (map_.find(key) != map_.end());
-    }
-
-    void update(const Key& key,const Value& value) {
+    void insert(const Key &key, const Value &value)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         map_[key] = value;
     }
 
-    std::vector<Value> getAllValues() const{
+    bool contains(const Key &key) const
+    {
+        std::shared_lock<std::shared_mutex> lock(mutex_);
+        return (map_.find(key) != map_.end());
+    }
+
+    void update(const Key &key, const Value &value)
+    {
+        std::lock_guard<std::shared_mutex> lock(mutex_);
+        map_[key] = value;
+    }
+
+    std::vector<Value> getAllValues() const
+    {
         std::shared_lock<std::shared_mutex> lock(mutex_);
         std::vector<Value> values;
         values.reserve(map_.size());
-        for (const auto& entry : map_) {
+        for (const auto &entry : map_)
+        {
             values.push_back(entry.second);
         }
         return values;
     }
 
-    Value& operator[](const Key& key){
+    Value &operator[](const Key &key)
+    {
         std::lock_guard<std::shared_mutex> lock(mutex_);
         return map_[key];
     }

@@ -20,7 +20,8 @@
 #include <string>
 #include <sstream>
 
-class RandomUtils {
+class RandomUtils
+{
 
 public:
     RandomUtils() = delete;
@@ -32,7 +33,7 @@ public:
     static int getIntegerBetween(int n, int m);
     static int getIntegerMoreThanZero();
     static std::string randomAlphabetic(int length);
-    
+
 private:
     static constexpr int UNICODE_START = 0x4E00;
     static constexpr int UNICODE_END = 0x9FA0;

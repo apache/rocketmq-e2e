@@ -15,11 +15,13 @@
  * limitations under the License.
  */
 #pragma once
-#include <rocketmq/DefaultMQProducer.h>
+#include "rocketmq/DefaultMQProducer.h"
 
-class MQMessageQueueSelector : public rocketmq::MessageQueueSelector {
+class MQMessageQueueSelector : public rocketmq::MessageQueueSelector
+{
 public:
-    rocketmq::MQMessageQueue select(const std::vector<rocketmq::MQMessageQueue> &mqs, const rocketmq::MQMessage &msg, void *arg) {
+    rocketmq::MQMessageQueue select(const std::vector<rocketmq::MQMessageQueue> &mqs, const rocketmq::MQMessage &msg, void *arg)
+    {
         int orderId = *static_cast<int *>(arg);
         int index = orderId % mqs.size();
         return mqs[index];

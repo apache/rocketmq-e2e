@@ -19,7 +19,8 @@
 #include <string>
 #include <map>
 
-enum class MessageType {
+enum class MessageType
+{
     UNSPECIFIED,
     NORMAL,
     FIFO,

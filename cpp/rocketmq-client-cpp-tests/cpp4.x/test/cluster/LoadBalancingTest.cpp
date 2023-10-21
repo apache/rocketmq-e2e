@@ -14,18 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
 #include <iostream>
 #include <memory>
 #include <string>
 #include <mutex>
 #include <chrono>
 #include <thread>
-#include <spdlog/spdlog.h>
-#include <rocketmq/MQMessage.h>
-#include <rocketmq/DefaultMQProducer.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/DefaultMQPullConsumer.h>
+#include "gtest/gtest.h"
+#include "spdlog/spdlog.h"
+#include "rocketmq/MQMessage.h"
+#include "rocketmq/DefaultMQProducer.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
 #include "frame/BaseOperate.h"
 #include "listener/MsgListener.h"
 #include "listener/rmq/RMQNormalListener.h"
@@ -41,12 +41,12 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//Normal message load balancing, start 4 consumers, send 240 messages, expect 4 consumers to consume load balancing, each consume 1/4, then shutdown 2 of them, send 240 messages again, still load balancing, each consume half, and start 2 new consumers. Another 240 messages are sent, still load balanced, each consuming 1/4(bug: A segment error occurred when two pushConsumers were started for the same consumer group)
-// TEST(LoadBalancingTest, testLoadBalancing_normal_message){
-//     int SEND_NUM = 240;
-//     std::string topic = getTopic(MessageType::NORMAL, "testLoadBalancing_normal_message", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
-//     std::string group = getGroupId("testLoadBalancing_normal_message");
-//     std::string tag = NameUtils::getRandomTagName();
+// Normal message load balancing, start 4 consumers, send 240 messages, expect 4 consumers to consume load balancing, each consume 1/4, then shutdown 2 of them, send 240 messages again, still load balancing, each consume half, and start 2 new consumers. Another 240 messages are sent, still load balanced, each consuming 1/4(bug: A segment error occurred when two pushConsumers were started for the same consumer group)
+//  TEST(LoadBalancingTest, testLoadBalancing_normal_message){
+//      int SEND_NUM = 240;
+//      std::string topic = getTopic(MessageType::NORMAL, "testLoadBalancing_normal_message", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+//      std::string group = getGroupId("testLoadBalancing_normal_message");
+//      std::string tag = NameUtils::getRandomTagName();
 
 //     std::shared_ptr<RMQNormalListener> listener1 = std::make_shared<RMQNormalListener>("Listener1");
 //     std::shared_ptr<RMQNormalListener> listener2 = std::make_shared<RMQNormalListener>("Listener2");
@@ -60,7 +60,7 @@ extern std::shared_ptr<Resource> resource;
 //     auto producer = ProducerFactory::getRMQProducer(group);
 
 //     ASSERT_NE(producer, nullptr);
-    
+
 //     for(int i=0;i<SEND_NUM;i++){
 //         auto message = MessageFactory::buildMessage(topic,tag,std::to_string(i));
 //         producer->send(message);
@@ -85,4 +85,3 @@ extern std::shared_ptr<Resource> resource;
 //     ASSERT_EQ(SEND_NUM/4,listener3->getDequeueMessages()->getDataSize());
 //     ASSERT_EQ(SEND_NUM/4,listener4->getDequeueMessages()->getDataSize());
 // }
-

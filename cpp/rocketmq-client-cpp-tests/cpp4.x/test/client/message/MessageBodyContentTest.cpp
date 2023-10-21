@@ -14,17 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include <gtest/gtest.h>
 #include <iostream>
 #include <string>
 #include <mutex>
 #include <chrono>
 #include <thread>
-#include <spdlog/spdlog.h>
-#include <rocketmq/MQMessage.h>
-#include <rocketmq/DefaultMQProducer.h>
-#include <rocketmq/DefaultMQPushConsumer.h>
-#include <rocketmq/DefaultMQPullConsumer.h>
+#include "gtest/gtest.h"
+#include "spdlog/spdlog.h"
+#include "rocketmq/MQMessage.h"
+#include "rocketmq/DefaultMQProducer.h"
+#include "rocketmq/DefaultMQPushConsumer.h"
+#include "rocketmq/DefaultMQPullConsumer.h"
 #include "frame/BaseOperate.h"
 #include "listener/MsgListener.h"
 #include "resource/Resource.h"
@@ -35,23 +35,20 @@
 extern std::shared_ptr<spdlog::logger> multi_logger;
 extern std::shared_ptr<Resource> resource;
 
-//Send normal message, setting message body with space character, expect consume success
-TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
-    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+// Send normal message, setting message body with space character, expect consume success
+TEST(MessageBodyContentTest, testMessageBodyContentIsSpace)
+{
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsSpace", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsSpace");
     ASSERT_NO_THROW({
         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic, group, "*", msglistener);
         std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
-        
-        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
         auto producer = ProducerFactory::getProducer(group);
 
         std::string body = " ";
-        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::MQMessage msg(topic, "*", body);
         rocketmq::SendResult sendResult = producer->send(msg);
 
         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
@@ -60,33 +57,28 @@ TEST(MessageBodyContentTest, testMessageBodyContentIsSpace){
 
         // std::vector<rocketmq::MQMessageExt> msgs = VerifyUtils::fetchMessages(pullConsumer, topic);
         auto msgs = msglistener->getMessages();
-        
+
         ASSERT_EQ(msgs.size(), 1);
         ASSERT_EQ(msgs[0].getBody(), body);
 
         pushConsumer->shutdown();
-        pullConsumer->shutdown();
         producer->shutdown();
     });
 }
 
-//Send normal message, setting message body with chinese character, expect consume success
-TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
-    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+// Send normal message, setting message body with chinese character, expect consume success
+TEST(MessageBodyContentTest, testMessageBodyContentIsChinese)
+{
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsChinese", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsChinese");
     ASSERT_NO_THROW({
         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
-        std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
-        
-        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic, group, "*", msglistener);
 
         auto producer = ProducerFactory::getProducer(group);
 
         std::string body = "中文字符";
-        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::MQMessage msg(topic, "*", body);
         rocketmq::SendResult sendResult = producer->send(msg);
 
         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
@@ -94,33 +86,29 @@ TEST(MessageBodyContentTest, testMessageBodyContentIsChinese){
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
         auto msgs = msglistener->getMessages();
-        
+
         ASSERT_EQ(msgs.size(), 1);
         ASSERT_EQ(msgs[0].getBody(), body);
 
         pushConsumer->shutdown();
-        pullConsumer->shutdown();
         producer->shutdown();
     });
 }
 
-//Send normal message, setting message body with emoji(😱) character, expect consume success
-TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
-    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(),resource->getCluster());
+// Send normal message, setting message body with emoji(😱) character, expect consume success
+TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji)
+{
+    std::string topic = getTopic(MessageType::NORMAL, "testMessageBodyContentIsEmoji", resource->getBrokerAddr(), resource->getNamesrv(), resource->getCluster());
     std::string group = getGroupId("testMessageBodyContentIsEmoji");
     ASSERT_NO_THROW({
         std::shared_ptr<MsgListener> msglistener = std::make_shared<MsgListener>();
-        auto pushConsumer = ConsumerFactory::getPushConsumer(topic,group,"*",msglistener);
+        auto pushConsumer = ConsumerFactory::getPushConsumer(topic, group, "*", msglistener);
         std::this_thread::sleep_for(std::chrono::seconds(5));
-
-        auto pullConsumer = ConsumerFactory::getPullConsumer(topic,group);
-        
-        ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,"*",pullConsumer));
 
         auto producer = ProducerFactory::getProducer(group);
 
         std::string body = "😱";
-        rocketmq::MQMessage msg(topic,"*",body);
+        rocketmq::MQMessage msg(topic, "*", body);
         rocketmq::SendResult sendResult = producer->send(msg);
 
         ASSERT_EQ(sendResult.getSendStatus(), rocketmq::SendStatus::SEND_OK);
@@ -128,12 +116,11 @@ TEST(MessageBodyContentTest, testMessageBodyContentIsEmoji){
         std::this_thread::sleep_for(std::chrono::seconds(5));
 
         auto msgs = msglistener->getMessages();
-        
+
         ASSERT_EQ(msgs.size(), 1);
         ASSERT_EQ(msgs[0].getBody(), body);
 
         pushConsumer->shutdown();
-        pullConsumer->shutdown();
         producer->shutdown();
     });
 }

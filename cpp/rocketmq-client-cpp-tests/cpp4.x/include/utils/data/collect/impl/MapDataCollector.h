@@ -25,7 +25,8 @@
 #include "utils/data/collect/DataCollector.h"
 
 template <typename T>
-class MapDataCollectorImpl : public DataCollector<T> {
+class MapDataCollectorImpl : public DataCollector<T>
+{
     std::map<T, std::atomic<int>> data;
     bool lock = false;
     mutable std::mutex mtx;
@@ -33,166 +34,104 @@ class MapDataCollectorImpl : public DataCollector<T> {
 public:
     MapDataCollectorImpl() {}
 
-    MapDataCollectorImpl(const std::vector<T>& initial_data) {
-        for (const std::string& item : initial_data) {
+    MapDataCollectorImpl(const std::vector<T> &initial_data)
+    {
+        for (const std::string &item : initial_data)
+        {
             addData(item);
         }
     }
 
-    void resetData() override {
+    void resetData() override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         data.clear();
         unlockIncrement();
     }
 
-    std::vector<T> getAllData() override {
+    std::vector<T> getAllData() override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         std::vector<T> result;
-        for (const auto& pair : data) {
-            for (int i = 0; i < pair.second; i++) {
+        for (const auto &pair : data)
+        {
+            for (int i = 0; i < pair.second; i++)
+            {
                 result.push_back(pair.first);
             }
         }
         return result;
     }
 
-    size_t getDataSizeWithoutDuplicate() override {
+    size_t getDataSizeWithoutDuplicate() override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         return data.size();
     }
 
-    void addData(const T& new_data) override {
+    void addData(const T &new_data) override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
-        if (!lock) {
-            if(data.find(new_data) == data.end()) {
+        if (!lock)
+        {
+            if (data.find(new_data) == data.end())
+            {
                 data[new_data] = 1;
-            } else {
+            }
+            else
+            {
                 data[new_data]++;
             }
         }
     }
 
-    size_t getDataSize() override {
+    size_t getDataSize() override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         size_t count = 0;
-        for (const auto& pair : data) {
+        for (const auto &pair : data)
+        {
             count += pair.second;
         }
         return count;
     }
 
-    bool isRepeatedData(const T& data) override {
+    bool isRepeatedData(const T &data) override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         return this->data[data] > 1;
     }
 
-    std::set<T> getAllDataWithoutDuplicate() override {
+    std::set<T> getAllDataWithoutDuplicate() override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         std::set<T> result;
-        for (const auto& pair : data) {
+        for (const auto &pair : data)
+        {
             result.insert(pair.first);
         }
         return result;
     }
 
-    int getRepeatedTimeForData(const T& data) override {
+    int getRepeatedTimeForData(const T &data) override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         return this->data[data];
     }
 
-    void removeData(const T& data) override {
+    void removeData(const T &data) override
+    {
         std::lock_guard<std::mutex> lock_this(mtx);
         this->data.erase(data);
     }
 
-    void lockIncrement() override {
+    void lockIncrement() override
+    {
         lock = true;
     }
 
-    void unlockIncrement() override {
+    void unlockIncrement() override
+    {
         lock = false;
     }
 };
-
-// class MapDataCollectorImpl : public DataCollector {
-//     std::unordered_map<std::string, std::atomic<int>> data;
-//     bool lock = false;
-//     mutable std::mutex mtx;
-
-// public:
-//     MapDataCollectorImpl() {}
-
-//     MapDataCollectorImpl(const std::vector<std::string>& initial_data) {
-//         for (const std::string& item : initial_data) {
-//             addData(item);
-//         }
-//     }
-
-//     void resetData() override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         data.clear();
-//         unlockIncrement();
-//     }
-
-//     std::vector<std::string> getAllData() override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         std::vector<std::string> result;
-//         for (const auto& pair : data) {
-//             result.insert(result.end(), pair.second, pair.first);
-//         }
-//         return result;
-//     }
-
-//     size_t getDataSizeWithoutDuplicate() override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         return data.size();
-//     }
-
-//     void addData(const std::string& new_data) override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         if (!lock) {
-//             data[new_data]++;
-//         }
-//     }
-
-//     size_t getDataSize() override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         size_t count = 0;
-//         for (const auto& pair : data) {
-//             count += pair.second;
-//         }
-//         return count;
-//     }
-
-//     bool isRepeatedData(const std::string& data) override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         return this->data[data] > 1;
-//     }
-
-//     std::set<std::string> getAllDataWithoutDuplicate() override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         std::set<std::string> result;
-//         for (const auto& pair : data) {
-//             result.insert(pair.first);
-//         }
-//         return result;
-//     }
-
-//     int getRepeatedTimeForData(const std::string& data) override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         return this->data[data];
-//     }
-
-//     void removeData(const std::string& data) override {
-//         std::lock_guard<std::mutex> lock_this(mtx);
-//         this->data.erase(data);
-//     }
-
-//     void lockIncrement() override {
-//         lock = true;
-//     }
-
-//     void unlockIncrement() override {
-//         lock = false;
-//     }
-// };

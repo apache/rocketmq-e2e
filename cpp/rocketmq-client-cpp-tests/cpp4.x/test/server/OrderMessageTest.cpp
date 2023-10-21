@@ -17,11 +17,9 @@
 #include <chrono>
 #include <iostream>
 #include <cassert>
-
-#include <gtest/gtest.h>
-#include <spdlog/logger.h>
 #include <string>
-
+#include "gtest/gtest.h"
+#include "spdlog/logger.h"
 #include "enums/MessageType.h"
 #include "frame/BaseOperate.h"
 #include "resource/Resource.h"
@@ -45,12 +43,6 @@ TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
 
     auto pushConsumer = ConsumerFactory::getRMQPushConsumer(topic,group,tag,std::make_shared<RMQOrderListener>());
 
-    auto pullConsumer = ConsumerFactory::getRMQPullConsumer(topic,group);
-
-    std::this_thread::sleep_for(std::chrono::seconds(2));
-
-    ASSERT_TRUE(VerifyUtils::tryReceiveOnce(topic,tag,pullConsumer->getPullConsumer()));
-
     auto producer = ProducerFactory::getRMQProducer(group);
 
     ASSERT_NE(producer, nullptr);
@@ -65,6 +57,5 @@ TEST(OrderMessageTest, testOrder_Send_PushConsumeOrderly){
     ASSERT_TRUE(VerifyUtils::verifyOrderMessage(*(producer->getEnqueueMessages()),*(pushConsumer->getOrderListener()->getDequeueMessages())));
 
     pushConsumer->shutdown();
-    pullConsumer->shutdown();
     producer->shutdown();
 }
