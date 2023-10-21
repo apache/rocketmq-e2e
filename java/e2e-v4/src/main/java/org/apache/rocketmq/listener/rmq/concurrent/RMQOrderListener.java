@@ -37,13 +37,13 @@ public class RMQOrderListener extends AbstractListener implements MessageListene
 
     public RMQOrderListener() {
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     public RMQOrderListener(ConsumeOrderlyStatus consumeStatus) {
         this.consumeStatus = consumeStatus;
         this.listenerName = RandomUtils.getStringByUUID();
-        logger.info("启动监听:{}", listenerName);
+        logger.info("Start listening:{}", listenerName);
     }
 
     @Override

@@ -23,6 +23,7 @@ import org.apache.rocketmq.utils.RandomUtils;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 
 public class MessageFactory {
@@ -61,9 +62,50 @@ public class MessageFactory {
         return msgList;
     }
 
+    /**
+     * Generate a message, customize the topic, tags, body, detect the body is null throws an exception problem.
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildMessage(String topic, String tags, String body) throws Exception{
+        return new Message(topic, tags, body.getBytes());
+    }
 
     /**
-     * 生成一条消息，tag不设置， body使用随机字符串
+     * Generate a message, customize the topic, tags, body.
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildNormalMessage(String topic, String tags, String body){
+        return new Message(topic, tags, body.getBytes());
+    }
+
+    public static Message buildMessageWithProperty(String topic, Map<String,String> userProperties, String body){
+        Message msg = new Message(topic, body.getBytes());
+        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+            msg.putUserProperty(entry.getKey(), entry.getValue());
+        }
+        return msg;
+    }
+
+    /**
+     * Generate a message, customize the topic and properties.
+     *
+     * @param topic topic
+     * @return message
+     */
+    public static Message buildMessageWithProperty(String topic, Map<String,String> userProperties){
+        Message msg = new Message(topic, RandomUtils.getStringByUUID().getBytes());
+        for (Map.Entry<String, String> entry : userProperties.entrySet()) {
+            msg.putUserProperty(entry.getKey(), entry.getValue());
+        }
+        return msg;
+    }
+
+    /**
+     * Generate a message with no tag and a random string for the body.
      *
      * @param topic topic
      * @return message
@@ -73,7 +115,7 @@ public class MessageFactory {
     }
 
     /**
-     * 根据tag生成一条消息， body使用随机字符串
+     * A message is generated from the tag, with the body using a random string.
      *
      * @param topic topic
      * @param tag   tag
@@ -84,10 +126,10 @@ public class MessageFactory {
     }
 
     /**
-     * 根据消息体生成一条消息，tag不设置
+     * A message is generated based on the message body. The tag is not set.
      *
      * @param topic       topic
-     * @param messageBody 消息体
+     * @param messageBody message body
      * @return message
      */
     public static Message buildOneMessageWithBody(String topic, String messageBody) {
@@ -95,11 +137,11 @@ public class MessageFactory {
     }
 
     /**
-     * 构建一条指定tag，消息body的message
+     * Builds a message specifying the tag, message body
      *
-     * @param topic 发送topic
-     * @param tag   发送tag
-     * @param body  消息体
+     * @param topic topic
+     * @param tag   tag
+     * @param body  message body
      * @return Message
      */
     public static Message buildOneMessageWithTagAndBody(String topic, String tag, String body) {
@@ -107,10 +149,10 @@ public class MessageFactory {
     }
 
     ///**
-    // * 构建指定一条指定properties，消息body的message
+    // * The build specifies a message that specifies properties, the body of the message
     // *
-    // * @param topic      发送topic
-    // * @param properties 自定义属性
+    // * @param topic      topic
+    // * @param properties custom properties
     // * @return Message
     // */
     //public static Message buildMessageWithUserProperties(String topic, HashMap<String, String> properties) {
@@ -122,8 +164,8 @@ public class MessageFactory {
     //}
     //
     /**
-     * 延时消息，单位毫秒（ms），在指定延迟时间（当前时间之后）进行投递，例如消息在3秒后投递
-     * 定时消息，单位毫秒（ms），在指定时间戳（当前时间之后）进行投递，例如2016-03-07 16:21:00投递。如果被设置成当前时间戳之前的某个时刻，消息将立即被投递给消费者。
+     * A delayed message, in milliseconds (ms), is delivered after the specified delay time (after the current time), for example, the message is delivered after 3 seconds
+     * An order message, in milliseconds (ms), is delivered in a specified timestamp (after the current time), such as 2016-03-07 16:21:00 delivery. If it is set to a time before the current timestamp, the message will be delivered to the consumer immediately.
      *
      * @param topic
      * @param level
@@ -137,16 +179,16 @@ public class MessageFactory {
     //
     //public static Message buildOneMessageWithTagAndStartDeliverTime(String topic, String tag, long time) {
     //    Message msg = new Message(topic, tag, RandomUtils.getStringByUUID().getBytes());
-    //    //发送时间
+    //    //sending time
     //    msg.putUserProperties("sendTime", String.valueOf(System.currentTimeMillis()));
-    //    //推送下发消息时间
+    //    //push message delivery time
     //    msg.putUserProperties("deliverTime", String.valueOf(time));
     //    msg.setStartDeliverTime(time);
     //    return msg;
     //}
     //
     ///**
-    // * 定时消息，单位毫秒（ms），在指定时间戳（当前时间之后）进行投递，例如2016-03-07 16:21:00投递。如果被设置成当前时间戳之前的某个时刻，消息将立即被投递给消费者。
+    // * An order message, in milliseconds (ms), is delivered in a specified timestamp (after the current time), such as 2016-03-07 16:21:00 delivery. If it is set to a time before the current timestamp, the message will be delivered to the consumer immediately.
     // *
     // * @param topic
     // * @param tag

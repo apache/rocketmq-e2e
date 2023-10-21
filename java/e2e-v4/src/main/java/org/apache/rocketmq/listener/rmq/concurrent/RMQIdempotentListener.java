@@ -29,36 +29,46 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RMQNormalListener extends AbstractListener implements MessageListenerConcurrently {
+public class RMQIdempotentListener extends AbstractListener implements MessageListenerConcurrently {
     private static Logger logger = LoggerFactory.getLogger(RMQNormalListener.class);
     private ConsumeConcurrentlyStatus consumeStatus = ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
     private AtomicInteger msgIndex = new AtomicInteger(0);
     private String listenerName;
+    private MessageIdStore messageIdStore = MessageIdStore.getInstance();
 
-    public RMQNormalListener() {
+    public RMQIdempotentListener() {
         this.listenerName = RandomUtils.getStringByUUID();
         logger.info("Start listening:{}", listenerName);
     }
 
-    public RMQNormalListener(String listenerName) {
+    public RMQIdempotentListener(String listenerName) {
         this.listenerName = listenerName;
         logger.info("Start listening:{}", listenerName);
     }
 
-    public RMQNormalListener(ConsumeConcurrentlyStatus consumeStatus) {
+    public RMQIdempotentListener(ConsumeConcurrentlyStatus consumeStatus) {
         this.consumeStatus = consumeStatus;
         this.listenerName = RandomUtils.getStringByUUID();
         logger.info("Start listening:{}", listenerName);
     }
 
-    public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext consumeConcurrentlyContext) {
+    public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+            ConsumeConcurrentlyContext consumeConcurrentlyContext) {
         for (MessageExt message : msgs) {
-            msgIndex.getAndIncrement();
-            message.putUserProperty("startDeliverTime", String.valueOf(System.currentTimeMillis()));
-            this.dequeueAllMessages.addData(message);
-            this.dequeueMessages.addData(message);
-            logger.info("{} - MessageId:{}, ReconsumeTimes:{}, Body:{}, tag:{}, recvIndex:{}, action:{}", listenerName, message.getMsgId(),
-                    message.getReconsumeTimes(), new String(message.getBody()), message.getTags(), msgIndex.getAndIncrement() + 1, consumeStatus);
+            boolean isConsumed = messageIdStore.isMessageConsumed(message.getMsgId());
+            if (isConsumed) {
+                return consumeStatus;
+            } else {
+                msgIndex.getAndIncrement();
+                message.putUserProperty("startDeliverTime", String.valueOf(System.currentTimeMillis()));
+                this.dequeueAllMessages.addData(message);
+                this.dequeueMessages.addData(message);
+                logger.info("{} - MessageId:{}, ReconsumeTimes:{}, Body:{}, tag:{}, recvIndex:{}, action:{}",
+                        listenerName, message.getMsgId(),
+                        message.getReconsumeTimes(), new String(message.getBody()), message.getTags(),
+                        msgIndex.getAndIncrement() + 1, consumeStatus);
+                messageIdStore.markMessageAsConsumed(message.getMsgId());
+            }
         }
         return consumeStatus;
     }

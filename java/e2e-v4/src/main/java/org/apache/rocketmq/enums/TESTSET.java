@@ -38,16 +38,34 @@ public class TESTSET {
     public static final String TRANSACTION = "transaction";
 
     public static final String PULL = "pull";
+
     public static final String BATCH_CONSUME = "batchConsume";
+
     public static final String DEADLETTER = "deadletter";
+
     public static final String REBALANCE = "rebalance";
+
     public static final String CLIENT = "client";
+
     public static final String RETRY = "retry";
+
     public static final String ASNYC = "async";
+
     public static final String TAG = "tag";
+
     public static final String SQL = "sql";
+
     public static final String CLUSTER = "cluster";
+
     public static final String BROADCAST = "broadcast";
+
     public static final String ACL = "acl";
-    public static final String SIMPLE = "Simple";
+
+    public static final String MODEL = "model";
+
+    public static final String LOAD_BALANCING = "loadBalancing";
+
+    public static final String BATCHPRODUCER = "batchProducer";
+    
+    public static final String OFFSET = "offset";
 }

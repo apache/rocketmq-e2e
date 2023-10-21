@@ -106,7 +106,8 @@ public class TestUtils {
             byte[] b = new byte[1024];
             int n = System.in.read(b);
 
-            for (String s = (new String(b, 0, n - 1)).replace("\r", "").replace("\n", ""); !s.equals(keyWord); s = new String(b, 0, n - 1)) {
+            for (String s = (new String(b, 0, n - 1)).replace("\r", "").replace("\n", ""); !s
+                    .equals(keyWord); s = new String(b, 0, n - 1)) {
                 n = System.in.read(b);
             }
 
@@ -121,14 +122,14 @@ public class TestUtils {
         Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
             @Override
             public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
-                return ((Comparable)o1.getValue()).compareTo(o2.getValue());
+                return ((Comparable) o1.getValue()).compareTo(o2.getValue());
             }
         });
         Map<K, V> result = new LinkedHashMap();
         Iterator var3 = list.iterator();
 
         while (var3.hasNext()) {
-            Map.Entry<K, V> entry = (Map.Entry)var3.next();
+            Map.Entry<K, V> entry = (Map.Entry) var3.next();
             result.put(entry.getKey(), entry.getValue());
         }
 
