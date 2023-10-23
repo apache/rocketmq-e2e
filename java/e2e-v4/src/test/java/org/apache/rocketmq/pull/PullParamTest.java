@@ -54,6 +54,12 @@ public class PullParamTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullParamTest.class);
     private String tag;
     private String groupId;
+    private static String topic;
+
+    @BeforeAll
+    public static void setUpAll() {
+        topic = getTopic("PullParamTest");
+    }
 
     @BeforeEach
     public void setUp() {
@@ -70,7 +76,6 @@ public class PullParamTest extends BaseOperate {
     @DisplayName("Send 300 normal messages synchronously, and after using PullConsumer receive 30 messages, ack them after consuming them, expecting each receive to be less than or equal to 32 messages, and never receive the ack messages again")
     public void testNormal_pull_receive_maxsize_sync() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
         int sendNum = 300;
@@ -172,7 +177,6 @@ public class PullParamTest extends BaseOperate {
     @DisplayName("Twenty ordinary messages are sent synchronously, and receive(50) messages are received in batch. All the pulled messages are ack() messages except the last one. expected the ack messages will not be consumed repeatedly")
     public void testNormal_simple_receive_multi_nack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
         int sendNum = 20;

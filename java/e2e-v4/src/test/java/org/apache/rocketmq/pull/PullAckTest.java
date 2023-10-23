@@ -38,11 +38,13 @@ import org.slf4j.LoggerFactory;
 public class PullAckTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullAckTest.class);
     private String tag;
+    private static String topic;
     private final static int SEND_NUM = 20;
     private RMQNormalProducer producer;
 
     @BeforeAll
     public static void setUpAll() {
+        topic = getTopic("PullAckTest");
     }
 
     @BeforeEach
@@ -64,7 +66,6 @@ public class PullAckTest extends BaseOperate {
     public void testNormal_lite_pull_receive_ack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
 
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook, 1);
@@ -89,7 +90,6 @@ public class PullAckTest extends BaseOperate {
     public void testNormal_pull_receive_ack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
 
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);

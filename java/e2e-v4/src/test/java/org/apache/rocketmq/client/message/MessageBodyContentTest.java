@@ -17,6 +17,8 @@
 
 package org.apache.rocketmq.client.message;
 
+import java.util.concurrent.Callable;
+
 import org.apache.rocketmq.client.rmq.RMQNormalConsumer;
 import org.apache.rocketmq.client.rmq.RMQNormalProducer;
 import org.apache.rocketmq.enums.TESTSET;
@@ -30,13 +32,15 @@ import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
+
 /**
  * Test message body
  */
 @Tag(TESTSET.CLIENT)
 public class MessageBodyContentTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageBodyContentTest.class);
-    private String tag;
     private static String topic;
     private RMQNormalProducer producer;
     private RMQNormalConsumer pushConsumer;
@@ -44,13 +48,12 @@ public class MessageBodyContentTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
+        topic = getTopic("MessageBodyContentTest");
     }
 
     @BeforeEach
     public void setUp() {
-        tag = NameUtils.getRandomTagName();
+        
     }
 
     @AfterEach
@@ -71,6 +74,7 @@ public class MessageBodyContentTest extends BaseOperate {
     public void testMessageBodyContentIsSpace() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String groupId = getGroupId(methodName);
+        String tag = NameUtils.getRandomTagName();
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -81,6 +85,13 @@ public class MessageBodyContentTest extends BaseOperate {
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
+            }
+        });
+
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
     }
@@ -90,6 +101,7 @@ public class MessageBodyContentTest extends BaseOperate {
     public void testMessageBodyContentIsChinese() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String groupId = getGroupId(methodName);
+        String tag = NameUtils.getRandomTagName();
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -100,6 +112,14 @@ public class MessageBodyContentTest extends BaseOperate {
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
+            }
+        });
+
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
     }
@@ -109,6 +129,7 @@ public class MessageBodyContentTest extends BaseOperate {
     public void testMessageBodyContentIsEmoji() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String groupId = getGroupId(methodName);
+        String tag = NameUtils.getRandomTagName();
 
         pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
@@ -119,6 +140,14 @@ public class MessageBodyContentTest extends BaseOperate {
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
+            }
+        });
+
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
     }

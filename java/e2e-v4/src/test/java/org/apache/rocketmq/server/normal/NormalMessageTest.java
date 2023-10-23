@@ -29,6 +29,7 @@ import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -41,13 +42,17 @@ import org.slf4j.LoggerFactory;
 public class NormalMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(NormalMessageTest.class);
     private String tag;
-    private String topic;
     private String groupId;
+    private static String topic;
     private final static int SEND_NUM = 10;
+
+    @BeforeAll
+    public static void setUpAll() {
+        topic = getTopic("NormalMessageTest");
+    }
 
     @BeforeEach
     public void setUp() {
-        topic = NameUtils.getTopicName();
         tag = NameUtils.getTagName();
         groupId = NameUtils.getGroupName();
         MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);

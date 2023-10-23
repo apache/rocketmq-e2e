@@ -32,14 +32,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 public class ConsumerGroupTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(ConsumerGroupTest.class);
     private static String topic;
-    private static String className;
     private DefaultLitePullConsumer consumer;
 
     @BeforeAll
     public static void setUpAll() {
-        className = ConsumerGroupTest.class.getName();
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
+        topic = getTopic("ConsumerGroupTest");
     }
 
     @AfterEach

@@ -41,6 +41,7 @@ import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -55,12 +56,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @Tag(TESTSET.LOAD_BALANCING)
 public class LoadBalancingTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(LoadBalancingTest.class);
-    private String tag;
+    private static String topic;
     private final static int SEND_NUM = 10;
 
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getRandomTagName();
+    @BeforeAll
+    public static void setUpAll() {
+        topic = getTopic("LoadBalancingTest");
     }
 
     @Test
@@ -68,7 +69,7 @@ public class LoadBalancingTest extends BaseOperate {
     public void testLoadBalancing_normal_message() {
         int messageSize = 240;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -157,7 +158,7 @@ public class LoadBalancingTest extends BaseOperate {
     public void testLoadBalancing_global_sequential_message(){
         int messageSize = 30;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -210,7 +211,7 @@ public class LoadBalancingTest extends BaseOperate {
     public void testLoadBalancing_partition_sequential_message(){
         int messageSize = 120;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 

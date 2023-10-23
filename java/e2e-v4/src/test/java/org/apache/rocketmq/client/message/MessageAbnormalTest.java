@@ -43,9 +43,7 @@ public class MessageAbnormalTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String className = MessageAbnormalTest.class.getName();
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
+        topic = getTopic("MessageAbnormalTest");
         try {
             producer = new DefaultMQProducer("MessageAbnormalTest", rpcHook);
             producer.setNamesrvAddr(namesrvAddr);

@@ -41,10 +41,8 @@ public class PushConsumerInitTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
-        groupId = getGroupId(methodName);
-        TestUtils.waitForSeconds(2);
+        topic = getTopic("PushConsumerInitTest");
+        groupId = getGroupId("PushConsumerInitTest");
     }
 
     @BeforeEach

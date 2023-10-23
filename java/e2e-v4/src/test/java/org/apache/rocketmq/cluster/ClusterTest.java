@@ -35,7 +35,7 @@ import org.slf4j.LoggerFactory;
 @Tag(TESTSET.MODEL)
 public class ClusterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(ClusterTest.class);
-    private String tag;
+    private static String topic;
     private final static int SEND_NUM = 100;
     private RMQNormalConsumer pushConsumer01;
     private RMQNormalConsumer pushConsumer02;
@@ -43,9 +43,9 @@ public class ClusterTest extends BaseOperate {
     private RMQNormalConsumer pullConsumer;
     private RMQNormalProducer producer;
 
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getRandomTagName();
+    @BeforeAll
+    public static void setUpAll() {
+        topic = getTopic("ClusterTest");
     }
 
     @BeforeEach
@@ -71,7 +71,7 @@ public class ClusterTest extends BaseOperate {
     @DisplayName("Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages")
     public void testBroadcastConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId01 = getGroupId(methodName + 1);
         String groupId02 = getGroupId(methodName + 2);
         String groupId03 = getGroupId(methodName + 3);
@@ -102,7 +102,7 @@ public class ClusterTest extends BaseOperate {
     @DisplayName("Send 100 normal messages synchronously, start three consumers on same GroupId, and expect each client to consume up to 100 messages")
     public void testBroadcastConsumeWithSameGroupId() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
@@ -131,7 +131,7 @@ public class ClusterTest extends BaseOperate {
     @DisplayName("Send 100 normal messages synchronously, start 3 consumers on the same GroupId, expect 3 clients to consume a total of 100 messages")
     public void testClusterConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");

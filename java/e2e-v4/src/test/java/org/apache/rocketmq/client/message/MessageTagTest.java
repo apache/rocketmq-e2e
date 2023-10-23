@@ -49,8 +49,7 @@ public class MessageTagTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
+        topic = getTopic("MessageTagTest");
     }
 
     @AfterEach

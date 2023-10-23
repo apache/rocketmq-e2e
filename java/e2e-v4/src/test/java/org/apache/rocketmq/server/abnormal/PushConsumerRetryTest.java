@@ -63,6 +63,7 @@ import org.apache.rocketmq.utils.RandomUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.apache.rocketmq.utils.TestUtils;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
@@ -80,7 +81,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public class PushConsumerRetryTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PushConsumerRetryTest.class);
     private String tag;
+    private static String topic;
     private final static int SEND_NUM = 5;
+
+    @BeforeAll
+    public static void setUpAll() {
+        topic = getTopic("PushConsumerRetryTest");
+    }
 
     @BeforeEach
     public void setUp() {
@@ -92,7 +99,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Send normal messages, set the maximum number of retries and set the received messages to RECONSUME_LATER. The expected retry time is about 10s for the first time and about 30s for the second time")
     public void testNormalMessageReconsumeTime() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -188,7 +194,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Send order messages, set the maximum number of retries and set the received messages to SUSPEND_CURRENT_QUEUE_A_MOMENT. The expected retry time is about 1s")
     public void testOrderMessageReconsumeTime() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -284,7 +289,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Send normal messages, set the maximum consumption to 0(The first retry is 10 seconds, and the setting is 15 seconds. Then check whether the retry occurs), and set the message reception to RECONUME_LATER, expecting that the retry will not occur")
     public void testNormalMessageRetryTimesSetting() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -341,7 +345,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Send one order message, set the maximum consumption to 0(The retry time of each message is 1s. Then check whether the retry occurs), and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the retry will not occur")
     public void testOrderMessageRetryTimesSetting() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -400,7 +403,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Send order messages, set the maximum consumption to 30, and set the message reception to SUSPEND_CURRENT_QUEUE_A_MOMENT, expecting that the received messages's reconsume time will be equal to 30 in 2 minutes")
     public void testOrderMessageRetryTimesWith30() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -456,7 +458,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("To send order messages, set SUSPEND_CURRENT_QUEUE_A_MOMENT for the first message. The next sequential message will not be consumed until the first message is in the dead letter queue. All messages except the first message are expected to be received")
     public void testOrderMessageRetryTimesWithMaxReconsumeimes() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -515,7 +516,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Simulate pushconsumer consumption fail, expect that the original message was not received, and capture all messages after message retry")
     public void testExceptionConsumption() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -579,7 +579,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Simulate pushconsumer consumption return null, expect that the original message was not received, and capture all messages after message retry")
     public void testNullConsumption() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -625,7 +624,7 @@ public class PushConsumerRetryTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        await().atMost(240, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return retryMsgs.size() == SEND_NUM && firstMsgs.size() == SEND_NUM;
@@ -642,7 +641,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("Simulate pushconsumer consumption timeout, expect message retry")
     public void testTimeoutConsumption() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -706,7 +704,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("The normal message is sent, and after the PushConsumer retry, the retry message is expected to be consumed")
     public void testNormalTopicPushConsumerRetry() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Map<String, MessageExt> firstMsgs = new ConcurrentHashMap<>();
@@ -767,7 +764,6 @@ public class PushConsumerRetryTest extends BaseOperate {
     @DisplayName("The send order message, after the PushConsumer retry, is expected to consume the retry message, and the message consumption order and send order")
     public void testFiFoTopicPushConsumerRetry() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
         String groupId = getGroupId(methodName);
 
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);

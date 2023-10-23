@@ -44,8 +44,7 @@ public class MessageUserPropertyTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
+        topic = getTopic("MessageUserPropertyTest");
         producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
     }
 

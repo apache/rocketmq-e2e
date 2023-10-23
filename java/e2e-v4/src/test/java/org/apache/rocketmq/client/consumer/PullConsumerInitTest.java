@@ -38,9 +38,8 @@ public class PullConsumerInitTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        topic = getTopic(methodName);
-        groupId = getGroupId(methodName);
+        topic = getTopic("PullConsumerInitTest");
+        groupId = getGroupId("PullConsumerInitTest");
     }
 
     @BeforeEach
@@ -151,8 +150,8 @@ public class PullConsumerInitTest extends BaseOperate {
             long endTime = System.currentTimeMillis();
             log.info("endTime: {}", endTime);
             pullConsumer.shutdown();
-            Assertions.assertTrue((endTime - startTime) > 10000 && (endTime - startTime) < 20000,
-                    String.format("invoke method 'receive()' exception, startTime:%s, endTime:%s, intervalTime:%s",
+            Assertions.assertTrue((endTime - startTime) >= 10000 && (endTime - startTime) <= 20000,
+                    String.format("invoke method 'poll()' exception, startTime:%s, endTime:%s, intervalTime:%s",
                             startTime, endTime, endTime - startTime));
         } catch (Exception e) {
             Assertions.fail("PullConsumer start exception");

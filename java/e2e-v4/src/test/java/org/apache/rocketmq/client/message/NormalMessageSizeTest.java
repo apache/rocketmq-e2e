@@ -57,11 +57,10 @@ public class NormalMessageSizeTest extends BaseOperate {
 
     @BeforeAll
     public static void setUpAll() {
-        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        normalTopic = getTopic(methodName);
-        transTopic = getTopic(methodName);
-        delayTopic = getTopic(methodName);
-        fifoTopic = getTopic(methodName);
+        normalTopic = getTopic("NormalMessageSizeTest-Normal");
+        transTopic = getTopic("NormalMessageSizeTest-Trans");
+        delayTopic = getTopic("NormalMessageSizeTest-Delay");
+        fifoTopic = getTopic("NormalMessageSizeTest-Fifo");
     }
 
     @AfterAll

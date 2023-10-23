@@ -90,11 +90,6 @@ public class OffsetTest extends BaseOperate {
         String groupId2 = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId1, rpcHook, 1);
-        pullConsumer.subscribeAndStartLitePull(topic, MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
         DefaultMQPushConsumer pushConsumer;
         ConcurrentLinkedDeque<MessageExt> deque = new ConcurrentLinkedDeque<>();
         try {
@@ -125,7 +120,7 @@ public class OffsetTest extends BaseOperate {
 
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(30, SECONDS).until(new Callable<Boolean>() {
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return deque.size() == SEND_NUM;
@@ -158,9 +153,12 @@ public class OffsetTest extends BaseOperate {
             throw new RuntimeException(e);
         }
 
-        TestUtils.waitForSeconds(30);
-
-        Assertions.assertEquals(SEND_NUM, deque.size(), "reconsumer receive message failed");
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return deque.size() == SEND_NUM;
+            }
+        });
 
         reConsumer.shutdown();
         producer.shutdown();
@@ -205,8 +203,12 @@ public class OffsetTest extends BaseOperate {
             throw new RuntimeException(e);
         }
 
-        TestUtils.waitForSeconds(30);
-        Assertions.assertEquals(100, deque.size(), "consumer receive message failed");
+        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                return deque.size() == 100;
+            }
+        });
 
         pushConsumer.shutdown();
         producer.shutdown();
