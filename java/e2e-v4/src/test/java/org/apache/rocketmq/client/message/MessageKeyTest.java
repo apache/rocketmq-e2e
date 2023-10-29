@@ -26,6 +26,7 @@ import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
@@ -42,35 +43,23 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test message key
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class MessageKeyTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageKeyTest.class);
-    private static String topic;
-    private RMQNormalProducer producer;
-    private RMQNormalConsumer pushConsumer;
-    private RMQNormalConsumer pullConsumer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("MessageKeyTest");
-    }
+    private static String topic = getTopic("MessageKeyTest");
 
     @AfterEach
     public void tearDown() {
-        if (producer != null) {
-            producer.shutdown();
-        }
-        if (pushConsumer != null) {
-            pushConsumer.shutdown();
-        }
-        if (pullConsumer != null) {
-            pullConsumer.shutdown();
-        }
+    }
+
+    @AfterAll
+    public static void tearDownAll() {
     }
 
     @Disabled
     @DisplayName("Message Key beyond 16KB, expect throw exception")
     public void testMessageKeyBeyond16KB() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String body = RandomStringUtils.randomAlphabetic(64);
         String key = RandomStringUtils.randomAlphabetic(16 * 1024 + 1);
 
@@ -79,24 +68,28 @@ public class MessageKeyTest extends BaseOperate {
             Message message = new Message(topic, "*", key, body.getBytes());
             producer.getProducer().send(message);
         }, " message key beyond 16KB , expect throw exception but it didn't");
+
+        producer.shutdown();
     }
 
     @Disabled
     @DisplayName("Message Key equals 16KB, expect send success")
     public void testMessageKeyEquals16KB() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String body = RandomStringUtils.randomAlphabetic(64);
         String key = RandomStringUtils.randomAlphabetic(16 * 1024);
         Assertions.assertNotNull(producer);
 
         Message message = new Message(topic, "*", key, body.getBytes());
         producer.send(message);
+
+        producer.shutdown();
     }
 
     @Disabled
     @DisplayName("Message Key contains invisible characters \u0000 ,expect throw exception")
     public void testMessageKeyWithInvisibleCharacter() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         String body = RandomStringUtils.randomAlphabetic(64);
         String key = "\u0000";
 
@@ -117,10 +110,10 @@ public class MessageKeyTest extends BaseOperate {
         String tag = NameUtils.getRandomTagName();
         String body = RandomStringUtils.randomAlphabetic(64);
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer);
 
         Message message = new Message(topic, tag, key, body.getBytes());
@@ -128,6 +121,9 @@ public class MessageKeyTest extends BaseOperate {
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages());
+
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 
     @Test
@@ -141,10 +137,10 @@ public class MessageKeyTest extends BaseOperate {
         String tag = NameUtils.getRandomTagName();
         String body = RandomStringUtils.randomAlphabetic(64);
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer);
 
         Message message = new Message(topic, tag, RandomUtils.getStringByUUID(), body.getBytes());
@@ -153,5 +149,8 @@ public class MessageKeyTest extends BaseOperate {
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages());
+
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 }

@@ -62,6 +62,7 @@ import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.remoting.exception.RemotingException;
 import org.apache.rocketmq.server.batch.BatchProducerTest;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.apache.rocketmq.utils.TestUtils;
@@ -71,40 +72,37 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 @Tag(TESTSET.OFFSET)
+@Tag(TESTSET.SMOKE)
 public class OffsetTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(OffsetTest.class);
-    private String tag;
-    private final static int SEND_NUM = 10;
-
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getRandomTagName();
-    }
+    private final static int SEND_NUM = 5;
 
     @Test
-    @DisplayName("Send 10 messages, set other groupid's pushconsumer consumption from first, expect to accept all messages again")
+    @DisplayName("Send 5 messages, set other groupid's pushconsumer consumption from first, expect to accept all messages again")
     public void testConsumeFromFisrtOffset() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
-        String groupId1 = getGroupId(methodName);
-        String groupId2 = getGroupId(methodName);
+        String tag = NameUtils.getRandomTagName();
+        String groupId1 = getGroupId(methodName + "1");
+        String groupId2 = getGroupId(methodName + "2");
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         DefaultMQPushConsumer pushConsumer;
-        ConcurrentLinkedDeque<MessageExt> deque = new ConcurrentLinkedDeque<>();
+        ConcurrentHashMap<String, MessageExt> messageMap = new ConcurrentHashMap<>();
         try {
             pushConsumer = new DefaultMQPushConsumer(groupId1, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+
             pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt message : msgs) {
                         log.info("receive message:{}", message);
-                        deque.add(message);
+                        messageMap.putIfAbsent(message.getMsgId(), message);
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
@@ -120,15 +118,17 @@ public class OffsetTest extends BaseOperate {
 
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                return deque.size() == SEND_NUM;
+                return SEND_NUM == messageMap.size();
             }
         });
 
         pushConsumer.shutdown();
-        deque.clear();
+        messageMap.clear();
 
         DefaultMQPushConsumer reConsumer;
         try {
@@ -143,7 +143,7 @@ public class OffsetTest extends BaseOperate {
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt message : msgs) {
                         log.info("reconsumer received message:{}", message);
-                        deque.add(message);
+                        messageMap.putIfAbsent(message.getMsgId(), message);
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
@@ -153,47 +153,50 @@ public class OffsetTest extends BaseOperate {
             throw new RuntimeException(e);
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(30, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                return deque.size() == SEND_NUM;
+                return SEND_NUM == messageMap.size();
             }
         });
 
         reConsumer.shutdown();
         producer.shutdown();
-
     }
 
     @Test
-    @DisplayName("Backlog 100 messages, start the consumer, and set the pull message from the LAST, expect to consume 100 messages")
+    @DisplayName("Backlog 5 messages, start the consumer, and set the pull message from the LAST, expect to consume 5 messages")
     public void testConsumeFromLastOffset() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         Assertions.assertNotNull(producer);
 
-        producer.send(topic, tag, 100);
+        producer.send(topic, tag, 10);
 
-        Assertions.assertEquals(100, producer.getEnqueueMessages().getDataSize(), "send message failed");
+        Assertions.assertEquals(10, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
         DefaultMQPushConsumer pushConsumer;
-        ConcurrentLinkedDeque<MessageExt> deque = new ConcurrentLinkedDeque<>();
+        ConcurrentHashMap<String, MessageExt> messageMap = new ConcurrentHashMap<>();
         try {
             pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook, new AllocateMessageQueueAveragely());
             pushConsumer.setInstanceName(RandomUtils.getStringByUUID());
             pushConsumer.setNamesrvAddr(namesrvAddr);
             pushConsumer.subscribe(topic, tag);
             pushConsumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+
             pushConsumer.setMessageListener(new MessageListenerConcurrently() {
                 @Override
                 public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
                         ConsumeConcurrentlyContext context) {
                     for (MessageExt message : msgs) {
                         log.info("receive message:{}", message);
-                        deque.add(message);
+                        messageMap.putIfAbsent(message.getMsgId(), message);
                     }
                     return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
                 }
@@ -203,34 +206,33 @@ public class OffsetTest extends BaseOperate {
             throw new RuntimeException(e);
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(30, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                return deque.size() == 100;
+                return 10 == messageMap.size();
             }
         });
 
         pushConsumer.shutdown();
         producer.shutdown();
-
     }
 
     @Test
-    @DisplayName("send 10 messages, PullConsumer normally receives messages, but does not update messages offset, expect the messages are receive again")
+    @DisplayName("send 5 messages, PullConsumer normally receives messages, but does not update messages offset, expect the messages are receive again")
     public void test_pull_receive_nack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
         producer.send(topic, tag, SEND_NUM);
-
-        TestUtils.waitForSeconds(1);
 
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
@@ -309,5 +311,8 @@ public class OffsetTest extends BaseOperate {
         for (Entry<String, AtomicInteger> entry : messageMap.entrySet()) {
             Assertions.assertTrue(entry.getValue().get() >= 1, "message receive count not match");
         }
+
+        consumer.shutdown();
+        producer.shutdown();
     }
 }

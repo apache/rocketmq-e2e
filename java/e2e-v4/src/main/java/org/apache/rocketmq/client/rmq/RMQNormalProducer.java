@@ -81,10 +81,10 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
-     * 向哪些Queue发送顺序消息
+     * Which Queue to send the sequential message to
      *
-     * @param mqs        Queue列表
-     * @param messageNum 每个Queue发送的消息数量
+     * @param mqs        Queue list
+     * @param messageNum The number of messages sent per Queue
      */
     public void sendWithQueue(List<MessageQueue> mqs, int messageNum) {
         String tag = NameUtils.getTagName();
@@ -108,10 +108,10 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
-     * 向哪些Queue发送顺序消息
+     * Which Queue to send the order message to
      *
-     * @param mqs        Queue列表
-     * @param messageNum 每个Queue发送的消息数量
+     * @param mqs        Queue list
+     * @param messageNum The number of messages sent per Queue
      */
     public void sendWithQueue(List<MessageQueue> mqs, String tag, int messageNum) {
         logger.info("Producer start to send messages");
@@ -134,10 +134,10 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
-     * 向Queue发送顺序消息
+     * Sends a order message to a Queue
      *
-     * @param mqs        Queue列表
-     * @param messageNum 每个Queue发送的消息数量
+     * @param mqs        Queue list
+     * @param messageNum The number of messages sent per Queue
      */
     public void sendWithQueue(List<MessageQueue> mqs, int messageNum, String tag) {
         logger.info("Producer start to send messages");
@@ -160,12 +160,12 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
-     * 发送指定正常的properties的普通消息l
+     * Sends a normal message specifying the normal properties
      *
-     * @param topic       topic名称
-     * @param tag         标签
-     * @param messageBody 消息体
-     * @param messageNum  消息条数
+     * @param topic       topic name
+     * @param tag         tag
+     * @param messageBody message body
+     * @param messageNum  number of messages
      */
     public void sendWithTagAndBody(String topic, String tag, String messageBody, int messageNum) {
         logger.info("Producer start to send messages");
@@ -341,11 +341,11 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /**
-     * 发送延迟消息
+     * Send delay message
      *
-     * @param topic      topic名称
-     * @param delayLevel 延迟时间，单位:秒
-     * @param messageNum 消息条数
+     * @param topic      topic name
+     * @param delayLevel delay level, different levels correspond to different times
+     * @param messageNum number of messages
      */
     public void sendDelay(String topic, int delayLevel, int messageNum) {
         logger.info("Producer start to send delay messages");
@@ -374,11 +374,11 @@ public class RMQNormalProducer extends AbstractMQProducer {
     }
 
     /// **
-    // * 发送延迟消息
+    // * Send delay message
     // *
-    // * @param topic topic名称
-    // * @param delaySecondTime 延迟时间，单位:秒
-    // * @param messageNum 消息条数
+    // * @param topic topic name
+    // * @param delaySecondTime delay level, different levels correspond to different times
+    // * @param messageNum number of messages
     // */
     // public void sendDelayWithTag(String topic, String tag, int delaySecondTime,
     /// int messageNum) {
@@ -395,11 +395,11 @@ public class RMQNormalProducer extends AbstractMQProducer {
     // }
     //
     /// **
-    // * 发送定时消息
+    // * Send a timed message
     // *
-    // * @param topic topic名称
-    // * @param time 定时消息的时间戳
-    // * @param messageNum 消息条数
+    // * @param topic topic name
+    // * @param time the timestamp of the timed message
+    // * @param messageNum number of messages
     // */
     // public void sendTimingWithTag(String topic, String tag, long time, int
     /// messageNum) {
@@ -417,11 +417,11 @@ public class RMQNormalProducer extends AbstractMQProducer {
     // }
     //
     /// **
-    // * 发送定时消息
+    // * Send a timed message
     // *
-    // * @param topic topic名称
-    // * @param time 定时消息的时间戳
-    // * @param messageNum 消息条数
+    // * @param topic topic name
+    // * @param time the timestamp of the timed message
+    // * @param messageNum number of messages
     // */
     // public void sendTimingWithTagAndBody(String topic, String tag, String body,
     /// long time, int messageNum) {
@@ -439,10 +439,10 @@ public class RMQNormalProducer extends AbstractMQProducer {
     // }
     //
     /// **
-    // * @param topic 发送topic
-    // * @param tag 消息tag
-    // * @param messageNum 消息数量
-    // * @param userProps 消息属性
+    // * @param topic send topic
+    // * @param tag
+    // * @param messageNum number of messages
+    // * @param userProps message attribute
     // */
     // public void sendWithTagAndUserProps(String topic, String tag, int messageNum,
     /// HashMap<String, String> userProps) {

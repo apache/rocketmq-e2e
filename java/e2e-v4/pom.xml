@@ -28,7 +28,7 @@
     <artifactId>rocketmq-java-e2e-v4</artifactId>
 
     <properties>
-        <rocketmq.client.version>4.9.3</rocketmq.client.version>
+        <rocketmq.client.version>4.9.7</rocketmq.client.version>
         <junit.jupiter.version>5.7.2</junit.jupiter.version>
     </properties>
 

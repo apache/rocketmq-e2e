@@ -23,6 +23,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -37,22 +38,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test user property
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class MessageUserPropertyTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageUserPropertyTest.class);
-    private static String topic;
-    private static RMQNormalProducer producer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("MessageUserPropertyTest");
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
-    }
+    private static String topic = getTopic("MessageUserPropertyTest");
 
     @AfterAll
     public static void tearDownAll() {
-        if (producer != null) {
-            producer.shutdown();
-        }
     }
 
     @Disabled
@@ -63,11 +55,15 @@ public class MessageUserPropertyTest extends BaseOperate {
         HashMap<String, String> userProperty = new HashMap<>();
         userProperty.put(key, value);
 
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        
         Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
         for (Map.Entry<String, String> entry : userProperty.entrySet()) {
             message.putUserProperty(entry.getKey(), entry.getValue());
         }
         producer.send(message);
+
+        producer.shutdown();
     }
 
     @Disabled
@@ -78,6 +74,8 @@ public class MessageUserPropertyTest extends BaseOperate {
         HashMap<String, String> userProperty = new HashMap<>();
         userProperty.put(key, value);
 
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
         assertThrows(Exception.class, () -> {
             Message message = new Message(topic, RandomUtils.getStringByUUID().getBytes());
             for (Map.Entry<String, String> entry : userProperty.entrySet()) {
@@ -85,6 +83,8 @@ public class MessageUserPropertyTest extends BaseOperate {
             }
             producer.getProducer().send(message);
         }, " message user property beyond 16KB ,expect throw exception but it didn't");
+
+        producer.shutdown();
     }
 
 }

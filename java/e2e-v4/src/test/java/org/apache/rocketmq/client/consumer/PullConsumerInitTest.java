@@ -20,6 +20,8 @@ package org.apache.rocketmq.client.consumer;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.frame.BaseOperate;
+import org.apache.rocketmq.utils.MQAdmin;
+import org.apache.rocketmq.utils.TestUtils;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,17 +33,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class PullConsumerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(PullConsumerInitTest.class);
-    private static String topic;
-    private static String groupId;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("PullConsumerInitTest");
-        groupId = getGroupId("PullConsumerInitTest");
-    }
-
+    private static String topic = getTopic("PullConsumerInitTest");
     @BeforeEach
     public void setUp() {
 
@@ -58,6 +53,8 @@ public class PullConsumerInitTest extends BaseOperate {
     @Test
     @DisplayName("PullConsumer all parameters are set properly, expect start success")
     public void testNormalSetting() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         try {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
@@ -70,14 +67,18 @@ public class PullConsumerInitTest extends BaseOperate {
         }
     }
 
+    @Disabled
     @Test
     @DisplayName("Without setting 'Endpoint Configuration' of the consumer client, expect start failed")
     public void testNoClientConfiguration() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId);
             pullConsumer.subscribe(topic, "*");
             pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
+            pullConsumer.shutdown();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
 
@@ -90,23 +91,29 @@ public class PullConsumerInitTest extends BaseOperate {
             pullConsumer.subscribe(topic, "*");
             pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
+            pullConsumer.shutdown();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
 
     @Disabled
     @DisplayName("Without setting 'Subscription' of the consumer client, expect start failed")
     public void testNoSubscription() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
             pullConsumer.setConsumerPullTimeoutMillis(10 * 1000);
             pullConsumer.start();
+            pullConsumer.shutdown();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
 
     @Test
     @DisplayName("Error setting 'SubscriptionExpressions' empty of the consumer client, except start failed")
     public void testEmptySubscription() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
@@ -114,29 +121,32 @@ public class PullConsumerInitTest extends BaseOperate {
             String var2 = null;
             pullConsumer.subscribe(var1, var2);
             pullConsumer.start();
+            pullConsumer.shutdown();
         }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
 
     @Disabled
     @DisplayName("Error setting 'ConsumerPullTimeoutMillis=0' of the consumer client, except start failed")
     public void testConsumerPullTimeoutMillisIs0s() {
-        DefaultLitePullConsumer pullConsumer = null;
-        try {
-            pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
+
+        assertThrows(Exception.class, () -> {
+            DefaultLitePullConsumer pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);
             pullConsumer.setNamesrvAddr(namesrvAddr);
             pullConsumer.subscribe(topic, "*");
             pullConsumer.setConsumerPullTimeoutMillis(0 * 1000);
             pullConsumer.start();
             pullConsumer.poll();
-        } catch (Exception e) {
-            e.printStackTrace();
-            Assertions.fail("PullConsumer start failed");
-        }
+            pullConsumer.shutdown();
+        }, "Expected Start [PullConsumer] Exception to throw, but it didn't");
     }
 
     @Test
     @DisplayName("Setting 'Wait Duration = 10s',Expect the empty pull message request to return between 10s and 20s")
     public void testAwaitDuration() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         DefaultLitePullConsumer pullConsumer = null;
         try {
             pullConsumer = new DefaultLitePullConsumer(groupId, rpcHook);

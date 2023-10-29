@@ -115,11 +115,9 @@ public class VerifyUtils {
         Collection<MessageExt> unConsumedMessages = waitForMessageConsume(enqueueMessages, dequeueMessages,
                 timeout * 1000L, 1);
         Set<MessageExt> unConsumedMessagesCopy = new HashSet<>(unConsumedMessages);
-        System.out.println(unConsumedMessagesCopy.size());
         Set<String> finalUnconsumedMsgIds = unconsumedMsgIds;
         unConsumedMessagesCopy = unConsumedMessagesCopy.stream()
                 .filter(msgExt -> !finalUnconsumedMsgIds.contains(msgExt.getMsgId())).collect(Collectors.toSet());
-        System.out.println(unConsumedMessagesCopy.size());
         StringBuilder sb = new StringBuilder();
         boolean allInUnConsumedMessages = true;
         for (String unconsumedMsgId : unconsumedMsgIds) {

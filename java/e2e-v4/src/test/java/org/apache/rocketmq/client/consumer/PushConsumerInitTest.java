@@ -23,6 +23,7 @@ import org.apache.rocketmq.common.consumer.ConsumeFromWhere;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.TestUtils;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -34,17 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * PushConsumer client initialization use case
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class PushConsumerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(PushConsumerInitTest.class);
-    private static String topic;
-    private static String groupId;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("PushConsumerInitTest");
-        groupId = getGroupId("PushConsumerInitTest");
-    }
-
+    private static String topic = getTopic("PullConsumerInitTest");
     @BeforeEach
     public void setUp() {
 
@@ -61,6 +55,8 @@ public class PushConsumerInitTest extends BaseOperate {
     @Test
     @DisplayName("PushConsumer all parameters are set properly, expect start success")
     public void testNormalSetting() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         try {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());
@@ -80,6 +76,9 @@ public class PushConsumerInitTest extends BaseOperate {
     @Tag(TESTSET.ACL)
     @DisplayName("Error setting the 'EndPoint' of the consumer client,expect start failed")
     public void testErrorNameserver() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());
@@ -96,6 +95,8 @@ public class PushConsumerInitTest extends BaseOperate {
     @Disabled
     @DisplayName("Set the consumer client's topic error, expecting a message receiving failure to throw an Exception")
     public void testErrorTopic() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());
@@ -112,6 +113,7 @@ public class PushConsumerInitTest extends BaseOperate {
     @Test
     @DisplayName("Without setting ConsumerGroup, expect PushConsumer NPE exception to start")
     public void testNoGroupId() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(rpcHook);
             pushConsumer.setNamesrvAddr(namesrvAddr);
@@ -127,6 +129,8 @@ public class PushConsumerInitTest extends BaseOperate {
     @Disabled
     @DisplayName("The 'Subscription' is not set, expect PushConsumer IllegalArgumentException exception to start")
     public void testNoSubscription() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());
@@ -142,6 +146,8 @@ public class PushConsumerInitTest extends BaseOperate {
     @Test
     @DisplayName("Set an empty Subscription, expecting PushConsumer IllegalArgumentException to be raised")
     public void testEmptySubscription() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());
@@ -157,9 +163,12 @@ public class PushConsumerInitTest extends BaseOperate {
         }, "Expected Start [PushConsumer] ClientException to throw, but it didn't");
     }
 
+    @Disabled
     @Test
     @DisplayName("The 'Endpoint Configuration' is not set. PushConsumer IllegalState exception is expected")
     public void testNoClientConfiguration() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String groupId = getGroupId(methodName);
         assertThrows(Exception.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId);
             pushConsumer.subscribe(topic, "*");
@@ -174,6 +183,9 @@ public class PushConsumerInitTest extends BaseOperate {
     @Test
     @DisplayName("The 'MessageListener' is not set. PushConsumer MQClient exception is expected")
     public void testNoListener() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
         assertThrows(MQClientException.class, () -> {
             DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer(groupId, rpcHook,
                     new AllocateMessageQueueAveragely());

@@ -20,6 +20,8 @@ package org.apache.rocketmq.client.consumer;
 import org.apache.rocketmq.common.message.MessageExt;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.frame.BaseOperate;
+import org.apache.rocketmq.utils.TestUtils;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,15 +31,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class ConsumerGroupTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(ConsumerGroupTest.class);
-    private static String topic;
     private DefaultLitePullConsumer consumer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("ConsumerGroupTest");
-    }
 
     @AfterEach
     public void tearDown() {
@@ -49,6 +46,8 @@ public class ConsumerGroupTest extends BaseOperate {
     @Test
     @DisplayName("Use the built-in ConsumerGroup[DEFAULT_CONSUMER] to consume messages and expect consume failed")
     public void testSystemInnerConsumerGroup() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
         String groupId = "DEFAULT_CONSUMER";
         assertThrows(Exception.class, () -> {
             consumer = new DefaultLitePullConsumer(groupId, rpcHook);

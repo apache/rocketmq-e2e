@@ -36,15 +36,15 @@ public class BaseOperate extends ResourceInit {
     }
 
     protected static String getTopic(String methodName) {
-        String topic = String.format("topic_%s_%s", methodName, RandomUtils.getStringWithCharacter(6));
+        String topic = String.format("topic_%s_%s", methodName, RandomUtils.generateRandomString(12));
         logger.info("[Topic] topic:{}, methodName:{}", topic, methodName);
-        boolean result = MQAdmin.createTopic(namesrvAddr,cluster, topic, 8);
+        boolean result = MQAdmin.createTopic(namesrvAddr,cluster, topic, 4);
         Assertions.assertTrue(result, String.format("Create topic:%s failed", topic));
         return topic;
     }
 
     protected static String getGroupId(String methodName) {
-        String groupId = String.format("GID_%s_%s", methodName, RandomUtils.getStringWithCharacter(6));
+        String groupId = String.format("GID_%s_%s", methodName, RandomUtils.generateRandomString(12));
         logger.info("[ConsumerGroupId] groupId:{}, methodName:{}", groupId, methodName);
         return groupId;
     }

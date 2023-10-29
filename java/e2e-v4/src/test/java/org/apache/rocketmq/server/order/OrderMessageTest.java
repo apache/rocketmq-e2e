@@ -29,6 +29,7 @@ import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Tag;
@@ -42,33 +43,31 @@ import java.util.List;
 @Tag(TESTSET.ORDER)
 public class OrderMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(OrderMessageTest.class);
-    private String tag;
-    private String topic;
-    private String groupId;
     private final static int SEND_NUM = 100;
-
-    @BeforeEach
-    public void setUp() {
-        topic = NameUtils.getTopicName();
-        tag = NameUtils.getTagName();
-        groupId = NameUtils.getGroupName();
-        MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
-        logger.info("topic:{}, tag:{}, groupId:{}", topic, tag, groupId);
-    }
+    private static String topic = getTopic("OrderMessageTest");
 
     @AfterEach
     public void tearDown() {
 
     }
 
+    @AfterAll
+    public static void tearDownAll() {
+        MQAdmin.deleteTopic(namesrvAddr, cluster , topic);
+    }
+
     @Test
     @DisplayName("Thirty messages are sent to each of the eight queues in a topic, with the expectation that the sequential consumption client will consume the messages in each queue in order")
     public void testConsumePartitionOrderMessage() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
+        consumer.subscribeAndStart(topic, tag, new RMQOrderListener());
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
-        producer.sendWithQueue(messageQueues, 30);
+        producer.sendWithQueue(messageQueues, tag, 30);
         VerifyUtils.verifyOrderMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
 
         producer.shutdown();
@@ -78,12 +77,16 @@ public class OrderMessageTest extends BaseOperate {
     @Test
     @DisplayName("100 messages are sent to a queue for a topic, with the expectation that the sequential consuming client will consume the messages in the queue in order")
     public void testConsumeGlobalOrderMessage() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+        
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
-        consumer.subscribeAndStart(topic, "*", new RMQOrderListener());
+        consumer.subscribeAndStart(topic, tag, new RMQOrderListener());
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         List<MessageQueue> messageQueues = producer.fetchPublishMessageQueues(topic);
         messageQueues.removeIf(messageQueue -> messageQueue.getQueueId() != 0);
-        producer.sendWithQueue(messageQueues, SEND_NUM);
+        producer.sendWithQueue(messageQueues, tag, SEND_NUM);
         VerifyUtils.verifyOrderMessage(producer.getEnqueueMessages(), consumer.getListener().getDequeueMessages());
 
         producer.shutdown();

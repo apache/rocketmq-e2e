@@ -23,6 +23,7 @@ import org.apache.rocketmq.common.message.Message;
 import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.frame.BaseOperate;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.junit.jupiter.api.*;
@@ -35,15 +36,14 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test message properties
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class MessageAbnormalTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageAbnormalTest.class);
     private static DefaultMQProducer producer;
-    private static String topic;
-    private String tag;
+    private static String topic = getTopic("MessageAbnormalTest");
 
     @BeforeAll
     public static void setUpAll() {
-        topic = getTopic("MessageAbnormalTest");
         try {
             producer = new DefaultMQProducer("MessageAbnormalTest", rpcHook);
             producer.setNamesrvAddr(namesrvAddr);
@@ -55,7 +55,7 @@ public class MessageAbnormalTest extends BaseOperate {
 
     @BeforeEach
     public void setUp() {
-        tag = NameUtils.getRandomTagName();
+        
     }
 
     @AfterEach
@@ -71,6 +71,7 @@ public class MessageAbnormalTest extends BaseOperate {
     @Disabled
     @DisplayName("producer invoke send(messageBody=\"\"), expect throw exception")
     public void sendMsgBodyIsEmpty() {
+        String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
             Message message = MessageFactory.buildMessage(topic, tag, "");
             producer.send(message);
@@ -80,6 +81,7 @@ public class MessageAbnormalTest extends BaseOperate {
     @Test
     @DisplayName("producer invoke send(messageBody=null), expect build message throw exception")
     public void sendMsgBodyIsNull() {
+        String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
             Message message = MessageFactory.buildMessage(topic, tag, null);
             producer.send(message);
@@ -89,6 +91,7 @@ public class MessageAbnormalTest extends BaseOperate {
     @Test
     @DisplayName("producer invoke send(topic=\"\"), expect throw exception")
     public void sendMsgTopicIsEmpty() {
+        String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
             Message message = MessageFactory.buildMessage("", tag, RandomUtils.getStringByUUID());
             producer.send(message);
@@ -98,6 +101,7 @@ public class MessageAbnormalTest extends BaseOperate {
     @Test
     @DisplayName("producer invoke send(topic=null), expect throw exception")
     public void sendMsgTopicIsNull() {
+        String tag = NameUtils.getRandomTagName();
         assertThrows(Exception.class, () -> {
             Message message = MessageFactory.buildMessage(null, tag, RandomUtils.getStringByUUID());
             producer.send(message);

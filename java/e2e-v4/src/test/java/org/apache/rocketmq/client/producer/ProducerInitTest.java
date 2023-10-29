@@ -32,14 +32,9 @@ import java.util.UUID;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class ProducerInitTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(ProducerInitTest.class);
-    private static String topic;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("ProducerInitTest");
-    }
 
     @BeforeEach
     public void setUp() {

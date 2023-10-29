@@ -30,6 +30,7 @@ import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.TransactionListenerImpl;
 import org.apache.rocketmq.remoting.exception.RemotingException;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.junit.jupiter.api.*;
@@ -46,34 +47,31 @@ import java.util.concurrent.*;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @Tag(TESTSET.NORMAL)
+@Tag(TESTSET.SMOKE)
 @DisplayName("Test cases that send messages")
 public class NormalMessageSizeTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(NormalMessageSizeTest.class);
     private static String normalTopic;
+    private static String delayTopic;
     private static String transTopic;
     private static String fifoTopic;
-    private static String delayTopic;
-    private static DefaultMQProducer producer;
 
     @BeforeAll
     public static void setUpAll() {
-        normalTopic = getTopic("NormalMessageSizeTest-Normal");
-        transTopic = getTopic("NormalMessageSizeTest-Trans");
-        delayTopic = getTopic("NormalMessageSizeTest-Delay");
-        fifoTopic = getTopic("NormalMessageSizeTest-Fifo");
+        normalTopic = getTopic("NormalMessageSizeTestNormal");
+        delayTopic = getTopic("NormalMessageSizeTestDelay");
+        transTopic = getTopic("NormalMessageSizeTestTrans");
+        fifoTopic = getTopic("NormalMessageSizeTestFifo");
     }
 
     @AfterAll
     public static void tearDownAll() {
-        if (producer != null) {
-            producer.shutdown();
-        }
     }
 
     @Test
     @DisplayName("Send normal messages synchronously with the body size of 4M+1, expect send failed")
     public void testNormalMsgSize4MAdd1() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -88,12 +86,13 @@ public class NormalMessageSizeTest extends BaseOperate {
             Message message = new Message(normalTopic, tag, messageBody.getBytes());
             producer.send(message);
         });
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send normal messages synchronously with the body size of 4M, expect send success")
     public void testNormalMsgSize4M() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -110,12 +109,13 @@ public class NormalMessageSizeTest extends BaseOperate {
             e.printStackTrace();
             Assertions.fail("Send message failed, expected success");
         }
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send delay messages synchronously with the body size of 4M+1, expect send failed")
     public void testDelayMsgSize4MAdd1() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -130,12 +130,13 @@ public class NormalMessageSizeTest extends BaseOperate {
             message.setDelayTimeLevel(3);
             producer.send(message);
         });
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send delay messages synchronously with the body size of 4M, expect send success")
     public void testDelayMsgSize4M() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -158,6 +159,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         } catch (InterruptedException e) {
             Assertions.fail("Send message failed, expected success, message:" + e.getMessage());
         }
+        producer.shutdown();
     }
 
     @Test
@@ -235,7 +237,7 @@ public class NormalMessageSizeTest extends BaseOperate {
     @Test
     @DisplayName("Send FIFO messages synchronously with the body size of 4M+1, expect send failed")
     public void testFifoMsgSize4MAdd1() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -259,12 +261,13 @@ public class NormalMessageSizeTest extends BaseOperate {
             }
             producer.send(message);
         });
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send FIFO messages synchronously with the body size of 4M, expect send success")
     public void testFifoMsgSize4M() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -295,12 +298,13 @@ public class NormalMessageSizeTest extends BaseOperate {
         } catch (MQClientException e) {
             Assertions.fail("Send message failed, expected success, message:" + e.getMessage());
         }
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send normal messages synchronously with the body size of 4M and the user property size of 16KB, expect send success")
     public void testNormalMsgSize4MAndUserProperty16KB() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -328,12 +332,13 @@ public class NormalMessageSizeTest extends BaseOperate {
         } catch (MQClientException e) {
             Assertions.fail("Send message failed, expected success, message:" + e.getMessage());
         }
+        producer.shutdown();
     }
 
     @Test
     @DisplayName("Send FIFO messages synchronously with the body size of 4M and the user property size of 16KB, expect send success")
     public void testFifoMsgSize4MAndUserProperty16KB() {
-        producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
+        DefaultMQProducer producer = new DefaultMQProducer(RandomUtils.getStringByUUID(), rpcHook);
         producer.setInstanceName(UUID.randomUUID().toString());
         producer.setNamesrvAddr(namesrvAddr);
         try {
@@ -370,6 +375,7 @@ public class NormalMessageSizeTest extends BaseOperate {
         } catch (MQClientException e) {
             Assertions.fail("Send message failed, expected success, message:" + e.getMessage());
         }
+        producer.shutdown();
     }
 
 }

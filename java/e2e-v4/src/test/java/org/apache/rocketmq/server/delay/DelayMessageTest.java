@@ -49,29 +49,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 @Tag(TESTSET.DELAY)
 public class DelayMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(DelayMessageTest.class);
-    // private RMQOrderConsumer consumer;
-    private String tag;
-    private String topic;
-    private String groupId;
     private final static int SEND_NUM = 10;
-
-    @BeforeEach
-    public void setUp() {
-        topic = NameUtils.getTopicName();
-        tag = NameUtils.getTagName();
-        groupId = NameUtils.getGroupName();
-        MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
-        logger.info("topic:{}, tag:{}, groupId:{}", topic, tag, groupId);
-    }
 
     @AfterEach
     public void tearDown() {
-
     }
 
     @Test
     @DisplayName("Send 10 delay messages and set the delay test delay level=1 , expecting all to be consumed and latency is as expected")
     public void testDelayLevel1() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+
         int delayLevel = 1;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
@@ -88,6 +78,10 @@ public class DelayMessageTest extends BaseOperate {
     @Test
     @DisplayName("Send 10 delay messages and set the delay test delay level=4 , expecting all to be consumed and latency is as expected")
     public void testDelayLevel4() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        String groupId = getGroupId(methodName);
+
         int delayLevel = 4;
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, "*", new RMQNormalListener());
@@ -105,6 +99,9 @@ public class DelayMessageTest extends BaseOperate {
     @Test
     @DisplayName("Send one delay message and set the delay test negative delay level, expecting message building wrong")
     public void testNegativeDelayLevel() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+
         int delayLevel = -1;
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -122,6 +119,9 @@ public class DelayMessageTest extends BaseOperate {
     @Test
     @DisplayName("Send one delay message and set the delay test delay level=19, expecting message building wrong")
     public void testDelayLevelWith19() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String topic = getTopic(methodName);
+        
         int delayLevel = 19;
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 

@@ -60,6 +60,8 @@ public class ConsumerFactory {
         consumer.setInstanceName(RandomUtils.getStringByUUID());
         consumer.setMessageModel(MessageModel.BROADCASTING);
         consumer.setNamesrvAddr(nsAddr);
+        // consumer.setConsumeThreadMin(2);
+        // consumer.setConsumeThreadMax(4);
         return new RMQNormalConsumer(consumer);
     }
 

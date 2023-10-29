@@ -36,9 +36,11 @@ import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -52,26 +54,21 @@ import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.awaitility.Awaitility.await;
 
 @Tag(TESTSET.BATCHPRODUCER)
+@Tag(TESTSET.SMOKE)
 public class BatchProducerTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(BatchProducerTest.class);
-    private String tag;
-    private static String topic;
     private final static int SEND_NUM = 10;
+    private static String topic = getTopic("BatchProducerTest");
 
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("BatchProducerTest");
-    }
-
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getRandomTagName();
+    @AfterAll
+    public static void tearDownAll() {
     }
 
     @Test
     @DisplayName("Send 10 messages in batch, expect pushconsumer to accept them all")
     public void testBatchProducer() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -92,7 +89,9 @@ public class BatchProducerTest extends BaseOperate {
             Assertions.fail(e.getMessage());
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return SEND_NUM == consumer.getListener().getDequeueMessages().getDataSize();
@@ -107,6 +106,7 @@ public class BatchProducerTest extends BaseOperate {
     @DisplayName("Send 10 messages to a queue in batch , expect pushconsumer to accept them all")
     public void testBatchProducer_queue() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
@@ -128,7 +128,9 @@ public class BatchProducerTest extends BaseOperate {
             Assertions.fail(e.getMessage());
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return SEND_NUM == consumer.getListener().getDequeueMessages().getDataSize();

@@ -31,6 +31,7 @@ import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.remoting.exception.RemotingException;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
@@ -47,18 +48,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
 @Tag(TESTSET.PULL)
+@Tag(TESTSET.SMOKE)
 public class PullOrderParamTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(PullOrderParamTest.class);
-    private String tag;
-    private String groupId;
     private final static int SEND_NUM = 20;
-
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getRandomTagName();
-        groupId = NameUtils.getRandomGroupName();
-        log.info("tag:{}, groupId:{}", tag, groupId);
-    }
+    private static String topic = getTopic("PullOrderParamTest");
 
     @AfterEach
     public void tearDown() {
@@ -68,12 +62,11 @@ public class PullOrderParamTest extends BaseOperate {
     @DisplayName("When sending 20 sequential messages synchronously using the same MessageQueue, PullConsumer normally receives messages, but does not ack messages, and keeps the sequence; the messages are stuck at the first")
     public void testFIFO_pull_receive_nack() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
-        String topic = getTopic(methodName);
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer consumer = ConsumerFactory.getRMQPullConsumer(namesrvAddr, groupId, rpcHook);
         consumer.startDefaultPull();
-        VerifyUtils.tryReceiveOnce(consumer.getPullConsumer(), topic, tag, 32);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
 
@@ -159,5 +152,8 @@ public class PullOrderParamTest extends BaseOperate {
                         StandardCharsets.UTF_8.decode(ByteBuffer.wrap(ext.getBody()))));
             }
         }
+
+        producer.shutdown();
+        consumer.shutdown();
     }
 }

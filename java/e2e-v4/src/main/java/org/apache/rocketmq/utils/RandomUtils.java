@@ -20,9 +20,13 @@ package org.apache.rocketmq.utils;
 import java.util.Random;
 import java.util.UUID;
 
+import io.netty.util.internal.ThreadLocalRandom;
+
 public class RandomUtils {
     private static final int UNICODE_START = '\u4E00';
     private static final int UNICODE_END = '\u9FA0';
+    private static final String CHARACTERS = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final Object lock = new Object();
     private static Random rd = new Random();
 
     private RandomUtils() {
@@ -52,6 +56,19 @@ public class RandomUtils {
     public static String getStringWithCharacter(int n) {
         int[] arg = new int[] {'a', 'z' + 1, 'A', 'Z' + 1};
         return getString(n, arg);
+    }
+
+    public static String generateRandomString(int length) {
+        StringBuilder sb = new StringBuilder(length);
+        synchronized (lock) {
+            ThreadLocalRandom random = ThreadLocalRandom.current();
+            for (int i = 0; i < length; i++) {
+                int index = random.nextInt(CHARACTERS.length());
+                char c = CHARACTERS.charAt(index);
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     private static String getString(int n, int[] arg) {

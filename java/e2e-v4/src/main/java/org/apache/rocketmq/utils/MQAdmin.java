@@ -141,7 +141,7 @@ public class MQAdmin {
         try {
             Set<String> set = new HashSet<>();
             set.add(nameSrvAddr);
-            mqAdminExt.deleteTopicInNameServer(set, topic);
+            mqAdminExt.deleteTopicInNameServer(set, topic, cluster);
 
             boolean isTopicExist = checkTopicExist(mqAdminExt, topic);
             long startTime = System.currentTimeMillis();

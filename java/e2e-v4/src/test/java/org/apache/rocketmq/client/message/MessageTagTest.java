@@ -26,6 +26,7 @@ import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.junit.jupiter.api.*;
@@ -40,35 +41,24 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  * Test message tag
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class MessageTagTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageTagTest.class);
-    private static String topic;
-    private RMQNormalProducer producer;
-    private RMQNormalConsumer pushConsumer;
-    private RMQNormalConsumer pullConsumer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("MessageTagTest");
-    }
+    private static String topic = getTopic("MessageTagTest");
 
     @AfterEach
     public void tearDown() {
-        if (producer != null) {
-            producer.shutdown();
-        }
-        if (pushConsumer != null) {
-            pushConsumer.shutdown();
-        }
-        if (pullConsumer != null) {
-            pullConsumer.shutdown();
-        }
+    }
+
+    @AfterAll
+    public static void tearDownAll() {
     }
 
     @Disabled
     @DisplayName("Message Tag beyond 16KB, expect throw exception")
     public void testMessageTagBeyond16KB() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
         String tag = RandomStringUtils.randomAlphabetic(16 * 1024 + 1);
         String body = RandomStringUtils.randomAlphabetic(64);
 
@@ -77,23 +67,28 @@ public class MessageTagTest extends BaseOperate {
             Message message = new Message(topic, tag, RandomUtils.getStringByUUID(), body.getBytes());
             producer.getProducer().send(message);
         }, " message tag beyond 16KB ,expect throw exception but it didn't");
+
+        producer.shutdown();
     }
 
     @Disabled
     @DisplayName("Message Tag equals 16KB, expect send success")
     public void testMessageTagEquals16KB() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+
         String tag = RandomStringUtils.randomAlphabetic(16 * 1024);
         String body = RandomStringUtils.randomAlphabetic(64);
 
         Message message = new Message(topic, tag, RandomUtils.getStringByUUID(), body.getBytes());
         producer.send(message);
+
+        producer.shutdown();
     }
 
     @Disabled
     @DisplayName("Message Tag contains invisible characters \u0000 ,expect throw exception")
     public void testMessageTagWithInvisibleCharacter() {
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String tag = "\u0000";
 
@@ -103,6 +98,8 @@ public class MessageTagTest extends BaseOperate {
                     RandomUtils.getStringByUUID().getBytes(StandardCharsets.UTF_8));
             producer.getProducer().send(message);
         }, " message tag contains invisible character ,expect throw exception but it didn't");
+
+        producer.shutdown();
     }
 
     @Disabled
@@ -111,7 +108,7 @@ public class MessageTagTest extends BaseOperate {
         String tag = "tag|";
         String body = RandomStringUtils.randomAlphabetic(64);
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         assertThrows(Exception.class, () -> {
             Message message = new Message(topic, tag, RandomUtils.getStringByUUID(),
@@ -119,6 +116,7 @@ public class MessageTagTest extends BaseOperate {
             producer.getProducer().send(message);
         }, " message tag contains | , expect throw exception but it didn't");
 
+        producer.shutdown();
     }
 
     @Test
@@ -130,15 +128,10 @@ public class MessageTagTest extends BaseOperate {
         String tag = "中文字符";
         String body = RandomStringUtils.randomAlphabetic(64);
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook);
-        pullConsumer.subscribeAndStartLitePull(topic, tag);
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer);
 
         Message message = new Message(topic, tag, RandomUtils.getStringByUUID(), body.getBytes(StandardCharsets.UTF_8));
@@ -146,5 +139,8 @@ public class MessageTagTest extends BaseOperate {
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), pushConsumer.getListener().getDequeueMessages());
+
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 }

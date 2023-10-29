@@ -27,7 +27,9 @@ import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
+import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,27 +43,16 @@ import org.slf4j.LoggerFactory;
 @Tag(TESTSET.SMOKE)
 public class NormalMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(NormalMessageTest.class);
-    private String tag;
-    private String groupId;
-    private static String topic;
     private final static int SEND_NUM = 10;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("NormalMessageTest");
-    }
-
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getTagName();
-        groupId = NameUtils.getGroupName();
-        MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
-        logger.info("topic:{}, tag:{}, groupId:{}", topic, tag, groupId);
-    }
+    private static String topic = getTopic("NormalMessageTest");
 
     @Test
     @DisplayName("Send 10 normal messages synchronously, expecting all to be consumed")
     public void testConsumeNormalMessage() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
@@ -75,6 +66,10 @@ public class NormalMessageTest extends BaseOperate {
     @Test
     @DisplayName("Send 10 normal messages asynchronously, expecting all to be consumed")
     public void testConsumeNormalMessageAndSendWithAsync() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);
@@ -88,6 +83,10 @@ public class NormalMessageTest extends BaseOperate {
     @Test
     @DisplayName("Send 10 normal messages in OneWay, expecting all to be consumed")
     public void testConsumeNormalMessageAndSendWithOneWay() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+        
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr,rpcHook);

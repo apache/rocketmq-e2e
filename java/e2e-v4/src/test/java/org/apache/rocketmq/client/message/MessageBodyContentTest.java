@@ -26,7 +26,9 @@ import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
+import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 import org.junit.jupiter.api.*;
 import org.slf4j.Logger;
@@ -39,17 +41,10 @@ import static org.awaitility.Awaitility.await;
  * Test message body
  */
 @Tag(TESTSET.CLIENT)
+@Tag(TESTSET.SMOKE)
 public class MessageBodyContentTest extends BaseOperate {
     private static final Logger log = LoggerFactory.getLogger(MessageBodyContentTest.class);
-    private static String topic;
-    private RMQNormalProducer producer;
-    private RMQNormalConsumer pushConsumer;
-    private RMQNormalConsumer pullConsumer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("MessageBodyContentTest");
-    }
+    private static String topic = getTopic("MessageBodyContentTest");
 
     @BeforeEach
     public void setUp() {
@@ -58,15 +53,10 @@ public class MessageBodyContentTest extends BaseOperate {
 
     @AfterEach
     public void tearDown() {
-        if (producer != null) {
-            producer.shutdown();
-        }
-        if (pushConsumer != null) {
-            pushConsumer.shutdown();
-        }
-        if (pullConsumer != null) {
-            pullConsumer.shutdown();
-        }
+    }
+    
+    @AfterAll
+    public static void tearDownAll() {
     }
 
     @Test
@@ -76,24 +66,23 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
         String tag = NameUtils.getRandomTagName();
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = " ";
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
-        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
-            }
-        });
+        
+        TestUtils.waitForSeconds(2);
 
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
+
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 
     @Test
@@ -103,25 +92,23 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
         String tag = NameUtils.getRandomTagName();
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = "中文字符";
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
-            }
-        });
+        TestUtils.waitForSeconds(2);
 
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
+        
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 
     @Test
@@ -131,24 +118,22 @@ public class MessageBodyContentTest extends BaseOperate {
         String groupId = getGroupId(methodName);
         String tag = NameUtils.getRandomTagName();
 
-        pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
         String body = "😱";
         producer.send(topic, tag, body);
 
         Assertions.assertEquals(1, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
-            @Override
-            public Boolean call() throws Exception {
-                return pushConsumer.getListener().getDequeueMessages().getDataSize() == 1;
-            }
-        });
+        TestUtils.waitForSeconds(2);
 
         VerifyUtils.verifyNormalMessageWithBody(producer.getEnqueueMessages(),
                 pushConsumer.getListener().getDequeueMessages(), body);
+
+        producer.shutdown();
+        pushConsumer.shutdown();
     }
 }

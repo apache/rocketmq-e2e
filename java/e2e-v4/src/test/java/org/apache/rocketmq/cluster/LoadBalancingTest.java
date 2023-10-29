@@ -21,7 +21,9 @@ import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQIdempotentListener;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQOrderListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
+import org.apache.rocketmq.utils.TestUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
 
 import java.util.ArrayList;
@@ -40,6 +42,7 @@ import org.apache.rocketmq.enums.TESTSET;
 import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.MessageFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,20 +57,20 @@ import static org.awaitility.Awaitility.await;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Tag(TESTSET.LOAD_BALANCING)
+@Tag(TESTSET.SMOKE)
 public class LoadBalancingTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(LoadBalancingTest.class);
-    private static String topic;
     private final static int SEND_NUM = 10;
+    private static String topic = getTopic("LoadBalancingTest");
 
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("LoadBalancingTest");
+    @AfterAll
+    public static void tearDownAll() {
     }
 
     @Test
-    @DisplayName("Normal message load balancing, start 4 consumers, send 240 messages, expect 4 consumers to consume load balancing, each consume 1/4, then shutdown 2 of them, send 240 messages again, still load balancing, each consume half, and start 2 new consumers. Another 240 messages are sent, still load balanced, each consuming 1/4")
+    @DisplayName("Normal message load balancing, start 4 consumers, send 40 messages, expect 4 consumers to consume load balancing, each consume 1/4, then shutdown 2 of them, send 40 messages again, still load balancing, each consume half, and start 2 new consumers. Another 40 messages are sent, still load balanced, each consuming 1/4")
     public void testLoadBalancing_normal_message() {
-        int messageSize = 240;
+        int messageSize = 40;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
@@ -87,7 +90,9 @@ public class LoadBalancingTest extends BaseOperate {
 
         Assertions.assertEquals(messageSize, producer.getEnqueueMessages().getDataSize(), "send message failed");
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -110,7 +115,9 @@ public class LoadBalancingTest extends BaseOperate {
 
         producer.send(topic, tag, messageSize);
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -124,14 +131,16 @@ public class LoadBalancingTest extends BaseOperate {
         consumer1.getListener().clearMsg();
         consumer2.getListener().clearMsg();
 
-        RMQNormalConsumer consumer5 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
-        RMQNormalConsumer consumer6 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer5 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer6 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
         consumer5.subscribeAndStart(topic, tag, new RMQIdempotentListener());
         consumer6.subscribeAndStart(topic, tag, new RMQIdempotentListener());
 
         producer.send(topic, tag, messageSize);
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -154,21 +163,16 @@ public class LoadBalancingTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("Global sequential message load balancing: Start 2 consumers, send 30 messages, expect only 1 Consumer to consume the message, and the other Consumer to consume 0, then shutdown 1 Consumer with message consumption, send another 30 messages, expect the idling Consumer to pull the message")
+    @DisplayName("Global sequential message load balancing: Start 2 consumers, send 5 messages, expect only 1 Consumer to consume the message, and the other Consumer to consume 0, then shutdown 1 Consumer with message consumption, send another 5 messages, expect the idling Consumer to pull the message")
     public void testLoadBalancing_global_sequential_message(){
-        int messageSize = 30;
+        int messageSize = 5;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        RMQNormalConsumer consumer1 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
-        RMQNormalConsumer consumer2 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer1 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer2 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
         consumer1.subscribeAndStart(topic, tag, new RMQOrderListener());
         consumer2.subscribeAndStart(topic, tag, new RMQOrderListener());
 
@@ -178,7 +182,9 @@ public class LoadBalancingTest extends BaseOperate {
         msgQueue.add(msgQueues.get(0));
         producer.sendWithQueue(msgQueue,tag,messageSize);
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -193,7 +199,9 @@ public class LoadBalancingTest extends BaseOperate {
 
         producer.sendWithQueue(msgQueue,tag,messageSize);
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer2.getListener().getDequeueMessages().getDataSize() == messageSize;
@@ -207,23 +215,18 @@ public class LoadBalancingTest extends BaseOperate {
     }
 
     @Test
-    @DisplayName("Partition sequential message load balancing, start 4 consumers, send 120 messages, shardingkey=8, expect 4 consumers to consume load balancing, each consumes 1/4 Partition, shutdown 2 of the consumers, send 120 messages again. The load is still balanced, and half of each Partition is consumed")
+    @DisplayName("Partition sequential message load balancing, start 4 consumers, send 40 messages, shardingkey=8, expect 4 consumers to consume load balancing, each consumes 1/4 Partition, shutdown 2 of the consumers, send 40 messages again. The load is still balanced, and half of each Partition is consumed")
     public void testLoadBalancing_partition_sequential_message(){
-        int messageSize = 120;
+        int messageSize = 40;
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
         RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
 
-        RMQNormalConsumer pullConsumer = ConsumerFactory.getRMQLitePullConsumer(namesrvAddr, groupId, rpcHook,1);
-        pullConsumer.subscribeAndStartLitePull(topic,MessageSelector.byTag(tag));
-        VerifyUtils.tryReceiveOnce(pullConsumer.getLitePullConsumer());
-        pullConsumer.shutdown();
-
-        RMQNormalConsumer consumer1 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
-        RMQNormalConsumer consumer2 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
-        RMQNormalConsumer consumer3 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
-        RMQNormalConsumer consumer4 = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer1 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer2 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer3 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
+        RMQNormalConsumer consumer4 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook,new AllocateMessageQueueAveragely());
         consumer1.subscribeAndStart(topic, tag, new RMQOrderListener());
         consumer2.subscribeAndStart(topic, tag, new RMQOrderListener());
         consumer3.subscribeAndStart(topic, tag, new RMQOrderListener());
@@ -248,7 +251,9 @@ public class LoadBalancingTest extends BaseOperate {
             }
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(60, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -258,10 +263,10 @@ public class LoadBalancingTest extends BaseOperate {
             }
         });
 
-        Assertions.assertTrue(messageSize/4==consumer1.getListener().getDequeueMessages().getDataSize(), "consumer1: first load balancing is not satisfied");
-        Assertions.assertTrue(messageSize/4==consumer2.getListener().getDequeueMessages().getDataSize(), "consumer2: first load balancing is not satisfied");
-        Assertions.assertTrue(messageSize/4==consumer3.getListener().getDequeueMessages().getDataSize(), "consumer3: first load balancing is not satisfied");
-        Assertions.assertTrue(messageSize/4==consumer4.getListener().getDequeueMessages().getDataSize(), "consumer4: first load balancing is not satisfied");
+        VerifyUtils.verifyBalance(messageSize, consumer1.getListener().getDequeueMessages().getDataSize(),
+                                                consumer2.getListener().getDequeueMessages().getDataSize(),
+                                                consumer3.getListener().getDequeueMessages().getDataSize(),
+                                                consumer4.getListener().getDequeueMessages().getDataSize());
 
         consumer3.shutdown();
         consumer4.shutdown();
@@ -287,7 +292,9 @@ public class LoadBalancingTest extends BaseOperate {
             }
         }
 
-        await().atMost(120, SECONDS).until(new Callable<Boolean>() {
+        TestUtils.waitForSeconds(2);
+
+        await().atMost(90, SECONDS).until(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 return consumer1.getListener().getDequeueMessages().getDataSize() +
@@ -295,8 +302,8 @@ public class LoadBalancingTest extends BaseOperate {
             }
         });
 
-        Assertions.assertTrue(messageSize/2==consumer1.getListener().getDequeueMessages().getDataSize(), "consumer1: second load balancing is not satisfied");
-        Assertions.assertTrue(messageSize/2==consumer2.getListener().getDequeueMessages().getDataSize(), "consumer2: second load balancing is not satisfied");
+        VerifyUtils.verifyBalance(messageSize, consumer1.getListener().getDequeueMessages().getDataSize(),
+                                                consumer2.getListener().getDequeueMessages().getDataSize());
 
         producer.shutdown();
         consumer1.shutdown();

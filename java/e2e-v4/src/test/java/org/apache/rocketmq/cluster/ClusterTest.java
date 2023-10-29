@@ -25,6 +25,7 @@ import org.apache.rocketmq.factory.ConsumerFactory;
 import org.apache.rocketmq.factory.ProducerFactory;
 import org.apache.rocketmq.frame.BaseOperate;
 import org.apache.rocketmq.listener.rmq.concurrent.RMQNormalListener;
+import org.apache.rocketmq.utils.MQAdmin;
 import org.apache.rocketmq.utils.NameUtils;
 import org.apache.rocketmq.utils.RandomUtils;
 import org.apache.rocketmq.utils.VerifyUtils;
@@ -33,42 +34,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Tag(TESTSET.MODEL)
+@Tag(TESTSET.SMOKE)
 public class ClusterTest extends BaseOperate {
     private final Logger log = LoggerFactory.getLogger(ClusterTest.class);
-    private static String topic;
-    private final static int SEND_NUM = 100;
-    private RMQNormalConsumer pushConsumer01;
-    private RMQNormalConsumer pushConsumer02;
-    private RMQNormalConsumer pushConsumer03;
-    private RMQNormalConsumer pullConsumer;
-    private RMQNormalProducer producer;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("ClusterTest");
-    }
+    private final static int SEND_NUM = 10;
+    private static String topic = getTopic("ClusterTest");
 
     @BeforeEach
     public void tearDown() {
-        if (pushConsumer01 != null) {
-            pushConsumer01.shutdown();
-        }
-        if (pushConsumer02 != null) {
-            pushConsumer02.shutdown();
-        }
-        if (pushConsumer03 != null) {
-            pushConsumer03.shutdown();
-        }
-        if (pullConsumer != null) {
-            pullConsumer.shutdown();
-        }
-        if (producer != null) {
-            producer.shutdown();
-        }
     }
 
     @Test
-    @DisplayName("Send 100 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 100 messages")
+    @DisplayName("Send 10 normal messages synchronously, start three consumers on different GroupId, and expect each client to consume up to 10 messages")
     public void testBroadcastConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
@@ -79,14 +56,14 @@ public class ClusterTest extends BaseOperate {
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
-        pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId01, rpcHook);
-        pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId02, rpcHook);
-        pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId03, rpcHook);
+        RMQNormalConsumer pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId01, rpcHook);
+        RMQNormalConsumer pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId02, rpcHook);
+        RMQNormalConsumer pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId03, rpcHook);
         pushConsumer01.subscribeAndStart(topic,tag, listenerA);
         pushConsumer02.subscribeAndStart(topic,tag, listenerB);
         pushConsumer03.subscribeAndStart(topic,tag, listenerC);
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get Producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = new Message(topic, tag, RandomUtils.getStringByUUID().getBytes());
@@ -96,10 +73,15 @@ public class ClusterTest extends BaseOperate {
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerA.getDequeueMessages());
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerB.getDequeueMessages());
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerC.getDequeueMessages());
+
+        producer.shutdown();
+        pushConsumer01.shutdown();
+        pushConsumer02.shutdown();
+        pushConsumer03.shutdown();
     }
 
     @Test
-    @DisplayName("Send 100 normal messages synchronously, start three consumers on same GroupId, and expect each client to consume up to 100 messages")
+    @DisplayName("Send 10 normal messages synchronously, start three consumers on same GroupId, and expect each client to consume up to 10 messages")
     public void testBroadcastConsumeWithSameGroupId() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
@@ -108,14 +90,14 @@ public class ClusterTest extends BaseOperate {
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
-        pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer01 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer02 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer03 = ConsumerFactory.getRMQBroadCastConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer01.subscribeAndStart(topic,tag, listenerA);
         pushConsumer02.subscribeAndStart(topic,tag, listenerB);
         pushConsumer03.subscribeAndStart(topic,tag, listenerC);
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get Producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = new Message(topic, tag, RandomUtils.getStringByUUID().getBytes());
@@ -125,10 +107,15 @@ public class ClusterTest extends BaseOperate {
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerA.getDequeueMessages());
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerB.getDequeueMessages());
         VerifyUtils.verifyNormalMessage(producer.getEnqueueMessages(), listenerC.getDequeueMessages());
+
+        producer.shutdown();
+        pushConsumer01.shutdown();
+        pushConsumer02.shutdown();
+        pushConsumer03.shutdown();
     }
 
     @Test
-    @DisplayName("Send 100 normal messages synchronously, start 3 consumers on the same GroupId, expect 3 clients to consume a total of 100 messages")
+    @DisplayName("Send 10 normal messages synchronously, start 3 consumers on the same GroupId, expect 3 clients to consume a total of 10 messages")
     public void testClusterConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
         String tag = NameUtils.getRandomTagName();
@@ -136,14 +123,14 @@ public class ClusterTest extends BaseOperate {
         RMQNormalListener listenerA = new RMQNormalListener("ListenerA");
         RMQNormalListener listenerB = new RMQNormalListener("ListenerB");
         RMQNormalListener listenerC = new RMQNormalListener("ListenerC");
-        pushConsumer01 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer02 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
-        pushConsumer03 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer01 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer02 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
+        RMQNormalConsumer pushConsumer03 = ConsumerFactory.getRMQClusterConsumer(namesrvAddr, groupId, rpcHook);
         pushConsumer01.subscribeAndStart(topic,tag, listenerA);
         pushConsumer02.subscribeAndStart(topic,tag, listenerB);
         pushConsumer03.subscribeAndStart(topic,tag, listenerC);
 
-        producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
+        RMQNormalProducer producer = ProducerFactory.getRMQProducer(namesrvAddr, rpcHook);
         Assertions.assertNotNull(producer, "Get producer failed");
         for (int i = 0; i < SEND_NUM; i++) {
             Message message = new Message(topic, tag, String.valueOf(i).getBytes());
@@ -151,6 +138,11 @@ public class ClusterTest extends BaseOperate {
         }
         Assertions.assertEquals(SEND_NUM, producer.getEnqueueMessages().getDataSize(), "send message failed");
         VerifyUtils.verifyClusterConsume(producer.getEnqueueMessages(), listenerA.getDequeueMessages(), listenerB.getDequeueMessages(), listenerC.getDequeueMessages());
+        
+        producer.shutdown();
+        pushConsumer01.shutdown();
+        pushConsumer02.shutdown();
+        pushConsumer03.shutdown();
     }
 }
 

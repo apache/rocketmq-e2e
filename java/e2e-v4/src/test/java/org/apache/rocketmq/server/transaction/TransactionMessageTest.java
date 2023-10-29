@@ -62,27 +62,16 @@ import static org.awaitility.Awaitility.await;
 @Tag(TESTSET.SMOKE)
 public class TransactionMessageTest extends BaseOperate {
     private final Logger logger = LoggerFactory.getLogger(TransactionMessageTest.class);
-    private String tag;
-    private String groupId;
-    private static String topic;
     private final static int SEND_NUM = 10;
-
-    @BeforeAll
-    public static void setUpAll() {
-        topic = getTopic("TransactionMessageTest");
-    }
-
-    @BeforeEach
-    public void setUp() {
-        tag = NameUtils.getTagName();
-        groupId = NameUtils.getGroupName();
-        MQAdmin.createTopic(namesrvAddr, cluster, topic, 8);
-        logger.info("topic:{}, tag:{}, groupId:{}", topic, tag, groupId);
-    }
+    private static String topic = getTopic("TransactionMessageTest");
 
     @Test
     @DisplayName("Send 10 transaction messages synchronously, expecting all to be consumed")
-    public void testConsumeNormalMessage() {
+    public void testConsumeTransMessage() {
+        String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
+        String groupId = getGroupId(methodName);
+
         RMQNormalConsumer consumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
         consumer.subscribeAndStart(topic, tag, new RMQNormalListener());
 
@@ -110,6 +99,7 @@ public class TransactionMessageTest extends BaseOperate {
     @DisplayName("Send 10 transaction messages and rollback directly (Checker does commit), expecting that these 10 messages cannot be consumed by PushConsumer")
     public void testTrans_SendRollback_PushConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
@@ -143,6 +133,7 @@ public class TransactionMessageTest extends BaseOperate {
     @DisplayName("Send 10 transaction messages and COMMIT the transaction by Checker (perform COMMIT), expecting the 10 messages to be consumed by PushConsumer")
     public void testTrans_SendCheckerCommit_PushConsume() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
@@ -175,6 +166,7 @@ public class TransactionMessageTest extends BaseOperate {
     @DisplayName("Send 10 transaction messages and roll back the transaction by Checker (performing ROLLBACK), expecting that the 10 messages will not be consumed by PushConsumer")
     public void testTrans_CheckerRollback() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
@@ -206,6 +198,7 @@ public class TransactionMessageTest extends BaseOperate {
     @DisplayName("Send 10 transactional messages and commit them by checking back (Checker commits for partial messages), and the expected committed messages can be consumed by PushConsumer")
     public void testTrans_SendCheckerPartionCommit() {
         String methodName = Thread.currentThread().getStackTrace()[1].getMethodName();
+        String tag = NameUtils.getRandomTagName();
         String groupId = getGroupId(methodName);
 
         RMQNormalConsumer pushConsumer = ConsumerFactory.getRMQNormalConsumer(namesrvAddr, groupId, rpcHook);
