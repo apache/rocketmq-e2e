@@ -25,18 +25,18 @@ import org.apache.rocketmq.client.apis.StaticSessionCredentialsProvider;
 public class ClientConfigurationFactory {
     public static ClientConfiguration build(Account account) {
         ClientConfiguration clientConfiguration;
-        if(account.getAclEnable()) {
+        if (account.getAclEnable()) {
             StaticSessionCredentialsProvider staticSessionCredentialsProvider = new StaticSessionCredentialsProvider(account.getAccessKey(), account.getSecretKey());
             clientConfiguration = ClientConfiguration.newBuilder()
-                    .setEndpoints(account.getEndpoint())
-                    .setRequestTimeout(Duration.ofSeconds(10))
-                    .setCredentialProvider(staticSessionCredentialsProvider)
-                    .build();
-        }else {
+                .setEndpoints(account.getEndpoint())
+                .setRequestTimeout(Duration.ofSeconds(10))
+                .setCredentialProvider(staticSessionCredentialsProvider)
+                .build();
+        } else {
             clientConfiguration = ClientConfiguration.newBuilder()
-                    .setEndpoints(account.getEndpoint())
-                    .setRequestTimeout(Duration.ofSeconds(10))
-                    .build();
+                .setEndpoints(account.getEndpoint())
+                .setRequestTimeout(Duration.ofSeconds(10))
+                .build();
         }
         return clientConfiguration;
     }
