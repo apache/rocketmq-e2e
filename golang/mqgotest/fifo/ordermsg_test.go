@@ -20,7 +20,6 @@ import (
 	. "rocketmq-go-e2e/utils"
 	"sync"
 	"testing"
-	"time"
 )
 
 func TestFiFOMsg(t *testing.T) {
@@ -29,10 +28,6 @@ func TestFiFOMsg(t *testing.T) {
 		wg               sync.WaitGroup
 		recvMsgCollector *RecvMsgsCollector
 		sendMsgCollector = NewSendMsgsCollector()
-		// maximum number of messages received at one time
-		maxMessageNum int32 = 32
-		// invisibleDuration should > 20s
-		invisibleDuration = time.Second * 20
 		// receive messages in a loop
 		testTopic    = GetTopicName()
 		nameServer   = NAMESERVER
@@ -60,13 +55,13 @@ func TestFiFOMsg(t *testing.T) {
 	wg.Add(1)
 
 	go func() {
-		recvMsgCollector = RecvMessage(simpleConsumer, maxMessageNum, invisibleDuration, 60)
+		recvMsgCollector = RecvMessage(simpleConsumer, MaxMessageNum, InvisibleDuration, 60)
 		wg.Done()
 	}()
 
 	go func() {
 		for i := 0; i < msgCount; i++ {
-			var msg = BuildFIFOMessage(testTopic, "test", msgtag, cm, keys)
+			msg := BuildFIFOMessage(testTopic, "test", msgtag, cm, keys)
 			SendMessage(producer, msg, sendMsgCollector)
 		}
 	}()
